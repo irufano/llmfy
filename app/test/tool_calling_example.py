@@ -5,6 +5,9 @@ from app.llmfy.messages.role import Role
 from app.llmfy.models.bedrock import bedrock_usage_tracker
 from app.llmfy.models.bedrock.bedrock_config import BedrockConfig
 from app.llmfy.models.bedrock.bedrock_model import BedrockModel
+
+# from app.llmfy.models.openai.openai_config import OpenAIConfig
+# from app.llmfy.models.openai.openai_model import OpenAIModel
 from app.llmfy.tools.tool import Tool
 
 load_dotenv()
@@ -18,9 +21,15 @@ def tool_calling_example():
     # model="amazon.nova-lite-v1:0",
 
     llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
+        model="anthropic.claude-3-haiku-20240307-v1:0",
         config=BedrockConfig(temperature=0.7),
     )
+
+    # config = OpenAIConfig(temperature=0.7)
+    # llm = OpenAIModel(
+    #     model="gpt-4o-mini",
+    #     config=config,
+    # )
 
     # Initialize framework
     ai = LLMfy(llm, system_message="You are a helpful assistant.")

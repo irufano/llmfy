@@ -1,0 +1,71 @@
+[
+    {
+        "role": "system",
+        "content": [
+            {
+                "text": "You are a helpful assistant."
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "text": "what time and weather in London?"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "toolUse": {
+                    "toolUseId": "tooluse_fduV1S_1Sp2vLGwuB77YkA",
+                    "name": "get_current_time",
+                    "input": {
+                        "location": "London"
+                    }
+                }
+            },
+            {
+                "toolUse": {
+                    "toolUseId": "tooluse_0JgYcF0vSe2pcjh7McmczA",
+                    "name": "get_current_weather",
+                    "input": {
+                        "unit": "celsius",
+                        "location": "London"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "toolResult": {
+                    "toolUseId": "tooluse_fduV1S_1Sp2vLGwuB77YkA",
+                    "content": [
+                        {
+                            "json": {
+                                "result": "The time in London is 09: 00 AM"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "toolResult": {
+                    "toolUseId": "tooluse_0JgYcF0vSe2pcjh7McmczA",
+                    "content": [
+                        {
+                            "json": {
+                                "result": "The weather in London is 22 degrees celsius"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]

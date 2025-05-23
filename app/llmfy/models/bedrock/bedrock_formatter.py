@@ -216,6 +216,12 @@ class BedrockFormatter(ModelFormatter):
         result: str,
         request_call_id: str | None = None,
     ) -> List[Message]:
+        """
+        There are 2 kind tool message provided in bedrock,
+        - if all tool request in one item list, the tool message also must in one item list, see sample : `app/llmfy/messages/sample_v1_bedrock_messages.json`
+        - if tool request is separated one by one, the tool message also must provided one by one, see sample : `app/llmfy/messages/sample_v2_bedrock_messages.json`
+        """
+
         tool_result = {
             "toolResult": {
                 "toolUseId": tool_call_id,
@@ -236,10 +242,12 @@ class BedrockFormatter(ModelFormatter):
         )
 
         if bedrock_message:
+            # V1 
             # update
             if bedrock_message.tool_results:
                 bedrock_message.tool_results.append(tool_result)
         else:
+            # V2
             # add new
             messages.append(
                 Message(

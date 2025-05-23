@@ -1,0 +1,81 @@
+[
+    {
+        "role": "system",
+        "content": [
+            {
+                "text": "You are a helpful assistant."
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "text": "what time and weather in London?"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "toolUse": {
+                    "toolUseId": "tooluse_YvbfTKm_RiSBklep50c6GA",
+                    "name": "get_current_time",
+                    "input": {
+                        "location": "London"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "toolResult": {
+                    "toolUseId": "tooluse_YvbfTKm_RiSBklep50c6GA",
+                    "content": [
+                        {
+                            "json": {
+                                "result": "The time in London is 09:00 AM"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "toolUse": {
+                    "toolUseId": "tooluse_IGhRZ6vLQu2nkRvQudtz6w",
+                    "name": "get_current_weather",
+                    "input": {
+                        "location": "London",
+                        "unit": "celsius"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "toolResult": {
+                    "toolUseId": "tooluse_IGhRZ6vLQu2nkRvQudtz6w",
+                    "content": [
+                        {
+                            "json": {
+                                "result": "The weather in London is 22 degrees celsius"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]

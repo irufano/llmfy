@@ -1,0 +1,43 @@
+[
+    {
+        "role": "system",
+        "content": "You are a helpful assistant."
+    },
+    {
+        "role": "user",
+        "content": "what time and weather in London?"
+    },
+    {
+        "role": "assistant",
+        "tool_calls": [
+            {
+                "id": "call_1H9mi0ki2oGc067UYtPZS36t",
+                "type": "function",
+                "function": {
+                    "name": "get_current_time",
+                    "arguments": "{\"location\": \"London\"}"
+                }
+            },
+            {
+                "id": "call_mW66aIHR7EHhXq5Kj6pPcMlb",
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "arguments": "{\"location\": \"London\", \"unit\": \"celsius\"}"
+                }
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "content": "The time in London is 09: 00 AM",
+        "tool_call_id": "call_1H9mi0ki2oGc067UYtPZS36t",
+        "name": "get_current_time"
+    },
+    {
+        "role": "tool",
+        "content": "The weather in London is 22 degrees celsius",
+        "tool_call_id": "call_mW66aIHR7EHhXq5Kj6pPcMlb",
+        "name": "get_current_weather"
+    }
+]

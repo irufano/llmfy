@@ -175,8 +175,6 @@ class LLMfy:
                 tool_calls=response.tool_calls,
             )
 
-            
-
             return ChatResponse(
                 result=response,
                 messages=self.messages_temp.get_instance_messages(),
@@ -233,6 +231,7 @@ class LLMfy:
                     )
 
             while True:
+                print(self.messages_temp.get_messages(provider=self.model.provider))
                 response = self.model.generate(
                     self.messages_temp.get_messages(provider=self.model.provider),
                     tools=self.__get_tool_definitions(),
