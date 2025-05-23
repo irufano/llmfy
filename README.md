@@ -10,7 +10,7 @@
 
 ![](aigoofusion.png)
 
-`llmfy` is a framework for developing applications by large language models (LLMs). `AIGooFusion` has `LLMfy` and `LLMfyPipe`. 
+`LLMfy` is a framework for developing applications with large language models (LLMs). 
 - `LLMfy` is llm abstraction to use various llm on one module. 
 - `LLMfyPipe` is llm apps workflow.
 
