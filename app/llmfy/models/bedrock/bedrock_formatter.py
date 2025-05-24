@@ -1,6 +1,8 @@
 import inspect
 import re
 from typing import Any, Dict, List, Union
+from app.exception.llmfy_exception import LLMfyException
+from app.llmfy.messages.content_type import ContentType
 from app.llmfy.messages.message import Message
 from app.llmfy.messages.role import Role
 from app.llmfy.models.model_formatter import ModelFormatter
@@ -24,7 +26,7 @@ class BedrockFormatter(ModelFormatter):
     def format_message(self, message: Message) -> dict:
         """Formats message into Bedrock's message format.
 
-        BasicResponse:
+        TextRequest:
         ```
         {
             "role": "user | assistant",
@@ -36,7 +38,41 @@ class BedrockFormatter(ModelFormatter):
         }
         ```
 
-        ToolRequestResponse:
+        ImageRequest:
+        ```
+        {
+            "role": "user",
+            "content": [
+                {
+                    "image": {
+                        "format": "png",
+                        "source": {
+                            "bytes": "image in bytes"
+                        }
+                    }
+                }
+            ]
+        }
+        # or
+        {
+            "role": "user",
+            "content": [
+                {
+                    "image": {
+                        "format": "png",
+                        "source": {
+                            "s3Location": {
+                                "uri": "s3://amzn-s3-demo-bucket/myImage",
+                                "bucketOwner": "111122223333"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+        ```
+
+        ToolRequest:
         ```
         {
             "role": "assistant",
@@ -83,7 +119,61 @@ class BedrockFormatter(ModelFormatter):
         }
 
         if message.content and not message.tool_results and not message.tool_calls:
-            message_dict["content"] = [{"text": message.content}]
+            if isinstance(message.content, str):
+                # content is absolute text
+                message_dict["content"] = [{"text": message.content}]
+            if isinstance(message.content, List):
+                # content can be text or image
+                message_dict["content"] = []
+                for c in message.content:
+                    if c.type == ContentType.TEXT:
+                        #  Content.value value is str.
+                        message_dict["content"].append({"text": c.value})
+                    if c.type == ContentType.IMAGE:
+                        supported_formats = ["gif", "jpeg", "png", "webp"]
+                        # check format
+                        if not c.format:
+                            raise LLMfyException("`format` is required for bedrock.")
+                        if c.format not in supported_formats:
+                            raise LLMfyException(
+                                f"`format` must in {supported_formats}."
+                            )
+
+                        # check is use s3
+                        if c.use_s3:
+                            # Use s3
+                            # check bwner if use s3
+                            if not c.bucket_owner:
+                                raise LLMfyException(
+                                    "`bucket_owner` is required if use s3."
+                                )
+
+                            # use s3
+                            # Content.value value is url to s3 image.
+                            message_dict["content"].append(
+                                {
+                                    "image": {
+                                        "format": c.format,
+                                        "source": {
+                                            "s3Location": {
+                                                "uri": c.value,
+                                                "bucketOwner": c.bucket_owner,
+                                            }
+                                        },
+                                    }
+                                }
+                            )
+                        else:
+                            # Use bytes
+                            #  Content.value value is str image bytes.
+                            message_dict["content"].append(
+                                {
+                                    "image": {
+                                        "format": c.format,
+                                        "source": {"bytes": c.value},
+                                    },
+                                }
+                            )
 
         if message.tool_results:
             message_dict["content"] = message.tool_results
@@ -122,7 +212,7 @@ class BedrockFormatter(ModelFormatter):
                                 "type": "object",
                                 "properties": {
                                     "location": {
-                                        "type": "string",
+                    ucket_o                    "type": "string",
                                         "description": ""
                                     },
                                     "unit": {
@@ -242,7 +332,7 @@ class BedrockFormatter(ModelFormatter):
         )
 
         if bedrock_message:
-            # V1 
+            # V1
             # update
             if bedrock_message.tool_results:
                 bedrock_message.tool_results.append(tool_result)

@@ -3,6 +3,7 @@ import inspect
 import re
 
 from typing import Any, Dict, List, Union
+from app.llmfy.messages.content_type import ContentType
 from app.llmfy.messages.message import Message
 from app.llmfy.messages.role import Role
 from app.llmfy.models.model_formatter import ModelFormatter
@@ -11,7 +12,7 @@ from app.llmfy.models.model_formatter import ModelFormatter
 class OpenAIFormatter(ModelFormatter):
     """OpenAIFormatter
 
-    BasicResponse:
+    BasicRequest:
     ```
     {
         role: "developer | user | assistant",
@@ -19,7 +20,7 @@ class OpenAIFormatter(ModelFormatter):
     }
     ```
 
-    ToolRequestResponse:
+    ToolRequest:
     ```
     [{
         "id": "call_12345xyz",
@@ -30,6 +31,36 @@ class OpenAIFormatter(ModelFormatter):
         }
     }]
     ```
+
+    ImageRequest:
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What's in this image?"},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+                }
+            },
+        ],
+    }
+
+    # or
+
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What's in this image?"},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": "base64 encoded image...",
+                }
+            },
+        ],
+    }
+    ```
     """
 
     def format_message(self, message: Message) -> dict:
@@ -38,14 +69,37 @@ class OpenAIFormatter(ModelFormatter):
         }
 
         if message.content and not message.tool_results and not message.tool_calls:
-            message_dict["content"] = message.content
+            if isinstance(message.content, str):
+                # content is absolute text
+                message_dict["content"] = message.content
+            if isinstance(message.content, List):
+                # content can be text or image
+                message_dict["content"] = []
+                for c in message.content:
+
+                    if c.type == ContentType.TEXT:
+                        # Content.value value is str.
+                        message_dict["content"].append(
+                            {
+                                "type": "text",
+                                "text": c.value,
+                            }
+                        )
+
+                    if c.type == ContentType.IMAGE:
+                        # Content.value value is str url or base64.
+                        message_dict["content"].append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": c.value,\
+                                },
+                            }
+                        )
 
         if message.tool_results:
             # in openai tool results only one then use first item.
             message_dict["content"] = message.tool_results[0]
-
-        if message.content is not None:
-            message_dict["content"] = message.content
 
         if message.tool_calls:
             message_dict["tool_calls"] = [
@@ -66,6 +120,7 @@ class OpenAIFormatter(ModelFormatter):
         if message.name:
             message_dict["name"] = message.name
 
+        print("hello", message_dict)
         return message_dict
 
     def format_tool_function(

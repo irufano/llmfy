@@ -1,5 +1,5 @@
 from .llmfy import LLMfy
-from .messages import Message, MessageTemp, Role, ToolCall
+from .messages import Message, MessageTemp, Role, ToolCall, Content, ContentType
 from .tools import ToolRegistry, Tool
 from .responses import AIResponse, ChatResponse
 from .models import (
@@ -53,4 +53,6 @@ __all__ = [
     "BedrockUsage",
     "bedrock_stream_usage_tracker",
     "track_bedrock_stream_usage",
+    "Content",
+    "ContentType",
 ]
