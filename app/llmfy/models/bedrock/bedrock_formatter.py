@@ -129,6 +129,7 @@ class BedrockFormatter(ModelFormatter):
                     if c.type == ContentType.TEXT:
                         #  Content.value value is str.
                         message_dict["content"].append({"text": c.value})
+
                     if c.type == ContentType.IMAGE:
                         supported_formats = ["gif", "jpeg", "png", "webp"]
                         # check format
@@ -170,6 +171,51 @@ class BedrockFormatter(ModelFormatter):
                                 {
                                     "image": {
                                         "format": c.format,
+                                        "source": {"bytes": c.value},
+                                    },
+                                }
+                            )
+
+                    if c.type == ContentType.DOCUMENT:
+                        # check filename
+                        if not c.filename:
+                            raise LLMfyException(
+                                "`filename` is required for content type DOCUMENT"
+                            )
+
+                        # check is use s3
+                        if c.use_s3:
+                            # Use s3
+                            # check bwner if use s3
+                            if not c.bucket_owner:
+                                raise LLMfyException(
+                                    "`bucket_owner` is required if use s3."
+                                )
+
+                            # use s3
+                            # Content.value value is url to s3 image.
+                            message_dict["content"].append(
+                                {
+                                    "document": {
+                                        "format": "pdf",
+                                        "name": c.filename,
+                                        "source": {
+                                            "s3Location": {
+                                                "uri": c.value,
+                                                "bucketOwner": c.bucket_owner,
+                                            }
+                                        },
+                                    }
+                                }
+                            )
+                        else:
+                            # Use bytes
+                            # Content.value value is str pdf bytes.
+                            message_dict["content"].append(
+                                {
+                                    "document": {
+                                        "format": "pdf",
+                                        "name": c.filename,
                                         "source": {"bytes": c.value},
                                     },
                                 }

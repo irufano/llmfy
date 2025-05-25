@@ -3,6 +3,7 @@ import inspect
 import re
 
 from typing import Any, Dict, List, Union
+from app.exception.llmfy_exception import LLMfyException
 from app.llmfy.messages.content_type import ContentType
 from app.llmfy.messages.message import Message
 from app.llmfy.messages.role import Role
@@ -92,9 +93,27 @@ class OpenAIFormatter(ModelFormatter):
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": c.value,\
+                                    "url": c.value,
                                 },
                             }
+                        )
+
+                    if c.type == ContentType.DOCUMENT:
+                        # check filename
+                        if not c.filename:
+                            raise LLMfyException(
+                                "`filename` is required for content type DOCUMENT"
+                            )
+
+                        # Content.value value is base64.
+                        message_dict["content"].append(
+                            {
+                                "type": "file",
+                                "file": {
+                                    "filename": c.filename,
+                                    "file_data": c.value,
+                                },
+                            },
                         )
 
         if message.tool_results:
@@ -120,7 +139,6 @@ class OpenAIFormatter(ModelFormatter):
         if message.name:
             message_dict["name"] = message.name
 
-        print("hello", message_dict)
         return message_dict
 
     def format_tool_function(
