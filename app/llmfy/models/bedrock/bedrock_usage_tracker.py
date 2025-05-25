@@ -1,17 +1,27 @@
+import functools
 from contextlib import contextmanager
 from contextvars import ContextVar
-import functools
 from typing import Any, Dict, Optional
 
 from app.llmfy.models.bedrock.bedrock_usage import BedrockUsage
+from app.llmfy.tools.deprecated import deprecated
+
 
 # Thread-safe storage for token usage per request
 BEDROCK_USAGE_TRACKER_VAR = ContextVar("BEDROCK_USAGE_TRACKER", default=BedrockUsage())
 
 
+@deprecated(
+    reason="inefficient algorithm",
+    version="0.2.1",
+    alternative="llmfy_usage_tracker()",
+)
 @contextmanager
 def bedrock_usage_tracker(pricing: Optional[Dict[str, Any]] = None):
-    """Bedrock usage tracker.
+    """
+    Bedrock usage tracker.
+
+    @deprecated Use llmfy_usage_tracker() instead.
 
     Use this to track token usage on bedrock.
 

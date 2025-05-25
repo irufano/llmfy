@@ -15,7 +15,8 @@ from app.llmfy.models.bedrock.bedrock_config import (
 from app.llmfy.models.bedrock.bedrock_stream_usage_tracker import (
     track_bedrock_stream_usage,
 )
-from app.llmfy.models.bedrock.bedrock_usage_tracker import track_bedrock_usage
+
+# from app.llmfy.models.bedrock.bedrock_usage_tracker import track_bedrock_usage
 from app.llmfy.models.model_provider import ModelProvider
 from app.llmfy.responses.ai_response import AIResponse
 from app.exception.llmfy_exception import LLMfyException
@@ -50,13 +51,27 @@ class BedrockModel(BaseAIModel):
             region_name=os.getenv("AWS_BEDROCK_REGION"),
         )
 
-    @track_bedrock_usage
+    # @track_bedrock_usage
+    # def __call_bedrock(self, params: dict[str, Any]):
+    #     try:
+    #         response = self.client.converse(**params)
+    #         return response
+    #     except Exception as e:
+    #         raise e
+
     def __call_bedrock(self, params: dict[str, Any]):
-        try:
-            response = self.client.converse(**params)
-            return response
-        except Exception as e:
-            raise e
+        # Import the decorator when the method is first defined/called
+        from app.llmfy.usage.usage_tracker import track_bedrock_usage
+
+        @track_bedrock_usage
+        def _call_bedrock_impl(params: dict[str, Any]):
+            try:
+                response = self.client.converse(**params)
+                return response
+            except Exception as e:
+                raise e
+
+        return _call_bedrock_impl(params)
 
     @track_bedrock_stream_usage
     def __call_stream_bedrock(self, params: dict[str, Any]):

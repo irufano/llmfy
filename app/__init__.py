@@ -16,6 +16,7 @@ from .llmfy import (
     bedrock_usage_tracker,
     track_bedrock_usage,
     bedrock_stream_usage_tracker,
+    llmfy_usage_tracker,
 )
 
 from .exception import LLMfyException
@@ -58,4 +59,6 @@ __all__ = [
     "bedrock_usage_tracker",
     "track_bedrock_usage",
     "bedrock_stream_usage_tracker",
+    "LLMfyUsage",
+    "llmfy_usage_tracker",
 ]

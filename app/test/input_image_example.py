@@ -10,9 +10,9 @@ from app.llmfy.messages.role import Role
 from app.llmfy.models.bedrock import bedrock_usage_tracker
 from app.llmfy.models.bedrock.bedrock_config import BedrockConfig
 from app.llmfy.models.bedrock.bedrock_model import BedrockModel
-from app.llmfy.models.openai import openai_usage_tracker
 from app.llmfy.models.openai.openai_config import OpenAIConfig
 from app.llmfy.models.openai.openai_model import OpenAIModel
+from app.llmfy.usage.usage_tracker import llmfy_usage_tracker
 
 
 load_dotenv()
@@ -100,7 +100,7 @@ def image_openai_example():
             )
         ]
 
-        with openai_usage_tracker() as usage:
+        with llmfy_usage_tracker() as usage:
             response = framework.generate(messages)
 
         print(f"\n>> {response.result.content}\n")

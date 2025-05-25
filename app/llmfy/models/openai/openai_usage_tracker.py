@@ -4,14 +4,24 @@ import functools
 from typing import Any, Dict, Optional
 
 from app.llmfy.models.openai.openai_usage import OpenAIUsage
+from app.llmfy.tools.deprecated import deprecated
+
 
 # Thread-safe storage for token usage per request
 OPENAI_USAGE_TRACKER_VAR = ContextVar("OPENAI_USAGE_TRACKER", default=OpenAIUsage())
 
 
+@deprecated(
+    reason="inefficient algorithm",
+    version="0.2.1",
+    alternative="llmfy_usage_tracker()",
+)
 @contextmanager
 def openai_usage_tracker(pricing: Optional[Dict[str, Any]] = None):
-    """OpenAI usage tracker.
+    """
+    OpenAI usage tracker.
+
+    @deprecated Use llmfy_usage_tracker() instead.
 
     Use this to track token usage on openai.
 

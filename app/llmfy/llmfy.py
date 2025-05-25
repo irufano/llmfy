@@ -231,7 +231,6 @@ class LLMfy:
                     )
 
             while True:
-                print(self.messages_temp.get_messages(provider=self.model.provider))
                 response = self.model.generate(
                     self.messages_temp.get_messages(provider=self.model.provider),
                     tools=self.__get_tool_definitions(),

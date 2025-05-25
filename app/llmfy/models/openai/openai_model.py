@@ -16,7 +16,8 @@ from app.llmfy.models.openai.openai_stream_usage_tracker import (
     track_openai_stream_usage,
 )
 from app.llmfy.models.openai.openai_usage import OpenAIUsage
-from app.llmfy.models.openai.openai_usage_tracker import track_openai_usage
+
+# from app.llmfy.models.openai.openai_usage_tracker import track_openai_usage
 from app.llmfy.responses.ai_response import AIResponse
 from app.exception.llmfy_exception import LLMfyException
 
@@ -50,13 +51,27 @@ class OpenAIModel(BaseAIModel):
         self.config = config
         self.usage_callback = OpenAIUsage()
 
-    @track_openai_usage
+    # @track_openai_usage
+    # def __call_openai(self, params: dict[str, Any]):
+    #     try:
+    #         response = self.client.chat.completions.create(**params)
+    #         return response
+    #     except Exception as e:
+    #         raise e
+
     def __call_openai(self, params: dict[str, Any]):
-        try:
-            response = self.client.chat.completions.create(**params)
-            return response
-        except Exception as e:
-            raise e
+        # Import the decorator when the method is first defined/called
+        from app.llmfy.usage.usage_tracker import track_openai_usage
+
+        @track_openai_usage
+        def _call_openai_impl(params: dict[str, Any]):
+            try:
+                response = self.client.chat.completions.create(**params)
+                return response
+            except Exception as e:
+                raise e
+
+        return _call_openai_impl(params)
 
     @track_openai_stream_usage
     def __call_stream_openai(self, params: dict[str, Any]):

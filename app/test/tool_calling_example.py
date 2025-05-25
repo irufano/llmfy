@@ -2,13 +2,13 @@ from dotenv import load_dotenv
 from app.llmfy.llmfy import LLMfy
 from app.llmfy.messages.message import Message
 from app.llmfy.messages.role import Role
-from app.llmfy.models.bedrock import bedrock_usage_tracker
 from app.llmfy.models.bedrock.bedrock_config import BedrockConfig
 from app.llmfy.models.bedrock.bedrock_model import BedrockModel
 
 # from app.llmfy.models.openai.openai_config import OpenAIConfig
 # from app.llmfy.models.openai.openai_model import OpenAIModel
 from app.llmfy.tools.tool import Tool
+from app.llmfy.usage.usage_tracker import llmfy_usage_tracker
 
 load_dotenv()
 
@@ -21,7 +21,7 @@ def tool_calling_example():
     # model="amazon.nova-lite-v1:0",
 
     llm = BedrockModel(
-        model="anthropic.claude-3-haiku-20240307-v1:0",
+        model="amazon.nova-lite-v1:0",
         config=BedrockConfig(temperature=0.7),
     )
 
@@ -59,7 +59,7 @@ def tool_calling_example():
 
         # sample custom price
         prices = {
-            "amazon.nova-lite-v1:0": {
+            "amazon.nova-lite-v1:": {
                 "us-east-1": {
                     "region": "US East (N. Virginia)",
                     "input": 0.00006,
@@ -72,7 +72,7 @@ def tool_calling_example():
                 },
             },
         }
-        with bedrock_usage_tracker(pricing=prices) as usage:
+        with llmfy_usage_tracker(bedrock_pricing=prices) as usage:
             response = ai.generate_with_tools(messages)
             print(f"\n>> {response.result.content}\n")
             print(usage)
