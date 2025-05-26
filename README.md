@@ -1,7 +1,7 @@
 
 <div align="center">
 
-  <a href="https://pypi.org/project/aigoofusion/">![llmfy](https://img.shields.io/badge/llmfy-0.2.1-30B445.svg?style=for-the-badge)</a>
+  <a href="https://pypi.org/project/aigoofusion/">![llmfy](https://img.shields.io/badge/llmfy-0.2.2-30B445.svg?style=for-the-badge)</a>
   <a href="">![python](https://img.shields.io/badge/python->=3.12-4392FF.svg?style=for-the-badge&logo=python&logoColor=4392FF)</a>
 
 </div>
