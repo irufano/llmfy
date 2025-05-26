@@ -1,4 +1,4 @@
-from .llmfy import (
+from .llmfy_core import (
     LLMfy,
     AIResponse,
     ChatResponse,

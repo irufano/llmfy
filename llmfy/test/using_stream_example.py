@@ -1,12 +1,12 @@
 from dotenv import load_dotenv
 
-from llmfy.llmfy.llmfy import LLMfy
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.bedrock import bedrock_stream_usage_tracker
-from llmfy.llmfy.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy.models.bedrock.bedrock_model import BedrockModel
-from llmfy.llmfy.responses.chat_response import ChatResponse
+from llmfy.llmfy_core.llmfy import LLMfy
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.bedrock import bedrock_stream_usage_tracker
+from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
+from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
+from llmfy.llmfy_core.responses.chat_response import ChatResponse
 
 
 load_dotenv()

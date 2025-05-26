@@ -4,7 +4,7 @@ import functools
 import itertools
 from typing import Any, Dict, Optional
 
-from llmfy.llmfy.models.openai.openai_usage import OpenAIUsage
+from llmfy.llmfy_core.models.openai.openai_usage import OpenAIUsage
 
 # Thread-safe storage for token usage per request
 OPENAI_STREAM_USAGE_TRACKER_VAR = ContextVar(

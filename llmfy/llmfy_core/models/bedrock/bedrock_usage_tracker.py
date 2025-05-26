@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Dict, Optional
 
-from llmfy.llmfy.models.bedrock.bedrock_usage import BedrockUsage
-from llmfy.llmfy.tools.deprecated import deprecated
+from llmfy.llmfy_core.models.bedrock.bedrock_usage import BedrockUsage
+from llmfy.llmfy_core.tools.deprecated import deprecated
 
 
 # Thread-safe storage for token usage per request

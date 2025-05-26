@@ -3,15 +3,15 @@ import os
 from dotenv import load_dotenv
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy.llmfy import LLMfy
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy.models.bedrock.bedrock_model import BedrockModel
+from llmfy.llmfy_core.llmfy import LLMfy
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
+from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
 
-from llmfy.llmfy.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy.models.openai.openai_model import OpenAIModel
-from llmfy.llmfy.usage.usage_tracker import llmfy_usage_tracker
+from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.models.openai.openai_model import OpenAIModel
+from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
 
 
 env_file = os.getenv("ENV_FILE", ".env")  # Default to .env if ENV_FILE is not set

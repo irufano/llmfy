@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, List
 
-from llmfy.llmfy.models.base_ai_model import BaseAIModel
-from llmfy.llmfy.tools.tool import Tool
+from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.tools.tool import Tool
 from llmfy.exception.llmfy_exception import LLMfyException
 
 

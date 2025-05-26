@@ -2,13 +2,13 @@ import string
 from typing import Any, Callable, Dict, List, Optional
 import uuid
 
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.message_temp import MessageTemp
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.base_ai_model import BaseAIModel
-from llmfy.llmfy.responses.ai_response import AIResponse
-from llmfy.llmfy.responses.chat_response import ChatResponse
-from llmfy.llmfy.tools.tool import Tool
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.message_temp import MessageTemp
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.responses.ai_response import AIResponse
+from llmfy.llmfy_core.responses.chat_response import ChatResponse
+from llmfy.llmfy_core.tools.tool import Tool
 from llmfy.exception.llmfy_exception import LLMfyException
 
 

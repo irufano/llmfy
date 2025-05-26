@@ -3,8 +3,8 @@ from contextvars import ContextVar
 import functools
 from typing import Any, Dict, Optional
 
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.usage.llmfy_usage import LLMfyUsage
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.usage.llmfy_usage import LLMfyUsage
 
 # Thread-safe storage for token usage per request
 LLMFY_USAGE_TRACKER_VAR = ContextVar("LLMFY_USAGE_TRACKER", default=LLMfyUsage())

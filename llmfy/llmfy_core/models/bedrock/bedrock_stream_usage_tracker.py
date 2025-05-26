@@ -3,7 +3,7 @@ from contextvars import ContextVar
 import functools
 import itertools
 
-from llmfy.llmfy.models.bedrock.bedrock_usage import BedrockUsage
+from llmfy.llmfy_core.models.bedrock.bedrock_usage import BedrockUsage
 
 # Thread-safe storage for token usage per request
 BEDROCK_STREAM_USAGE_TRACKER_VAR = ContextVar(

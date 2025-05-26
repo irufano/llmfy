@@ -2,17 +2,17 @@ import base64
 from dotenv import load_dotenv
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy.llmfy import LLMfy
-from llmfy.llmfy.messages.content import Content
-from llmfy.llmfy.messages.content_type import ContentType
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.bedrock import bedrock_usage_tracker
-from llmfy.llmfy.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy.models.bedrock.bedrock_model import BedrockModel
-from llmfy.llmfy.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy.models.openai.openai_model import OpenAIModel
-from llmfy.llmfy.usage.usage_tracker import llmfy_usage_tracker
+from llmfy.llmfy_core.llmfy import LLMfy
+from llmfy.llmfy_core.messages.content import Content
+from llmfy.llmfy_core.messages.content_type import ContentType
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.bedrock import bedrock_usage_tracker
+from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
+from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
+from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.models.openai.openai_model import OpenAIModel
+from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
 
 
 load_dotenv()

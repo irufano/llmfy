@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
-from llmfy.llmfy.messages.content_type import ContentType
+from llmfy.llmfy_core.messages.content_type import ContentType
 
 
 class Content(BaseModel):

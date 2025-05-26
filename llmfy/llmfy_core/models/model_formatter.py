@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy.messages.message import Message
+from llmfy.llmfy_core.messages.message import Message
 
 
 class ModelFormatter(ABC):

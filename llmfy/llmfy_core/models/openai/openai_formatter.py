@@ -4,10 +4,10 @@ import re
 
 from typing import Any, Dict, List, Union
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy.messages.content_type import ContentType
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.model_formatter import ModelFormatter
+from llmfy.llmfy_core.messages.content_type import ContentType
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.model_formatter import ModelFormatter
 
 
 class OpenAIFormatter(ModelFormatter):

@@ -7,18 +7,18 @@ import json
 import os
 from typing import Any, Dict, List
 
-from llmfy.llmfy.messages.tool_call import ToolCall
-from llmfy.llmfy.models.base_ai_model import BaseAIModel
-from llmfy.llmfy.models.bedrock.bedrock_config import (
+from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.models.bedrock.bedrock_config import (
     BedrockConfig,
 )
-from llmfy.llmfy.models.bedrock.bedrock_stream_usage_tracker import (
+from llmfy.llmfy_core.models.bedrock.bedrock_stream_usage_tracker import (
     track_bedrock_stream_usage,
 )
 
 # from app.llmfy.models.bedrock.bedrock_usage_tracker import track_bedrock_usage
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.responses.ai_response import AIResponse
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.exception.llmfy_exception import LLMfyException
 
 
@@ -61,7 +61,7 @@ class BedrockModel(BaseAIModel):
 
     def __call_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from llmfy.llmfy.usage.usage_tracker import track_bedrock_usage
+        from llmfy.llmfy_core.usage.usage_tracker import track_bedrock_usage
 
         @track_bedrock_usage
         def _call_bedrock_impl(params: dict[str, Any]):

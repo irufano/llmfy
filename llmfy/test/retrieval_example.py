@@ -3,11 +3,11 @@ import os
 from dotenv import load_dotenv
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy.llmfy import LLMfy
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy.models.bedrock.bedrock_model import BedrockModel
+from llmfy.llmfy_core.llmfy import LLMfy
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
+from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
 
 # from app.llmfy.models.openai.openai_config import OpenAIConfig
 # from app.llmfy.models.openai.openai_model import OpenAIModel

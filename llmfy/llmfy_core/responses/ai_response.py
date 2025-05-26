@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from llmfy.llmfy.messages.tool_call import ToolCall
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 
 
 class AIResponse(BaseModel):

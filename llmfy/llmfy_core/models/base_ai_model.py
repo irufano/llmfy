@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.responses.ai_response import AIResponse
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.responses.ai_response import AIResponse
 
 
 class BaseAIModel(ABC):

@@ -1,13 +1,13 @@
 import asyncio
 from dotenv import load_dotenv
 
-from llmfy.llmfy.llmfy import LLMfy
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy.models.bedrock.bedrock_model import BedrockModel
-from llmfy.llmfy.tools.tool import Tool
-from llmfy.llmfy.tools.tool_registry import ToolRegistry
+from llmfy.llmfy_core.llmfy import LLMfy
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
+from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
+from llmfy.llmfy_core.tools.tool import Tool
+from llmfy.llmfy_core.tools.tool_registry import ToolRegistry
 from llmfy.llmfypipe.helper import tools_node
 from llmfy.llmfypipe.llmfypipe import LLMfyPipe
 from llmfy.llmfypipe.node.node import END, START

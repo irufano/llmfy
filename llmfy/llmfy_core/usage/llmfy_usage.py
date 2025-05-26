@@ -2,10 +2,10 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.models.openai.openai_pricing_list import OPENAI_PRICING
-from llmfy.llmfy.models.model_pricing import ModelPricing
+from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.models.openai.openai_pricing_list import OPENAI_PRICING
+from llmfy.llmfy_core.models.model_pricing import ModelPricing
 from llmfy.exception.llmfy_exception import LLMfyException
 
 

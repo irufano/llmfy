@@ -1,8 +1,8 @@
 from typing import List
 from pydantic import BaseModel, ConfigDict, Field
 
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.responses.ai_response import AIResponse
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.responses.ai_response import AIResponse
 
 
 class ChatResponse(BaseModel):

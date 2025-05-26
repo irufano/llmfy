@@ -8,17 +8,17 @@ import os
 
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy.messages.tool_call import ToolCall
-from llmfy.llmfy.models.base_ai_model import BaseAIModel
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy.models.openai.openai_stream_usage_tracker import (
+from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.models.openai.openai_stream_usage_tracker import (
     track_openai_stream_usage,
 )
-from llmfy.llmfy.models.openai.openai_usage import OpenAIUsage
+from llmfy.llmfy_core.models.openai.openai_usage import OpenAIUsage
 
 # from app.llmfy.models.openai.openai_usage_tracker import track_openai_usage
-from llmfy.llmfy.responses.ai_response import AIResponse
+from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.exception.llmfy_exception import LLMfyException
 
 
@@ -61,7 +61,7 @@ class OpenAIModel(BaseAIModel):
 
     def __call_openai(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from llmfy.llmfy.usage.usage_tracker import track_openai_usage
+        from llmfy.llmfy_core.usage.usage_tracker import track_openai_usage
 
         @track_openai_usage
         def _call_openai_impl(params: dict[str, Any]):

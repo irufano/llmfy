@@ -3,8 +3,8 @@ from contextvars import ContextVar
 import functools
 from typing import Any, Dict, Optional
 
-from llmfy.llmfy.models.openai.openai_usage import OpenAIUsage
-from llmfy.llmfy.tools.deprecated import deprecated
+from llmfy.llmfy_core.models.openai.openai_usage import OpenAIUsage
+from llmfy.llmfy_core.tools.deprecated import deprecated
 
 
 # Thread-safe storage for token usage per request

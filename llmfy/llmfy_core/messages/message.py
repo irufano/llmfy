@@ -4,9 +4,9 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
-from llmfy.llmfy.messages.content import Content
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.messages.tool_call import ToolCall
+from llmfy.llmfy_core.messages.content import Content
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 
 
 class Message(BaseModel):

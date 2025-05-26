@@ -1,8 +1,8 @@
 from typing import List
 
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.tools.tool_registry import ToolRegistry
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.tools.tool_registry import ToolRegistry
 
 
 def tools_node(messages: List[Message], registry: ToolRegistry):

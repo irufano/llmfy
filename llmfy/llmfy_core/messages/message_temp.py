@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy.messages.message import Message
-from llmfy.llmfy.messages.role import Role
-from llmfy.llmfy.messages.tool_call import ToolCall
-from llmfy.llmfy.models.bedrock.bedrock_formatter import BedrockFormatter
-from llmfy.llmfy.models.model_provider import ModelProvider
-from llmfy.llmfy.models.openai.openai_formatter import OpenAIFormatter
-from llmfy.llmfy.models.model_formatter import ModelFormatter
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
+from llmfy.llmfy_core.models.model_formatter import ModelFormatter
 from llmfy.exception.llmfy_exception import LLMfyException
 
 
