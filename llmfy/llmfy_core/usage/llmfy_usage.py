@@ -100,6 +100,21 @@ class LLMfyUsage:
         )
         self.details: List[Dict[str, Any]] = []
 
+    def to_dict(self):
+        return {
+            "total_request": self.total_request,
+            "tokens": {
+                "total_tokens": self.total_tokens,
+                "input_tokens": self.input_tokens,
+                "output_tokens": self.output_tokens,
+            },
+            "costs": {
+                "total_cost": self.total_cost,
+                "total_cost_formatted": self.__format_trimmed_float(self.total_cost),
+            },
+            "details": self.details,
+        }
+
     def __repr__(self) -> str:
         # rounded_up = math.ceil(self.total_cost * 1000000) / 1000000
         return (
