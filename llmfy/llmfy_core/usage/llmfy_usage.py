@@ -1,6 +1,7 @@
 import os
 import re
 from typing import Any, Dict, List, Optional
+import warnings
 
 from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
 from llmfy.llmfy_core.models.model_provider import ModelProvider
@@ -265,7 +266,7 @@ class LLMfyUsage:
             # pricing accumulation
             self.total_cost += total_cost_per_request
         else:
-            raise LLMfyException(
+            warnings.warn(
                 "MODEL not found at specified openai pricing. You can add in custom prices with `llmfy_usage_tracker(openai_pricing=prices)`"
             )
 
@@ -328,7 +329,7 @@ class LLMfyUsage:
             # pricing accumulation
             self.total_cost += total_cost_per_request
         else:
-            raise LLMfyException(
+            warnings.warn(
                 "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
             )
 
