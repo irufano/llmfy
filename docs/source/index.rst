@@ -36,7 +36,7 @@ Contents
    :maxdepth: 2
    :caption: API
 
-   api
+   modules
 
 Indices and tables
 ------------------

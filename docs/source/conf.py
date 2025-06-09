@@ -3,30 +3,9 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from unittest.mock import MagicMock
 from sphinxawesome_theme import ThemeOptions
 
 load_dotenv()
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):  # type: ignore
-        return MagicMock()
-
-
-# Mock common dependencies that might not be available on Read the Docs
-MOCK_MODULES = [
-    "numpy",
-    "pandas",
-    "python-dotenv",
-    "openai",
-    "boto3",
-    "pydantic",
-]
-
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
 
 # sys.path.insert(0, os.path.abspath("../.."))
 # Get the directory containing conf.py
@@ -38,41 +17,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, "..", "..")
 llmfy_path = os.path.join(project_root, "llmfy")
 sys.path.insert(0, project_root)
-
-
-def run_apidoc(_):
-    """Generate API documentation using sphinx-apidoc"""
-    from sphinx.ext import apidoc
-
-    # Check if the source directory exists
-    if not os.path.exists(llmfy_path):
-        print(f"Warning: Source directory {llmfy_path} does not exist")
-        print(f"Current working directory: {os.getcwd()}")
-        print(f"Files in project root: {os.listdir(project_root)}")
-        return
-
-    # Arguments for sphinx-apidoc
-    argv = [
-        "--force",  # Overwrite existing files
-        "--output-dir",
-        current_dir,  # Output to docs/source/
-        llmfy_path,  # Source directory to document
-        "--separate",  # Put each module on its own page
-    ]
-
-    try:
-        apidoc.main(argv)
-        print("=== Generated .rst files ===")
-        for f in os.listdir(current_dir):
-            if f.endswith(".rst"):
-                print(f"Generated: {f}")
-        print(f"API documentation generated successfully from {llmfy_path}")
-    except Exception as e:
-        print(f"Error generating API docs: {e}")
-
-
-def setup(app):
-    app.connect("builder-inited", run_apidoc)
 
 
 # Configuration file for the Sphinx documentation builder.
