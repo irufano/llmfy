@@ -123,7 +123,7 @@ class BedrockFormatter(ModelFormatter):
                 # content is absolute text
                 message_dict["content"] = [{"text": message.content}]
             if isinstance(message.content, List):
-                # content can be text or image
+                # content can be text, image, document or video
                 message_dict["content"] = []
                 for c in message.content:
                     if c.type == ContentType.TEXT:
@@ -216,6 +216,62 @@ class BedrockFormatter(ModelFormatter):
                                     "document": {
                                         "format": "pdf",
                                         "name": c.filename,
+                                        "source": {"bytes": c.value},
+                                    },
+                                }
+                            )
+
+                    if c.type == ContentType.VIDEO:
+                        supported_formats = [
+                            "wmv",
+                            "mpg",
+                            "mpeg",
+                            "three_gp",
+                            "flv",
+                            "mp4",
+                            "mov",
+                            "mkv",
+                            "webm",
+                        ]
+                        # check format
+                        if not c.format:
+                            raise LLMfyException("`format` is required for bedrock.")
+                        if c.format not in supported_formats:
+                            raise LLMfyException(
+                                f"`format` must in {supported_formats}."
+                            )
+
+                        # check is use s3
+                        if c.use_s3:
+                            # Use s3
+                            # check bwner if use s3
+                            if not c.bucket_owner:
+                                raise LLMfyException(
+                                    "`bucket_owner` is required if use s3."
+                                )
+
+                            # use s3
+                            # Content.value value is url to s3 video.
+                            message_dict["content"].append(
+                                {
+                                    "video": {
+                                        "format": c.format,
+                                        "source": {
+                                            "s3Location": {
+                                                "uri": c.value,
+                                                "bucketOwner": c.bucket_owner,
+                                            }
+                                        },
+                                    }
+                                }
+                            )
+                        else:
+                            # Use bytes
+                            #  Content.value value is str video bytes.
+                            message_dict["content"].append(
+                                {
+                                    "video": {
+                                        "format": c.format,
                                         "source": {"bytes": c.value},
                                     },
                                 }

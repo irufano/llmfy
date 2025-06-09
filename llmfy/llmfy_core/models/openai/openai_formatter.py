@@ -116,6 +116,11 @@ class OpenAIFormatter(ModelFormatter):
                             },
                         )
 
+                    if c.type == ContentType.VIDEO:
+                        raise LLMfyException(
+                            "OpenAI `ContentType.VIDEO` input is not supported yet"
+                        )
+
         if message.tool_results:
             # in openai tool results only one then use first item.
             message_dict["content"] = message.tool_results[0]

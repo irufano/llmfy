@@ -7,6 +7,7 @@ class ContentType(str, Enum):
     TEXT = "text"
     IMAGE = "image"
     DOCUMENT = "document"
+    VIDEO = "video"
 
     def __str__(self):
         return self.value
