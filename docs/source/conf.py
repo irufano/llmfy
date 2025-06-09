@@ -5,36 +5,44 @@ import sys
 from dotenv import load_dotenv
 from sphinxawesome_theme import ThemeOptions
 
-# sys.path.insert(0, os.path.abspath("../.."))
-sys.path.insert(0, os.path.abspath("../../"))
 load_dotenv()
+# sys.path.insert(0, os.path.abspath("../.."))
+# Get the directory containing conf.py
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add your project to the path - adjust this based on your structure
+# If llmfy is at the repo root: ../../llmfy
+# If llmfy is in src/: ../../src/llmfy
+project_root = os.path.join(current_dir, "..", "..")
+llmfy_path = os.path.join(project_root, "llmfy")
+sys.path.insert(0, project_root)
 
 
-# Auto-generate API documentation
 def run_apidoc(_):
     """Generate API documentation using sphinx-apidoc"""
     from sphinx.ext import apidoc
+
+    # Check if the source directory exists
+    if not os.path.exists(llmfy_path):
+        print(f"Warning: Source directory {llmfy_path} does not exist")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Files in project root: {os.listdir(project_root)}")
+        return
 
     # Arguments for sphinx-apidoc
     argv = [
         "--force",  # Overwrite existing files
         "--output-dir",
-        "docs/source/",  # Output directory
-        "../llmfy",  # Source directory to document
+        current_dir,  # Output to docs/source/
+        llmfy_path,  # Source directory to document
         "--separate",  # Put each module on its own page
     ]
 
-    # Change to the correct directory
-    current_dir = os.getcwd()
-    os.chdir(os.path.dirname(__file__))
-
     try:
         apidoc.main(argv)
-        print("API documentation generated successfully")
+        print(f"API documentation generated successfully from {llmfy_path}")
     except Exception as e:
         print(f"Error generating API docs: {e}")
-    finally:
-        os.chdir(current_dir)
 
 
 def setup(app):
