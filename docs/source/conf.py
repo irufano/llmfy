@@ -32,8 +32,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",  # For Google-style docstrings
     "myst_parser",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    "pydantic",
 ]
 
 # Autodoc settings
