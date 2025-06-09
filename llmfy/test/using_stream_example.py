@@ -3,10 +3,10 @@ from dotenv import load_dotenv
 from llmfy.llmfy_core.llmfy import LLMfy
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.bedrock import bedrock_stream_usage_tracker
 from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
 from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
 from llmfy.llmfy_core.responses.generation_response import GenerationResponse
+from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
 
 
 load_dotenv()
@@ -42,7 +42,7 @@ def stream_example():
         # Example conversation with tool use
         messages = [Message(role=Role.USER, content="apa ibukota jakarta?")]
         # with openai_usage_tracker() as usage:
-        with bedrock_stream_usage_tracker() as usage:
+        with llmfy_usage_tracker() as usage:
             stream = chat.chat_stream(messages, info=info)
             full_content = ""
             for chunk in stream:
