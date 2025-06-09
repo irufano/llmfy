@@ -7,16 +7,7 @@ from sphinxawesome_theme import ThemeOptions
 
 load_dotenv()
 
-# sys.path.insert(0, os.path.abspath("../.."))
-# Get the directory containing conf.py
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Add your project to the path - adjust this based on your structure
-# If llmfy is at the repo root: ../../llmfy
-# If llmfy is in src/: ../../src/llmfy
-project_root = os.path.join(current_dir, "..", "..")
-llmfy_path = os.path.join(project_root, "llmfy")
-sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.abspath("../../"))
 
 
 # Configuration file for the Sphinx documentation builder.
