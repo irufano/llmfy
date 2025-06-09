@@ -6,29 +6,35 @@ from dotenv import load_dotenv
 from sphinxawesome_theme import ThemeOptions
 
 # sys.path.insert(0, os.path.abspath("../.."))
-sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath("../../"))
 load_dotenv()
 
 
 # Auto-generate API documentation
-def run_apidoc(app):
-    """Generate API documentation"""
-    ignore_paths = []
+def run_apidoc(_):
+    """Generate API documentation using sphinx-apidoc"""
+    from sphinx.ext import apidoc
 
+    # Arguments for sphinx-apidoc
     argv = [
-        "-f",  # Overwrite existing files
-        "-o",
+        "--force",  # Overwrite existing files
+        "--output-dir",
         "docs/source/",  # Output directory
-        "../llmfy",  # Source directory
-    ] + ignore_paths
+        "../llmfy",  # Source directory to document
+        "--separate",  # Put each module on its own page
+    ]
+
+    # Change to the correct directory
+    current_dir = os.getcwd()
+    os.chdir(os.path.dirname(__file__))
 
     try:
-        # Import here to avoid issues if sphinx-apidoc is not available
-        from sphinx.ext.apidoc import main
-
-        main(argv)
+        apidoc.main(argv)
+        print("API documentation generated successfully")
     except Exception as e:
-        print(f"Running `sphinx-apidoc` failed!\n{e}")
+        print(f"Error generating API docs: {e}")
+    finally:
+        os.chdir(current_dir)
 
 
 def setup(app):
