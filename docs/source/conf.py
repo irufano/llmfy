@@ -49,7 +49,7 @@ theme_options = ThemeOptions(
     show_breadcrumbs=True,
     logo_light="./llmfy-logo-circle.png",
     logo_dark="./llmfy-logo-circle.png",
-    show_scrolltop=True,
+    show_scrolltop=False,
 )
 
 
