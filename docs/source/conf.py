@@ -5,7 +5,7 @@ import sys
 from dotenv import load_dotenv
 from sphinxawesome_theme import ThemeOptions
 
-sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath(".."))
 load_dotenv()
 
 # Configuration file for the Sphinx documentation builder.
@@ -18,7 +18,7 @@ load_dotenv()
 
 
 project = "llmfy_docs"
-copyright = "2025, irufano"
+# copyright = "2025, irufano"
 author = "irufano"
 release = str(os.getenv("VERSION"))
 
