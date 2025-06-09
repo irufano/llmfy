@@ -13,7 +13,8 @@
 
 ![](llmfy-banner.png)
 
-`LLMfy` is a framework for developing applications with large language models (LLMs). 
+`LLMfy` is a framework for developing applications with large language models (LLMs).
+ 
 - `LLMfy` is llm abstraction to use various llm on one module. 
 - `LLMfyPipe` is llm apps workflow.
 

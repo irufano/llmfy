@@ -5,3 +5,7 @@ pydantic==2.11.4
 twine==6.1.0
 wheel
 setuptools
+myst-parser
+sphinx
+sphinxawesome_theme
+sphinx-autodoc-typehints==3.2.0
