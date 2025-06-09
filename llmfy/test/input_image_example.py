@@ -31,7 +31,7 @@ def image_bedrock_example():
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT)
 
-    input_image = "app/test/simple_flowchart.jpg"
+    input_image = "llmfy/test/simple_flowchart.jpg"
     with open(input_image, "rb") as f:
         image_bytes = f.read()
 
@@ -77,7 +77,7 @@ def image_openai_example():
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT)
 
-    input_image = "app/test/simple_flowchart.jpg"
+    input_image = "llmfy/test/simple_flowchart.jpg"
     with open(input_image, "rb") as f:
         image = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode("utf-8")}"
 

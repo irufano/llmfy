@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
@@ -25,13 +26,15 @@ class MessageTemp:
     def add_system_message(self, content: str) -> None:
         self.messages.insert(0, Message(role=Role.SYSTEM, content=content))
 
-    def add_user_message(self, id: str, content: str) -> None:
+    def add_user_message(
+        self, id: str, content: Optional[str] | Optional[List[Content]]
+    ) -> None:
         self.messages.append(Message(id=id, role=Role.USER, content=content))
 
     def add_assistant_message(
         self,
         id: str,
-        content: Optional[str] = None,
+        content: Optional[str] | Optional[List[Content]] = None,
         tool_calls: Optional[List[ToolCall]] = None,
     ) -> None:
         # Update request call id by parent

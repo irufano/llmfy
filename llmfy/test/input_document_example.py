@@ -31,7 +31,7 @@ def doc_bedrock_example():
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT)
 
-    input_doc = "app/test/short_stories.pdf"
+    input_doc = "llmfy/test/short_stories.pdf"
     with open(input_doc, "rb") as f:
         doc = f.read()
 
@@ -77,7 +77,7 @@ def doc_openai_example():
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT)
 
-    input_doc = "app/test/short_stories.pdf"
+    input_doc = "llmfy/test/short_stories.pdf"
     with open(input_doc, "rb") as f:
         doc = (
             f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"
