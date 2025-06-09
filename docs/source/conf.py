@@ -3,9 +3,31 @@ import os
 import sys
 
 from dotenv import load_dotenv
+from unittest.mock import MagicMock
 from sphinxawesome_theme import ThemeOptions
 
 load_dotenv()
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):  # type: ignore
+        return MagicMock()
+
+
+# Mock common dependencies that might not be available on Read the Docs
+MOCK_MODULES = [
+    "numpy",
+    "pandas",
+    "python-dotenv",
+    "openai",
+    "boto3",
+    "pydantic",
+]
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
+
 # sys.path.insert(0, os.path.abspath("../.."))
 # Get the directory containing conf.py
 current_dir = os.path.dirname(os.path.abspath(__file__))
