@@ -1,3 +1,4 @@
+myst-parser
 sphinx
-sphinx-rtd-theme
-llmfy
+sphinxawesome_theme
+sphinx-autodoc-typehints==3.2.0
