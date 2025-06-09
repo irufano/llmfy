@@ -5,8 +5,35 @@ import sys
 from dotenv import load_dotenv
 from sphinxawesome_theme import ThemeOptions
 
+# sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("../.."))
 load_dotenv()
+
+
+# Auto-generate API documentation
+def run_apidoc(app):
+    """Generate API documentation"""
+    ignore_paths = []
+
+    argv = [
+        "-f",  # Overwrite existing files
+        "-o",
+        "docs/source/",  # Output directory
+        "../llmfy",  # Source directory
+    ] + ignore_paths
+
+    try:
+        # Import here to avoid issues if sphinx-apidoc is not available
+        from sphinx.ext.apidoc import main
+
+        main(argv)
+    except Exception as e:
+        print(f"Running `sphinx-apidoc` failed!\n{e}")
+
+
+def setup(app):
+    app.connect("builder-inited", run_apidoc)
+
 
 # Configuration file for the Sphinx documentation builder.
 #

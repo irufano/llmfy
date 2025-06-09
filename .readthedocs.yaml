@@ -27,9 +27,6 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
-  
-  before_script:
-    - sphinx-apidoc -o docs/source/ llmfy
 
 formats:
   - pdf
