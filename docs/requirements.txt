@@ -12,3 +12,6 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 myst-parser==4.0.1
+openai==1.81.0
+boto3==1.38.21
+pydantic==2.11.4
