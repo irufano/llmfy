@@ -6,7 +6,7 @@ from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.models.bedrock import bedrock_stream_usage_tracker
 from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
 from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
-from llmfy.llmfy_core.responses.generation_response import ChatResponse
+from llmfy.llmfy_core.responses.generation_response import GenerationResponse
 
 
 load_dotenv()
@@ -43,10 +43,10 @@ def stream_example():
         messages = [Message(role=Role.USER, content="apa ibukota jakarta?")]
         # with openai_usage_tracker() as usage:
         with bedrock_stream_usage_tracker() as usage:
-            stream = chat.generate_stream(messages, info=info)
+            stream = chat.chat_stream(messages, info=info)
             full_content = ""
             for chunk in stream:
-                if isinstance(chunk, ChatResponse):
+                if isinstance(chunk, GenerationResponse):
                     if chunk.result.content:
                         content = chunk.result.content
                         full_content += content
