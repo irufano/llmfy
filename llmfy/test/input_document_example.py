@@ -7,12 +7,11 @@ from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.bedrock import bedrock_usage_tracker
 from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
 from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
-from llmfy.llmfy_core.models.openai import openai_usage_tracker
 from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
 from llmfy.llmfy_core.models.openai.openai_model import OpenAIModel
+from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
 
 
 load_dotenv()
@@ -54,8 +53,24 @@ def doc_bedrock_example():
             )
         ]
 
-        with bedrock_usage_tracker() as usage:
-            response = framework.generate(messages)
+        content = [
+            Content(
+                type=ContentType.DOCUMENT,
+                filename="short_stories",
+                value=doc,
+            ),
+            Content(
+                type=ContentType.TEXT,
+                value="Siapa pemeran dalam cerita di dokumen?",
+            ),
+        ]
+
+        with llmfy_usage_tracker() as usage:
+            # Use chat or invoke
+            # (chat with messages)
+            response = framework.chat(messages)
+            # (invoke with content)
+            response = framework.invoke(content)
 
         print(f"\n>> {response.result.content}\n")
         print(f"\nUsage:\n{usage}\n")
@@ -68,7 +83,7 @@ def doc_openai_example():
     # Configuration
     config = OpenAIConfig(temperature=0.7)
     llm = OpenAIModel(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         config=config,
     )
 
@@ -101,8 +116,23 @@ def doc_openai_example():
             )
         ]
 
-        with openai_usage_tracker() as usage:
-            response = framework.generate(messages)
+        content = [
+            Content(
+                type=ContentType.DOCUMENT,
+                filename="short_stories.pdf",
+                value=doc,
+            ),
+            Content(
+                value="Siapa pemeran dalam cerita di dokumen?",
+            ),
+        ]
+
+        with llmfy_usage_tracker() as usage:
+            # Use chat or invoke
+            # (chat with messages)
+            response = framework.chat(messages)
+            # (invoke with content)
+            response = framework.invoke(content)
 
         print(f"\n>> {response.result.content}\n")
         print(f"\nUsage:\n{usage}\n")
@@ -111,5 +141,5 @@ def doc_openai_example():
         print(f"{e}")
 
 
-doc_bedrock_example()
-# file_openai_example()
+# doc_bedrock_example()
+doc_openai_example()

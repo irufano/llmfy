@@ -58,7 +58,7 @@ async def llmfypipe_example():
 
     async def main_agent(state: WorkflowState) -> dict:
         messages = state.get("messages", [])
-        response = chat.generate(messages)
+        response = chat.chat(messages)
         messages.append(response.messages[-1])
         return {"messages": messages, "system": response.messages[0]}
 

@@ -1,4 +1,4 @@
 from .ai_response import AIResponse
-from .chat_response import ChatResponse
+from .generation_response import GenerationResponse
 
-__all__ = ["AIResponse", "ChatResponse"]
+__all__ = ["AIResponse", "GenerationResponse"]

@@ -271,6 +271,9 @@ class LLMfyUsage:
         self.total_tokens += total_tokens
 
         # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+
         if model in self.openai_pricing:
             price_info = self.openai_pricing[model]
             # pricing per-request
@@ -293,8 +296,8 @@ class LLMfyUsage:
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": total_tokens,
-                "input_price": price_info.token_input,
-                "output_price": price_info.token_output,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
                 "price_per_tokens": ONE_MILLION,
                 "total_cost": total_cost_per_request,
             }
@@ -332,7 +335,9 @@ class LLMfyUsage:
         self.total_tokens += total_tokens
 
         # Calculate price
+        price_info = None
         total_cost_per_request = 0
+
         if MODEL in self.bedrock_pricing:
             price_info = self.bedrock_pricing[MODEL][AWS_REGION]
 
@@ -356,8 +361,8 @@ class LLMfyUsage:
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": total_tokens,
-                "input_price": price_info.token_input,
-                "output_price": price_info.token_output,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
                 "price_per_tokens": ONE_K,
                 "total_cost": total_cost_per_request,
             }

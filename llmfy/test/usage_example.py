@@ -48,10 +48,16 @@ def usage_example():
     try:
         # Example conversation with tool use
         messages = [Message(role=Role.USER, content="Apa ibukota china?")]
+        contents = "Apa ibukota china?"
 
         with llmfy_usage_tracker() as usage:
-            response_b = bedrock.generate(messages, info=info)
-            response_o = openai.generate(messages, info=info)
+            # Use chat or invoke
+            # (chat use messages)
+            response_b = bedrock.chat(messages, info=info)
+            response_o = openai.chat(messages, info=info)
+            # (invoke use contents)
+            response_b = bedrock.invoke(contents, info=info)
+            response_o = openai.invoke(contents, info=info)
 
         print(f"\n>> {response_b.result.content}\n")
         print(f"\n>> {response_o.result.content}\n")

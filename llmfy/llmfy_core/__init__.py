@@ -1,7 +1,7 @@
 from .llmfy import LLMfy
 from .messages import Message, MessageTemp, Role, ToolCall, Content, ContentType
 from .tools import ToolRegistry, Tool
-from .responses import AIResponse, ChatResponse
+from .responses import AIResponse, GenerationResponse
 from .models import (
     BaseAIModel,
     ModelPricing,
@@ -34,7 +34,7 @@ __all__ = [
     "ToolRegistry",
     "Tool",
     "AIResponse",
-    "ChatResponse",
+    "GenerationResponse",
     "BaseAIModel",
     "ModelPricing",
     "OpenAIConfig",

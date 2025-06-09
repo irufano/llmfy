@@ -2,12 +2,13 @@ import string
 from typing import Any, Callable, Dict, List, Optional
 import uuid
 
+from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.message_temp import MessageTemp
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.responses.ai_response import AIResponse
-from llmfy.llmfy_core.responses.chat_response import ChatResponse
+from llmfy.llmfy_core.responses.generation_response import GenerationResponse
 from llmfy.llmfy_core.tools.tool import Tool
 from llmfy.exception.llmfy_exception import LLMfyException
 
@@ -116,16 +117,147 @@ class LLMfy:
         except Exception as e:
             raise LLMfyException(f"Error formatting system message: {str(e)}")
 
-    def generate(self, messages: List[Message], **kwargs) -> ChatResponse:
+    def invoke(self, contents: str | List[Content], **kwargs) -> GenerationResponse:
+        """
+        Generate a response based on contents.
+
+        Args:
+            contents (str | List[Content]): Text or List of content objects to process
+            **kwargs: Additional generation parameters
+
+        Returns:
+            GenerationResponse containing the generated response
+        """
+        try:
+            self.messages_temp.clear()
+
+            # Generate using user role only if invoke
+            messages = [Message(role=Role.USER, content=contents)]
+
+            if self.system_message:
+                # Validate system message
+                final_system_message = self.__validate_system_message(**kwargs)
+
+                # Add system message to history
+                self.messages_temp.add_system_message(
+                    final_system_message if final_system_message else ""
+                )
+
+            # Add new messages to history
+            for message in messages:
+                # always ROLE == USER because invoke
+                if message.role == Role.USER:
+                    self.messages_temp.add_user_message(
+                        message.id,
+                        message.content if message.content else "",
+                    )
+
+            response = self.model.generate(
+                self.messages_temp.get_messages(provider=self.model.provider),
+                tools=self.__get_tool_definitions(),
+            )
+
+            self.messages_temp.add_assistant_message(
+                id=str(uuid.uuid4()),
+                content=response.content,
+                tool_calls=response.tool_calls,
+            )
+
+            return GenerationResponse(
+                result=response,
+                messages=self.messages_temp.get_instance_messages(),
+            )
+        except Exception as e:
+            raise LLMfyException(e)
+
+    def invoke_with_tools(
+        self,
+        contents: str | List[Content],
+        **kwargs,
+    ) -> GenerationResponse:
+        """
+        Generate a response based on contents with tools results.
+
+        Args:
+            contents (str | List[Content]): Text or List of content objects to process
+            **kwargs: Additional generation parameters
+
+        Returns:
+            GenerationResponse containing the generated response
+        """
+        try:
+            self.messages_temp.clear()
+
+            # Generate using user role only if invoke
+            messages = [Message(role=Role.USER, content=contents)]
+
+            if self.system_message:
+                # Validate system message
+                final_system_message = self.__validate_system_message(**kwargs)
+
+                # Add system message to history
+                self.messages_temp.add_system_message(
+                    final_system_message if final_system_message else ""
+                )
+
+            # Add new messages to history
+            for message in messages:
+                # always ROLE == USER because invoke
+                if message.role == Role.USER:
+                    self.messages_temp.add_user_message(
+                        message.id,
+                        message.content if message.content else "",
+                    )
+
+            while True:
+                response = self.model.generate(
+                    self.messages_temp.get_messages(provider=self.model.provider),
+                    tools=self.__get_tool_definitions(),
+                )
+
+                if response.tool_calls:
+                    self.messages_temp.add_assistant_message(
+                        id=str(uuid.uuid4()),
+                        tool_calls=response.tool_calls,
+                    )
+
+                    for tool_call in response.tool_calls:
+                        result = self.__execute_tool(
+                            tool_call.name, tool_call.arguments
+                        )
+                        self.messages_temp.add_tool_message(
+                            id=str(uuid.uuid4()),
+                            request_call_id=tool_call.request_call_id,
+                            tool_call_id=tool_call.tool_call_id,
+                            name=tool_call.name,
+                            result=str(result),
+                            provider=self.model.provider,
+                        )
+                    continue
+
+                self.messages_temp.add_assistant_message(
+                    id=str(uuid.uuid4()),
+                    content=response.content,
+                    tool_calls=response.tool_calls,
+                )
+
+                return GenerationResponse(
+                    result=response,
+                    messages=self.messages_temp.get_instance_messages(),
+                )
+        except Exception as e:
+            raise LLMfyException(e)
+
+    def chat(self, messages: List[Message], **kwargs) -> GenerationResponse:
         """
         Generate a response based on a list of messages.
 
         Args:
-            messages: List of Message objects to process
+            messages (List[Message]): List of Message objects to process
             **kwargs: Additional generation parameters
 
         Returns:
-            AIResponse containing the generated response
+            GenerationResponse containing the generated response
         """
         try:
             self.messages_temp.clear()
@@ -175,23 +307,23 @@ class LLMfy:
                 tool_calls=response.tool_calls,
             )
 
-            return ChatResponse(
+            return GenerationResponse(
                 result=response,
                 messages=self.messages_temp.get_instance_messages(),
             )
         except Exception as e:
             raise LLMfyException(e)
 
-    def generate_with_tools(self, messages: List[Message], **kwargs) -> ChatResponse:
+    def chat_with_tools(self, messages: List[Message], **kwargs) -> GenerationResponse:
         """
-        Generate a response based on a list of messages.
+        Generate a response based on a list of messages with tools results.
 
         Args:
-            messages: List of Message objects to process
+            messages (List[Message]): List of Message objects to process
             **kwargs: Additional generation parameters
 
         Returns:
-            AIResponse containing the generated response
+            GenerationResponse containing the generated response
         """
         try:
             self.messages_temp.clear()
@@ -262,19 +394,19 @@ class LLMfy:
                     tool_calls=response.tool_calls,
                 )
 
-                return ChatResponse(
+                return GenerationResponse(
                     result=response,
                     messages=self.messages_temp.get_instance_messages(),
                 )
         except Exception as e:
             raise LLMfyException(e)
 
-    def generate_stream(self, messages: List[Message], **kwargs) -> Any:
+    def chat_stream(self, messages: List[Message], **kwargs) -> Any:
         """
         Generate a streaming response based on a list of messages.
 
         Args:
-            messages: List of Message objects to process
+            messages (List[Message]): List of Message objects to process
             **kwargs: Additional generation parameters
 
         Returns:
@@ -338,7 +470,7 @@ class LLMfy:
                         tool_calls = chunk.tool_calls
 
                     # update content and toolcalls only
-                    yield ChatResponse(
+                    yield GenerationResponse(
                         result=AIResponse(content=content, tool_calls=tool_calls),
                         messages=[],
                     )
@@ -350,7 +482,7 @@ class LLMfy:
             )
 
             # update messages only
-            yield ChatResponse(
+            yield GenerationResponse(
                 result=AIResponse(),
                 messages=self.messages_temp.get_instance_messages(),
             )

@@ -1,7 +1,7 @@
 from .llmfy_core import (
     LLMfy,
     AIResponse,
-    ChatResponse,
+    GenerationResponse,
     Message,
     Role,
     Tool,
@@ -39,7 +39,7 @@ __all__ = [
     "Tool",
     "ToolRegistry",
     "AIResponse",
-    "ChatResponse",
+    "GenerationResponse",
     "OpenAIConfig",
     "OpenAIModel",
     "track_openai_usage",

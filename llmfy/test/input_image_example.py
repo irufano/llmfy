@@ -7,7 +7,6 @@ from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.bedrock import bedrock_usage_tracker
 from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
 from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
 from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
@@ -36,7 +35,6 @@ def image_bedrock_example():
         image_bytes = f.read()
 
     try:
-        # Example conversation with tool use
         messages = [
             Message(
                 role=Role.USER,
@@ -54,8 +52,24 @@ def image_bedrock_example():
             )
         ]
 
-        with bedrock_usage_tracker() as usage:
-            response = framework.generate(messages)
+        content = [
+            Content(
+                type=ContentType.TEXT,
+                value="Jelaskan flowchart berikut.",
+            ),
+            Content(
+                type=ContentType.IMAGE,
+                format="jpeg",
+                value=image_bytes,
+            ),
+        ]
+
+        with llmfy_usage_tracker() as usage:
+            # Use chat or invoke
+            # (chat with messages)
+            response = framework.chat(messages)
+            # (invoke with content)
+            response = framework.invoke(content)
 
         print(f"\n>> {response.result.content}\n")
         print(f"\nUsage:\n{usage}\n")
@@ -84,7 +98,6 @@ def image_openai_example():
     # image = "https://marketplace.canva.com/EAE6AFZ1JEQ/1/0/1600w/canva-simple-flowchart-infographic-graph-5JjJMyCnd5Y.jpg"
 
     try:
-        # Example conversation with tool use
         messages = [
             Message(
                 role=Role.USER,
@@ -100,8 +113,22 @@ def image_openai_example():
             )
         ]
 
+        content = [
+            Content(
+                value="Jelaskan flowchart berikut.",
+            ),
+            Content(
+                type=ContentType.IMAGE,
+                value=image,
+            ),
+        ]
+
         with llmfy_usage_tracker() as usage:
-            response = framework.generate(messages)
+            # Use chat or invoke
+            # (chat with messages)
+            response = framework.chat(messages)
+            # (invoke with content)
+            response = framework.invoke(content)
 
         print(f"\n>> {response.result.content}\n")
         print(f"\nUsage:\n{usage}\n")

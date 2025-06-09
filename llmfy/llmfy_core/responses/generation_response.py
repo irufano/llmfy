@@ -5,8 +5,8 @@ from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 
 
-class ChatResponse(BaseModel):
-    """ChatResponse Class"""
+class GenerationResponse(BaseModel):
+    """GenerationResponse Class"""
 
     model_config = ConfigDict(extra="forbid")
     result: AIResponse
