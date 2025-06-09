@@ -40,6 +40,10 @@ def run_apidoc(_):
 
     try:
         apidoc.main(argv)
+        print("=== Generated .rst files ===")
+        for f in os.listdir(current_dir):
+            if f.endswith(".rst"):
+                print(f"Generated: {f}")
         print(f"API documentation generated successfully from {llmfy_path}")
     except Exception as e:
         print(f"Error generating API docs: {e}")
