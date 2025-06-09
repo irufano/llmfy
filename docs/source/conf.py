@@ -75,7 +75,21 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",  # For Google-style docstrings
     "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
 ]
+
+# Autodoc settings
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+    "special-members": "__init__",
+}
+
+
+# Don't skip __init__ method documentation
+autoclass_content = "both"
 
 templates_path = ["_templates"]
 exclude_patterns = []
