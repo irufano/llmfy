@@ -1,21 +1,18 @@
-import os
-
 from dotenv import load_dotenv
 
-from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llmfy import LLMfy
-from llmfy.llmfy_core.messages.message import Message
-from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
+from llmfy import (
+    LLMfyException,
+    LLMfy,
+    Message,
+    Role,
+    BedrockConfig,
+    BedrockModel,
+    OpenAIConfig,
+    OpenAIModel,
+    llmfy_usage_tracker,
+)
 
-from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy_core.models.openai.openai_model import OpenAIModel
-from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
-
-
-env_file = os.getenv("ENV_FILE", ".env")  # Default to .env if ENV_FILE is not set
-load_dotenv(env_file)
+load_dotenv()
 
 
 def usage_example():
@@ -54,9 +51,9 @@ def usage_example():
             # Use chat or invoke
             # (chat use messages)
             response_b = bedrock.chat(messages, info=info)
-            response_o = openai.chat(messages, info=info)
+            # response_o = openai.chat(messages, info=info)
             # (invoke use contents)
-            response_b = bedrock.invoke(contents, info=info)
+            # response_b = bedrock.invoke(contents, info=info)
             response_o = openai.invoke(contents, info=info)
 
         print(f"\n>> {response_b.result.content}\n")

@@ -1,13 +1,15 @@
 from dotenv import load_dotenv
-from llmfy.llmfy_core.llmfy import LLMfy
-from llmfy.llmfy_core.messages.message import Message
-from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.bedrock.bedrock_config import BedrockConfig
-from llmfy.llmfy_core.models.bedrock.bedrock_model import BedrockModel
 
-# from app.llmfy.models.openai.openai_config import OpenAIConfig
-# from app.llmfy.models.openai.openai_model import OpenAIModel
-from llmfy.llmfy_core.tools.tool import Tool
+from llmfy import (
+    BedrockConfig,
+    BedrockModel,
+    LLMfy,
+    Message,
+    Role,
+    Tool,
+    # OpenAIConfig,
+    # OpenAIModel,
+)
 
 load_dotenv()
 
