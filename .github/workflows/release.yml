@@ -1,0 +1,75 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v0.3.1, v1.0.0, etc.
+  # Alternative: Manual trigger
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag version (e.g., v0.3.1)'
+        required: true
+        default: 'v0.3.1'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+    
+    - name: Get tag name
+      id: get_tag
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        else
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # If no previous tag, get all commits
+          CHANGELOG=$(git log --pretty=format:"- %s (%an)" --no-merges)
+        else
+          # Get commits since the previous tag
+          CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+        fi
+        
+        # Handle empty changelog
+        if [ -z "$CHANGELOG" ]; then
+          CHANGELOG="- Initial release"
+        fi
+        
+        # Save changelog to output (handle multiline)
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_tag.outputs.tag }}
+        name: Release ${{ steps.get_tag.outputs.tag }}
+        body: |
+          ## What's Changed
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.get_tag.outputs.tag }}...HEAD
+        draft: false
+        prerelease: false
+        generate_release_notes: true  # GitHub will auto-generate additional notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

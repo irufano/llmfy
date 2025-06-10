@@ -29,11 +29,11 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }} # Use the stored PyPI token
         run: |
           twine upload dist/*
-      - name: Create release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create ${{ github.ref_name }} \\
-            --repo="${GITHUB_REPOSITORY}" \\
-            --title="${{ github.ref_name#v }}" \\
-            --generate-notes
+      # - name: Create release
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release create ${{ github.ref_name }} \\
+      #       --repo="${GITHUB_REPOSITORY}" \\
+      #       --title="${{ github.ref_name != '' && github.ref_name.startsWith('v') && github.ref_name.replace('v', '') || github.ref_name }}" \\
+      #       --generate-notes
