@@ -23,7 +23,7 @@ from .models import (
     bedrock_stream_usage_tracker,
     track_bedrock_stream_usage,
 )
-from .usage import llmfy_usage_tracker
+from .usage import llmfy_usage_tracker, LLMfyUsage
 
 __all__ = [
     "LLMfy",
@@ -57,4 +57,5 @@ __all__ = [
     "Content",
     "ContentType",
     "llmfy_usage_tracker",
+    "LLMfyUsage",
 ]
