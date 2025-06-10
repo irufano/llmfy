@@ -16,12 +16,12 @@ class Content(BaseModel):
                 - openAI: image url (e.g. "https://image.link.jpg") or base64 (`f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
                 - bedrock: image bytes (`image = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
             - document:
-                - openAI: pdf base64 (`image = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
-                - bedrock: pdf bytes (`image = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
+                - openAI: pdf base64 (`doc = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
+                - bedrock: pdf bytes (`doc = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
         format (str): [Bedrock ONLY] format based on ContentType:
             - `ContentType.IMAGE` extension must be in ["gif", "jpeg", "png", "webp"]
             - `ContentType.VIDEO` extension must be in ["mp4"]
-        use_s3 (str): [Bedrock ONLY] Use image file from AWS S3
+        use_s3 (str): [Bedrock ONLY] Use file from AWS S3
         bucket_owner (str): [Bedrock ONLY] bucket id (e.g. "111122223333")
     """
 
@@ -39,8 +39,8 @@ class Content(BaseModel):
                 - openAI: image url (e.g. "https://image.link.jpg") or base64 (`image = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
                 - bedrock: image bytes (`image = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
             - document:
-                - openAI: pdf base64 (`image = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
-                - bedrock: pdf bytes (`image = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
+                - openAI: pdf base64 (`doc = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
+                - bedrock: pdf bytes (`doc = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
             - video:
                 - openAI: not supported yet
                 - bedrock: mp4 bytes (`video = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
