@@ -1,4 +1,5 @@
 # Agent
+Agents are AI-powered tools that use large language models to interpret language, have conversations, and perform tasks.
 
 ## Create agent with LLMfy
 We can create agent with `LLMfy`
@@ -21,7 +22,7 @@ messages = [
         content="What is the capital city of Indonesia?",
     )
 ]
-response = agent.generate(messages)
+response = agent.chat(messages)
 
 print(f"\n>> {response.result.content}\n")       
 ```
@@ -31,7 +32,7 @@ Output:
 >> The capital city of Indonesia is Jakarta.   
 ```
 
-## LLMfy with Tools
+## Agent with Tools
 To add tools to LLMfy agent:
 
 ### Define agent
@@ -69,7 +70,7 @@ messages = [
     )
 ]
 
-response = agent.generate_with_tools(messages)
+response = agent.chat_with_tools(messages)
 print(f"\n>> {response.result.content}\n")
 ```
 

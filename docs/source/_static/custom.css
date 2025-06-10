@@ -1,0 +1,20 @@
+/* Hide scrollbar by default */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+}
+
+/* Make the thumb transparent by default */
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  transition: background-color 0.3s;
+}
+
+/* On hover or active scroll, show the thumb */
+*:hover::-webkit-scrollbar-thumb,
+*:focus::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background-color: rgba(136, 136, 136, 0.6); /* Customize as needed */
+  border-radius: 10px;
+}

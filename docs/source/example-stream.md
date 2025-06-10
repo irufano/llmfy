@@ -1,3 +1,6 @@
+# Stream Example
+
+```python
 from dotenv import load_dotenv
 
 from llmfy import (
@@ -61,3 +64,5 @@ def stream_example():
 
 if __name__ == "__main__":
     stream_example()
+
+```

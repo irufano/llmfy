@@ -20,9 +20,8 @@ sys.path.insert(0, os.path.abspath("../../"))
 
 
 project = "llmfy_docs"
-# copyright = "2025, irufano"
+copyright = "%Y, irufano"
 author = "irufano"
-release = str(os.getenv("VERSION"))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -72,12 +71,13 @@ theme_options = ThemeOptions(
 pygments_style = "emacs"
 # Select a different color scheme for dark mode
 pygments_style_dark = "monokai"
-html_title = f"LLMFY v{release}"
-html_short_title = f"LLMFY v{release}"
+html_title = "LLMFY"
+html_short_title = "LLMFY"
 html_favicon = "./llmfy-logo-circle.png"
 # html_logo = "./llmfy-logo-square.png"
 html_theme_options = asdict(theme_options)
 html_theme = "sphinxawesome_theme"
 html_permalinks_icon = "<span></span>"
-version = release
+# version = release
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]

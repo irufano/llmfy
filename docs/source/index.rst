@@ -6,11 +6,7 @@
 LLMFY 
 ====================
 
-`LLMfy` is a framework for developing applications with large language models (LLMs). 
-
-- `LLMfy` is llm abstraction to use various llm on one module. 
-
-- `LLMfyPipe` is llm apps workflow.
+`LLMfy` is a flexible and developer-friendly framework designed to streamline the creation of applications powered by large language models (LLMs). It provides essential tools and abstractions that simplify the integration, orchestration, and management of LLMs across various use cases, enabling developers to focus on building intelligent, context-aware solutions without getting bogged down in low-level model handling. With support for modular components, prompt engineering, and extensibility, LLMfy accelerates the development of AI-driven applications from prototyping to production.
 
 
 Contents
@@ -21,7 +17,7 @@ Contents
    :caption: Installation
 
    how-to-install
-   prerequisites
+   configuration
   
 .. toctree::
    :maxdepth: 2
@@ -29,8 +25,24 @@ Contents
 
    basic
    providers
+   generate
+   content
    agent
    tool-calling
+   usage
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   example-retrieval
+   example-tool-calling
+   example-stream
+   example-llmfypipe
+   example-input-image
+   example-input-document
+   example-input-video
+   example-usage-tracker
 
 .. toctree::
    :maxdepth: 2

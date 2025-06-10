@@ -29,9 +29,22 @@ agent = LLMfy(llm, system_message="You are helpful assistant.")
 
 ## Generate
 
+### Using Invoke
+
+```python
+content = "Hello"
+       
+response = agent.invoke(content)
+
+print(f"\n>> {response.result.content}\n")     
+```
+
+### Using Chat
+
 ```python
 messages = [Message(role=Role.USER, content="Hello")]
        
-response = agent.generate(messages, info=info)
+response = agent.chat(messages)
+
 print(f"\n>> {response.result.content}\n")       
 ```

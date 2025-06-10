@@ -54,7 +54,7 @@ messages = [
     )
 ]
 
-response = agent.generate_with_tools(messages)
+response = agent.chat_with_tools(messages)
 print(f"\n>> {response.result.content}\n")
 ```
 
