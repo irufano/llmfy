@@ -13,10 +13,11 @@ except ImportError:
 
 try:
     import numpy as np
+    from numpy.typing import NDArray
 except ImportError:
-    np = None
-
-from numpy.typing import NDArray
+    raise LLMfyException(
+        "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+    )
 
 
 class OpenAIEmbedding(BaseEmbeddingModel):
