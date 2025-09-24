@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 # Read the README file
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -39,5 +39,7 @@ setup(
     extras_require={
         "openai": ["openai"],
         "boto3": ["boto3"],
+        "numpy": ["numpy"],
+        "faiss-cpu": ["faiss-cpu"],
     },
 )

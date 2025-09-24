@@ -34,7 +34,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
 
         if openai is None:
             raise LLMfyException(
-                "openai package is not installed. Install it using `pip install llmfy[openai]`"
+                'openai package is not installed. Install it using `pip install "llmfy[openai]"`'
             )
         if not os.getenv("OPENAI_API_KEY"):
             raise LLMfyException("Please provide `OPENAI_API_KEY` on your environment!")
@@ -120,7 +120,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
         if np is None:
             raise LLMfyException(
                 "`encode_batch` operation is using numpy, numpy package is not installed. "
-                "Install it using `pip install llmfy[numpy]`"
+                'Install it using `pip install "llmfy[numpy]"`'
             )
 
         if isinstance(texts, str):

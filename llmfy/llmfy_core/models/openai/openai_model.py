@@ -39,7 +39,7 @@ class OpenAIModel(BaseAIModel):
     def __init__(self, model: str, config: OpenAIConfig):
         if openai is None:
             raise LLMfyException(
-                "openai package is not installed. Install it using `pip install llmy[openai]`"
+                'openai package is not installed. Install it using `pip install "llmy[openai]"`'
             )
         if not os.getenv("OPENAI_API_KEY"):
             raise LLMfyException("Please provide `OPENAI_API_KEY` on your environment!")

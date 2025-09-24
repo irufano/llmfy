@@ -35,7 +35,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
 
         if boto3 is None:
             raise LLMfyException(
-                "boto3 package is not installed. Install it using `pip install llmfy[boto3]`"
+                'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'
             )
 
         if not os.getenv("AWS_ACCESS_KEY_ID"):
@@ -135,7 +135,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
         if np is None:
             raise LLMfyException(
                 "`encode_batch` operation is using numpy, numpy package is not installed. "
-                "Install it using `pip install llmfy[numpy]`"
+                'Install it using `pip install "llmfy[numpy]"`'
             )
 
         if isinstance(texts, str):

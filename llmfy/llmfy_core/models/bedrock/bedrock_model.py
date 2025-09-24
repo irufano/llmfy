@@ -26,7 +26,7 @@ class BedrockModel(BaseAIModel):
     def __init__(self, model: str, config: BedrockConfig):
         if boto3 is None:
             raise LLMfyException(
-                "boto3 package is not installed. Install it using `pip install llmfy[boto3]`"
+                'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'
             )
         if not os.getenv("AWS_ACCESS_KEY_ID"):
             raise LLMfyException(

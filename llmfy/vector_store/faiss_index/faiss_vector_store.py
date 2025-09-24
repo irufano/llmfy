@@ -38,12 +38,12 @@ class FAISSVectorStore:
 
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         self.index_type: Optional[Literal["flat", "hnsw", "ivfflat", "ivfpq"]] = (
@@ -69,7 +69,7 @@ class FAISSVectorStore:
         """
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         if not isinstance(vectors, np.ndarray):
@@ -160,7 +160,7 @@ class FAISSVectorStore:
         """
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         self.documents = documents
@@ -252,7 +252,7 @@ class FAISSVectorStore:
         """
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         if self.faiss_index is None or len(self.documents) == 0:
@@ -295,12 +295,12 @@ class FAISSVectorStore:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         if self.faiss_index is None:
@@ -356,7 +356,7 @@ class FAISSVectorStore:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         # Load config first
@@ -403,7 +403,7 @@ class FAISSVectorStore:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if self.faiss_index is None:
@@ -470,12 +470,12 @@ class FAISSVectorStore:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         # Load config

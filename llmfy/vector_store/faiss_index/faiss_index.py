@@ -88,12 +88,12 @@ class FAISSIndex:
 
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         self.dim = dim
@@ -124,12 +124,12 @@ class FAISSIndex:
     ):
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         if np is None:
             raise LLMfyException(
-                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+                'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
         # Use IP (Inner Product / Cosine Similarity) best for semantic search, retrieval, RAG
@@ -221,7 +221,7 @@ class FAISSIndex:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         faiss.write_index(self.index, path)
@@ -232,7 +232,7 @@ class FAISSIndex:
         """
         if faiss is None:
             raise LLMfyException(
-                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+                'faiss package is not installed. Install it using `pip install "llmfy[faiss-cpu]"`'
             )
 
         self.index = faiss.read_index(path)
