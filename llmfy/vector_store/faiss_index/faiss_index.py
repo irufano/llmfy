@@ -1,20 +1,16 @@
-from typing import Literal, Optional, Tuple
+from typing import Any, Literal, Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
 
 try:
     import faiss
 except ImportError:
-    raise LLMfyException(
-        "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
-    )
+    faiss = None
 
 try:
     import numpy as np
 except ImportError:
-    raise LLMfyException(
-        "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
-    )
+    np = None
 
 
 class FAISSIndex:
@@ -27,13 +23,7 @@ class FAISSIndex:
         M: int = 32,
         ef_search: int = 50,
         nbits: int = 8,
-        index: Optional[
-            faiss.IndexFlatIP
-            | faiss.IndexHNSWFlat
-            | faiss.IndexLSH
-            | faiss.IndexIVFFlat
-            | faiss.IndexIVFPQ
-        ] = None,
+        index: Optional[Any] = None,
     ):
         """
         Initialize FAISS Index.
@@ -131,13 +121,17 @@ class FAISSIndex:
         nlist: int,
         M: int,
         nbits: int,
-    ) -> (
-        faiss.IndexFlatIP
-        | faiss.IndexHNSWFlat
-        | faiss.IndexLSH
-        | faiss.IndexIVFFlat
-        | faiss.IndexIVFPQ
     ):
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         # Use IP (Inner Product / Cosine Similarity) best for semantic search, retrieval, RAG
         # with embeddings from models like Bedrock Titan, OpenAI, Cohere, etc.
         if index_type == "flat":
@@ -157,15 +151,24 @@ class FAISSIndex:
         else:
             raise ValueError(f"Unsupported index type: {index_type}")
 
-    def train(self, vectors: np.ndarray):
+    def train(self, vectors):
         """
         Train the index (required for IVF).
+
+        Args:
+            vectors (np.ndarray): _description_
         """
         self.index.train(vectors)  # type: ignore
 
-    def add(self, vectors: np.ndarray):
+    def add(self, vectors):
         """
         Add vectors to the index.
+
+        Args:
+            vectors (np.ndarray): _description_
+
+        Raises:
+            ValueError: _description_
         """
         if not self.index:
             raise ValueError("Index not initialized.")
@@ -178,13 +181,19 @@ class FAISSIndex:
 
     def search(
         self,
-        query: np.ndarray,
+        query,
         k: int = 5,
         nprobe: Optional[int] = None,
         ef_search: Optional[int] = None,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ):
         """
         Search the index.
+
+        Args:
+            query (np.ndarray): _description_
+            k (int, optional): _description_. Defaults to 5.
+            nprobe (Optional[int], optional): _description_. Defaults to None.
+            ef_search (Optional[int], optional): _description_. Defaults to None.
 
         Returns:
             distances (np.ndarray), indices (np.ndarray)
@@ -210,10 +219,20 @@ class FAISSIndex:
         """
         Save the FAISS index to disk.
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
         faiss.write_index(self.index, path)
 
     def load(self, path: str):
         """
         Load the FAISS index from disk.
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
         self.index = faiss.read_index(path)

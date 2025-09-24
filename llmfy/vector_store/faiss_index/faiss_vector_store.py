@@ -13,16 +13,13 @@ from llmfy.vector_store.faiss_index.faiss_index import FAISSIndex
 try:
     import faiss
 except ImportError:
-    raise LLMfyException(
-        "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
-    )
+    faiss = None
+
 
 try:
     import numpy as np
 except ImportError:
-    raise LLMfyException(
-        "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
-    )
+    np = None
 
 
 class FAISSVectorStore:
@@ -39,6 +36,16 @@ class FAISSVectorStore:
             index_type (str): Type of FAISS index (flat, ivfflat, hnsw). default to `None`.
         """
 
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         self.index_type: Optional[Literal["flat", "hnsw", "ivfflat", "ivfpq"]] = (
             index_type
         )
@@ -50,10 +57,21 @@ class FAISSVectorStore:
         self.total_vectors = None
         self.index_configs = None
 
-    def _validate_vectors(self, vectors: np.ndarray) -> np.ndarray:
+    def _validate_vectors(self, vectors):
         """
-        Validate and ensure vectors are in the correct format.
+         Validate and ensure vectors are in the correct format.
+
+        Args:
+            vectors (np.ndarray): _description_
+
+        Returns:
+            np.ndarray: _description_
         """
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         if not isinstance(vectors, np.ndarray):
             vectors = np.array(vectors)
 
@@ -140,6 +158,11 @@ class FAISSVectorStore:
             documents (List[Document]): List of text documents.
             batch_size (int): Batch size. default 5.
         """
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         self.documents = documents
 
         # Generate embeddings
@@ -227,6 +250,11 @@ class FAISSVectorStore:
         Returns:
             List[Tuple[Document, float, int]]: _description_
         """
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         if self.faiss_index is None or len(self.documents) == 0:
             return []
 
@@ -265,6 +293,16 @@ class FAISSVectorStore:
         """
         Save the FAISS index and metadata separately to disk.
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         if self.faiss_index is None:
             raise ValueError(
                 "`faiss_index` is not initialize. `encode_documents` or `load` first."
@@ -316,6 +354,11 @@ class FAISSVectorStore:
         """
         Load the FAISS vector store from disk
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
         # Load config first
         with open(os.path.join(path, "config.pkl"), "rb") as f:
             configs: Dict = pickle.load(f)
@@ -358,6 +401,11 @@ class FAISSVectorStore:
         Returns:
             dict[str, io.BytesIO]: Dictionary of filename → buffer
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
         if self.faiss_index is None:
             raise ValueError(
                 "`faiss_index` is not initialized. Run `encode_documents` or `load` first."
@@ -420,6 +468,16 @@ class FAISSVectorStore:
         Args:
             buffers (dict[str, io.BytesIO]): Dictionary mapping filename -> BytesIO buffer
         """
+        if faiss is None:
+            raise LLMfyException(
+                "faiss package is not installed. Install it using `pip install llmfy[faiss-cpu]`"
+            )
+
+        if np is None:
+            raise LLMfyException(
+                "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
+            )
+
         # Load config
         configs = pickle.load(buffers["config.pkl"])
 

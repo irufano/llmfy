@@ -1,15 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
 
-from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.service_provider import ServiceProvider
-
-try:
-    from numpy.typing import NDArray
-except ImportError:
-    raise LLMfyException(
-        "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
-    )
 
 
 class BaseEmbeddingModel(ABC):
@@ -35,5 +27,5 @@ class BaseEmbeddingModel(ABC):
         max_retries: int = 3,
         retry_delay: float = 1.0,
         show_progress_bar: bool = False,
-    ) -> NDArray[Any]:
+    ) -> Any:
         pass

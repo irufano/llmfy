@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from typing import Any, List
+from typing import List
 
 from botocore.exceptions import ClientError
 
@@ -16,11 +16,8 @@ except ImportError:
 
 try:
     import numpy as np
-    from numpy.typing import NDArray
 except ImportError:
-    raise LLMfyException(
-        "numpy package is not installed. Install it using `pip install llmfy[numpy]`"
-    )
+    np = None
 
 
 class BedrockEmbedding(BaseEmbeddingModel):
@@ -122,7 +119,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
         max_retries: int = 3,
         retry_delay: float = 1.0,
         show_progress_bar: bool = False,
-    ) -> NDArray[Any]:
+    ):
         """
         Encode texts into embedding with batch prosess.
 
