@@ -1,9 +1,10 @@
+import functools
 from contextlib import contextmanager
 from contextvars import ContextVar
-import functools
 from typing import Any, Dict, Optional
 
-from llmfy.llmfy_core.models.model_provider import ModelProvider
+from llmfy.llmfy_core.service_provider import ServiceProvider
+from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.llmfy_usage import LLMfyUsage
 
 # Thread-safe storage for token usage per request
@@ -110,10 +111,39 @@ def track_openai_usage(func):
             usage = response.usage
             usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
             usage_tracker.update(
-                provider=ModelProvider.OPENAI,
+                provider=ServiceProvider.OPENAI,
+                type=ServiceType.LLM,
                 model=model,
                 usage=usage,
             )
+        return response
+
+    return wrapper
+
+
+def track_openai_embedding_usage(func):
+    """Decorator to wrap `__call_openai_embedding` calls on `OpenAIEmbedding`."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        model = args[0]
+        # Extract token usage
+        # input_tokens = response.usage.prompt_tokens if response.usage else 0
+        # Usage(prompt_tokens=8, total_tokens=8)
+        usage = {
+            "prompt_tokens": response.usage.prompt_tokens or 0,
+            "total_tokens": response.usage.total_tokens or 0,
+        }
+        print(usage)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        usage_tracker.update(
+            provider=ServiceProvider.OPENAI,
+            type=ServiceType.EMBEDDING,
+            model=model,
+            usage=usage,
+        )
+
         return response
 
     return wrapper
@@ -132,10 +162,35 @@ def track_bedrock_usage(func):
             usage = response["usage"]
             usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
             usage_tracker.update(
-                provider=ModelProvider.BEDROCK,
+                provider=ServiceProvider.BEDROCK,
+                type=ServiceType.LLM,
                 model=model,
                 usage=usage,
             )
+        return response
+
+    return wrapper
+
+
+def track_bedrock_embedding_usage(func):
+    """Decorator to wrap `__call_bedrock_embedding` calls on `BedrockEmbedding`."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        model = args[0]
+        # Extract token usage from headers
+        headers = response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+        input_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
+        usage = {"x-amzn-bedrock-input-token-count": input_tokens}
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        usage_tracker.update(
+            provider=ServiceProvider.BEDROCK,
+            type=ServiceType.EMBEDDING,
+            model=model,
+            usage=usage,
+        )
+
         return response
 
     return wrapper

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy_core.models.model_provider import ModelProvider
 from llmfy.llmfy_core.responses.ai_response import AIResponse
+from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class BaseAIModel(ABC):
@@ -10,7 +10,7 @@ class BaseAIModel(ABC):
 
     def __init__(self):
         """Model provider."""
-        self.provider: ModelProvider
+        self.provider: ServiceProvider
 
     @abstractmethod
     def generate(

@@ -87,4 +87,65 @@ BEDROCK_PRICING = {
             "output": 0.00024,
         },
     },
+    "deepseek.r1-v1:0": {
+        "us-east-1": {
+            "region": "US East (N. Virginia)",
+            "input": 0.00135,
+            "output": 0.0054,
+        },
+        "us-west-2": {
+            "region": "US West (Oregon)",
+            "input": 0.00135,
+            "output": 0.0054,
+        },
+    },
+    "meta.llama3-3-70b-instruct-v1:0": {
+        "us-east-1": {
+            "region": "US East (N. Virginia)",
+            "input": 0.00072,
+            "output": 0.00072,
+        },
+        "us-west-2": {
+            "region": "US West (Oregon)",
+            "input": 0.00072,
+            "output": 0.00072,
+        },
+    },
+    "meta.llama4-maverick-17b-instruct-v1:0": {
+        "us-east-1": {
+            "region": "US East (N. Virginia)",
+            "input": 0.00024,
+            "output": 0.00097,
+        },
+        "us-west-2": {
+            "region": "US West (Oregon)",
+            "input": 0.00024,
+            "output": 0.00097,
+        },
+    },
+    "amazon.titan-embed-text-v1": {
+        "us-east-1": {
+            "region": "US East (N. Virginia)",
+            "input": 0.0001,
+            "output": 0,
+        },
+        "us-west-2": {
+            "region": "US West (Oregon)",
+            "input": 0.0001,
+            "output": 0,
+        },
+    },
+    "amazon.titan-embed-text-v2": {
+        "us-east-1": {
+            "region": "US East (N. Virginia)",
+            "input": 0.00002,
+            "output": 0,
+        },
+        "us-west-2": {
+            "region": "US West (Oregon)",
+            "input": 0.00002,
+            "output": 0,
+        },
+    },
 }
+

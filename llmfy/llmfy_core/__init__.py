@@ -1,29 +1,32 @@
+from .embeddings.base_embedding_model import BaseEmbeddingModel
+from .embeddings.bedrock.bedrock_embedding import BedrockEmbedding
+from .embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy import LLMfy
-from .messages import Message, MessageTemp, Role, ToolCall, Content, ContentType
-from .tools import ToolRegistry, Tool
-from .responses import AIResponse, GenerationResponse
+from .messages import Content, ContentType, Message, MessageTemp, Role, ToolCall
 from .models import (
+    BEDROCK_PRICING,
+    OPENAI_PRICING,
     BaseAIModel,
+    BedrockConfig,
+    BedrockFormatter,
+    BedrockModel,
+    BedrockUsage,
     ModelPricing,
     OpenAIConfig,
     OpenAIModel,
-    OPENAI_PRICING,
-    track_openai_usage,
-    openai_usage_tracker,
-    track_openai_stream_usage,
-    openai_stream_usage_tracker,
     OpenAIUsage,
-    BedrockFormatter,
-    BedrockConfig,
-    BedrockModel,
-    BEDROCK_PRICING,
-    bedrock_usage_tracker,
-    track_bedrock_usage,
-    BedrockUsage,
     bedrock_stream_usage_tracker,
+    bedrock_usage_tracker,
+    openai_stream_usage_tracker,
+    openai_usage_tracker,
     track_bedrock_stream_usage,
+    track_bedrock_usage,
+    track_openai_stream_usage,
+    track_openai_usage,
 )
-from .usage import llmfy_usage_tracker, LLMfyUsage
+from .responses import AIResponse, GenerationResponse
+from .tools import Tool, ToolRegistry
+from .usage import LLMfyUsage, llmfy_usage_tracker
 
 __all__ = [
     "LLMfy",
@@ -58,4 +61,7 @@ __all__ = [
     "ContentType",
     "llmfy_usage_tracker",
     "LLMfyUsage",
+    "BaseEmbeddingModel",
+    "BedrockEmbedding",
+    "OpenAIEmbedding",
 ]

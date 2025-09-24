@@ -5,12 +5,11 @@ except ImportError:
 
 import json
 import os
-
 from typing import Any, Dict, List, Optional
 
+from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.models.model_provider import ModelProvider
 from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
 from llmfy.llmfy_core.models.openai.openai_stream_usage_tracker import (
     track_openai_stream_usage,
@@ -19,7 +18,7 @@ from llmfy.llmfy_core.models.openai.openai_usage import OpenAIUsage
 
 # from app.llmfy.models.openai.openai_usage_tracker import track_openai_usage
 from llmfy.llmfy_core.responses.ai_response import AIResponse
-from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class OpenAIModel(BaseAIModel):
@@ -46,7 +45,7 @@ class OpenAIModel(BaseAIModel):
             raise LLMfyException("Please provide `OPENAI_API_KEY` on your environment!")
 
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.provider = ModelProvider.OPENAI
+        self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config
         self.usage_callback = OpenAIUsage()

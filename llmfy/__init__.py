@@ -1,39 +1,43 @@
+from .exception import LLMfyException
 from .llmfy_core import (
-    LLMfy,
     AIResponse,
+    BedrockConfig,
+    BedrockModel,
+    Content,
+    ContentType,
     GenerationResponse,
+    LLMfy,
+    LLMfyUsage,
     Message,
+    OpenAIConfig,
+    OpenAIModel,
     Role,
     Tool,
     ToolRegistry,
-    OpenAIConfig,
-    OpenAIModel,
-    openai_usage_tracker,
-    track_openai_usage,
-    openai_stream_usage_tracker,
-    BedrockConfig,
-    BedrockModel,
-    bedrock_usage_tracker,
-    track_bedrock_usage,
     bedrock_stream_usage_tracker,
+    bedrock_usage_tracker,
     llmfy_usage_tracker,
-    LLMfyUsage,
-    Content,
-    ContentType,
+    openai_stream_usage_tracker,
+    openai_usage_tracker,
+    track_bedrock_usage,
+    track_openai_usage,
 )
-
-from .exception import LLMfyException
-
+from .llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
+from .llmfy_core.embeddings.bedrock.bedrock_embedding import BedrockEmbedding
+from .llmfy_core.embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfypipe import (
-    LLMfyPipe,
+    END,
+    START,
     Edge,
-    tools_node,
+    LLMfyPipe,
+    MemoryManager,
     Node,
     WorkflowState,
-    MemoryManager,
-    START,
-    END,
+    tools_node,
 )
+from .vector_store.document import Document
+from .vector_store.faiss_index.faiss_index import FAISSIndex
+from .vector_store.faiss_index.faiss_vector_store import FAISSVectorStore
 
 __all__ = [
     "LLMfy",
@@ -66,4 +70,10 @@ __all__ = [
     "llmfy_usage_tracker",
     "Content",
     "ContentType",
+    "Document",
+    "FAISSIndex",
+    "FAISSVectorStore",
+    "BaseEmbeddingModel",
+    "BedrockEmbedding",
+    "OpenAIEmbedding",
 ]

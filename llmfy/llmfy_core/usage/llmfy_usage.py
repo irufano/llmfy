@@ -1,13 +1,14 @@
 import os
 import re
-from typing import Any, Dict, List, Optional
 import warnings
+from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
-from llmfy.llmfy_core.models.model_provider import ModelProvider
-from llmfy.llmfy_core.models.openai.openai_pricing_list import OPENAI_PRICING
-from llmfy.llmfy_core.models.model_pricing import ModelPricing
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
+from llmfy.llmfy_core.models.model_pricing import ModelPricing
+from llmfy.llmfy_core.models.openai.openai_pricing_list import OPENAI_PRICING
+from llmfy.llmfy_core.service_provider import ServiceProvider
+from llmfy.llmfy_core.service_type import ServiceType
 
 
 class LLMfyUsage:
@@ -131,6 +132,7 @@ class LLMfyUsage:
             + "\n".join(
                 f"{i + 1}. {detail['model']} "
                 f"\n\tprovider: {detail['provider']} "
+                f"\n\ttype: {detail['type']} "
                 f"\n\tinput_tokens: {detail['input_tokens']} "
                 f"\n\toutput_tokens: {detail['output_tokens']} "
                 f"\n\ttotal_tokens: {detail['total_tokens']} "
@@ -222,7 +224,8 @@ class LLMfyUsage:
 
     def update(
         self,
-        provider: ModelProvider,
+        provider: ServiceProvider,
+        type: ServiceType,
         model: str,
         usage: Dict[str, int],
     ) -> None:
@@ -234,11 +237,23 @@ class LLMfyUsage:
             model (str): Model name
             usage (Dict[str, int]): Dictionary containing token counts
         """
-        match provider:
-            case ModelProvider.OPENAI:
-                self.__openai_update(model=model, usage=usage)
-            case ModelProvider.BEDROCK:
-                self.__bedrock_update(model=model, usage=usage)
+        match type:
+            case ServiceType.LLM:
+                match provider:
+                    case ServiceProvider.OPENAI:
+                        self.__openai_update(model=model, usage=usage)
+                    case ServiceProvider.BEDROCK:
+                        self.__bedrock_update(model=model, usage=usage)
+                    case _:
+                        pass
+            case ServiceType.EMBEDDING:
+                match provider:
+                    case ServiceProvider.OPENAI:
+                        self.__openai_embedding_update(model=model, usage=usage)
+                    case ServiceProvider.BEDROCK:
+                        self.__bedrock_embedding_update(model=model, usage=usage)
+                    case _:
+                        pass
             case _:
                 pass
 
@@ -292,7 +307,71 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "provider": "OPENAI",
+                "provider": ServiceProvider.OPENAI,
+                "type": ServiceType.LLM,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
+                "price_per_tokens": ONE_MILLION,
+                "total_cost": total_cost_per_request,
+            }
+        )
+        pass
+
+    def __openai_embedding_update(self, model: str, usage: Dict) -> None:
+        """
+        Update usage statistics and calculate price.
+
+        Args:
+            model: Model name
+            usage: usage of input token (for embedding use input token only).
+        """
+
+        def has_cross_region_inference_id(s):
+            return bool(re.match(r"^.{2}\.", s))
+
+        ONE_MILLION = 1000000
+
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        # usage per-request
+        input_tokens = usage_dict.get("prompt_tokens", 0)
+        output_tokens = 0  # in embedding no output tokens usage
+        total_tokens = input_tokens + output_tokens
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+
+        # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+
+        if model in self.openai_pricing:
+            price_info = self.openai_pricing[model]
+            # pricing per-request
+            i_price = (input_tokens / ONE_MILLION) * price_info.token_input
+            o_price = (output_tokens / ONE_MILLION) * price_info.token_output
+            total_cost_per_request = i_price + o_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "provider": ServiceProvider.OPENAI,
+                "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": total_tokens,
@@ -357,7 +436,74 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "provider": "BEDROCK",
+                "provider": ServiceProvider.BEDROCK,
+                "type": ServiceType.LLM,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
+                "price_per_tokens": ONE_K,
+                "total_cost": total_cost_per_request,
+            }
+        )
+        pass
+
+    def __bedrock_embedding_update(self, model: str, usage: Dict) -> None:
+        """
+        Update usage statistics and calculate price.
+
+        Args:
+            model: Model name
+            usage: usage of input token (for embedding use input token only).
+        """
+
+        def has_cross_region_inference_id(s):
+            return bool(re.match(r"^.{2}\.", s))
+
+        ONE_K = 1000
+        AWS_REGION = os.getenv("AWS_BEDROCK_REGION") or ""
+        MODEL = model[3:] if has_cross_region_inference_id(model) else model
+
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        # usage per-request
+        input_tokens = usage_dict.get("x-amzn-bedrock-input-token-count", 0)
+        output_tokens = 0  # in embedding no output tokens usage
+        total_tokens = input_tokens + output_tokens
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+
+        # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+
+        if MODEL in self.bedrock_pricing:
+            price_info = self.bedrock_pricing[MODEL][AWS_REGION]
+
+            # pricing per-request
+            i_price = (input_tokens / ONE_K) * price_info.token_input
+            o_price = 0  # in embedding no output tokens usage
+            total_cost_per_request = i_price + o_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "provider": ServiceProvider.BEDROCK,
+                "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": total_tokens,

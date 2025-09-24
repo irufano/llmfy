@@ -7,6 +7,7 @@ import json
 import os
 from typing import Any, Dict, List
 
+from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.models.bedrock.bedrock_config import (
@@ -15,11 +16,10 @@ from llmfy.llmfy_core.models.bedrock.bedrock_config import (
 from llmfy.llmfy_core.models.bedrock.bedrock_stream_usage_tracker import (
     track_bedrock_stream_usage,
 )
+from llmfy.llmfy_core.responses.ai_response import AIResponse
 
 # from app.llmfy.models.bedrock.bedrock_usage_tracker import track_bedrock_usage
-from llmfy.llmfy_core.models.model_provider import ModelProvider
-from llmfy.llmfy_core.responses.ai_response import AIResponse
-from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class BedrockModel(BaseAIModel):
@@ -41,7 +41,7 @@ class BedrockModel(BaseAIModel):
                 "Please provide `AWS_BEDROCK_REGION` on your environment!"
             )
 
-        self.provider = ModelProvider.BEDROCK
+        self.provider = ServiceProvider.BEDROCK
         self.model_name = model
         self.config = config
         self.client = boto3.client(

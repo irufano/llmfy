@@ -1,23 +1,23 @@
 from typing import Any, Dict, List, Optional
 
+from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
-from llmfy.llmfy_core.models.model_provider import ModelProvider
-from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.models.model_formatter import ModelFormatter
-from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
+from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class MessageTemp:
     """MessageTemp class. History only per request, not saved to memory."""
 
     # Register formatter
-    _formatters: Dict[ModelProvider, ModelFormatter] = {
-        ModelProvider.OPENAI: OpenAIFormatter(),
-        ModelProvider.BEDROCK: BedrockFormatter(),
+    _formatters: Dict[ServiceProvider, ModelFormatter] = {
+        ServiceProvider.OPENAI: OpenAIFormatter(),
+        ServiceProvider.BEDROCK: BedrockFormatter(),
     }
 
     def __init__(self):
@@ -52,7 +52,7 @@ class MessageTemp:
         tool_call_id: str,
         name: str,
         result: str,
-        provider: ModelProvider,
+        provider: ServiceProvider,
         request_call_id: Optional[str] = None,
     ) -> None:
         formatter = self._formatters.get(provider)
@@ -68,7 +68,7 @@ class MessageTemp:
             result=result,
         )
 
-    def get_messages(self, provider: ModelProvider) -> List[Dict[str, Any]]:
+    def get_messages(self, provider: ServiceProvider) -> List[Dict[str, Any]]:
         formatter = self._formatters.get(provider)
         if not formatter:
             raise LLMfyException(f"Unsupported model provider: {provider}")

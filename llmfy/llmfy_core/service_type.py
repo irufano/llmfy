@@ -1,10 +1,10 @@
 from enum import Enum
 
 
-class ModelProvider(str, Enum):
-	"""ModelProvider enum."""
-	OPENAI = "openai"
-	BEDROCK = "bedrock"
+class ServiceType(str, Enum):
+	"""ServiceType enum."""
+	LLM = "llm"
+	EMBEDDING = "embedding"
 
 	def __str__(self):
 		return self.value
