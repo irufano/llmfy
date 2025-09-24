@@ -3,14 +3,13 @@ import os
 import time
 from typing import List
 
-from botocore.exceptions import ClientError
-
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 try:
     import boto3
+    from botocore.exceptions import ClientError
 except ImportError:
     boto3 = None
 
