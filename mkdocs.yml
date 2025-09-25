@@ -26,6 +26,7 @@ nav:
           - docs/features/content.md
           - docs/features/tool-calling.md
           - docs/features/embedding.md
+          - docs/features/chunk-text.md
           - docs/features/usage.md
   - Examples:
       - examples/example-retrieval.md
@@ -37,6 +38,7 @@ nav:
       - examples/example-input-image.md
       - examples/example-input-video.md
       - examples/example-embedding.md
+      - examples/example-chunking.md
       - examples/example-faiss-vectore-store.md
   - API Reference:
       - llmfy_core:
