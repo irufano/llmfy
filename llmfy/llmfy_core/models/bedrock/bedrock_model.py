@@ -23,6 +23,20 @@ from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class BedrockModel(BaseAIModel):
+    """
+    BedrockModel class.
+
+    Example:
+    ```python
+    # Configuration
+    config = BedrockConfig(
+            temperature=0.7
+    )
+    llm = BedrockModel(model="amazon.nova-pro-v1:0", config=config)
+    ...
+    ```
+    """
+
     def __init__(self, model: str, config: BedrockConfig):
         if boto3 is None:
             raise LLMfyException(
@@ -86,6 +100,19 @@ class BedrockModel(BaseAIModel):
         tools: List[Dict[str, Any]] | None = None,
         **kwargs,
     ) -> AIResponse:
+        """
+        Generate messages.
+
+        Args:
+                messages (List[Dict[str, Any]]): _description_
+                tools (Optional[List[Dict[str, Any]]], optional): _description_. Defaults to None.
+
+        Raises:
+                AIGooChatException: _description_
+
+        Returns:
+                AIResponse: _description_
+        """
         try:
             _system = next(
                 (msg["content"] for msg in messages if msg["role"] == "system"), None
@@ -190,6 +217,27 @@ class BedrockModel(BaseAIModel):
         tools: List[Dict[str, Any]] | None = None,
         **kwargs,
     ) -> Any:
+        """
+        Generate messages with streaming.
+
+        Note:
+                When using stream=True, the response does not include total usage information (usage field with prompt_tokens, completion_tokens, and total_tokens).
+
+                Why?
+
+                \t- In streaming mode, tokens are sent incrementally, so the API doesnt return a single final response that includes token usage.
+                \t- If you need token usage, you must track tokens manually or make a separate non-streaming request.
+
+        Args:
+                messages (List[Dict[str, Any]]): _description_
+                tools (Optional[List[Dict[str, Any]]], optional): _description_. Defaults to None.
+
+        Raises:
+                AIGooChatException: _description_
+
+        Returns:
+                Any: _description_
+        """
         try:
             _system = next(
                 (msg["content"] for msg in messages if msg["role"] == "system"), None

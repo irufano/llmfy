@@ -1,9 +1,10 @@
 from typing import List, Optional
+
 from pydantic import BaseModel
 
 
 class BedrockConfig(BaseModel):
-    """Configuration for BedrockAnthropicModel."""
+    """Configuration for BedrockModel."""
 
     temperature: float = 0.7
     max_tokens: Optional[int] = None

@@ -1,0 +1,135 @@
+site_name: LLMfy
+site_description: Framework for building and integrating LLM-powered applications.
+site_url: https://llmfy.readthedocs.io/ # Update this
+
+plugins:
+  - search
+  - social
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google # or numpy, sphinx
+            show_source: true
+            show_root_heading: true
+
+nav:
+  - LLMfy: index.md
+  - Docs:
+      - Intallation:
+          - docs/installation/how-to-install.md
+          - docs/installation/configuration.md
+      - Features:
+          - docs/features/framework.md
+          - docs/features/providers.md
+          - docs/features/generate.md
+          - docs/features/content.md
+          - docs/features/tool-calling.md
+          - docs/features/embedding.md
+          - docs/features/usage.md
+  - Examples:
+      - examples/example-retrieval.md
+      - examples/example-tool-calling.md
+      - examples/example-stream.md
+      - examples/example-usage-tracker.md
+      - examples/example-llmfypipe.md
+      - examples/example-input-document.md
+      - examples/example-input-image.md
+      - examples/example-input-video.md
+      - examples/example-embedding.md
+      - examples/example-faiss-vectore-store.md
+  - API Reference:
+      - llmfy_core:
+          - reference/llmfy_core.llmfy.md
+          - reference/llmfy_core.usage.usage_tracker.md
+          - reference/llmfy_core.tools.tool.md
+          - reference/llmfy_core.tools.tool_registry.md
+          - reference/llmfy_core.responses.generation_response.md
+          - reference/llmfy_core.responses.ai_response.md
+          - reference/llmfy_core.messages.content.md
+          - reference/llmfy_core.messages.content_type.md
+          - reference/llmfy_core.messages.message.md
+          - reference/llmfy_core.messages.role.md
+          - reference/llmfy_core.messages.tool_call.md
+          - reference/llmfy_core.models.base_ai_model.md
+          - reference/llmfy_core.models.bedrock.bedrock_config.md
+          - reference/llmfy_core.models.bedrock.bedrock_model.md
+          - reference/llmfy_core.models.bedrock.bedrock_pricing_list.md
+          - reference/llmfy_core.models.openai.openai_config.md
+          - reference/llmfy_core.models.openai.openai_model.md
+          - reference/llmfy_core.models.openai.openai_pricing_list.md
+          - reference/llmfy_core.embeddings.base_embedding_model.md
+          - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
+          - reference/llmfy_core.embeddings.openai.openai_embedding.md
+      - llmfypipe:
+          - reference/llmfypipe.md
+      - vector_store:
+          - reference/vector_store.document.md
+          - reference/vector_store.faiss_index.faiss_index.md
+          - reference/vector_store.faiss_index.faiss_vector_store.md
+      - Exception:
+          - reference/llmfy_core.exception.llmfy_exception..md
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.instant.preview
+    - navigation.tabs.sticky
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - search.share
+    - navigation.footer
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to theme mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/irufano
+      name: irufano
+
+extra_css:
+  - stylesheets/extra.css
+
+repo_url: https://github.com/irufano/llmfy
+
+copyright: LLMfy | framework for building and integrating LLM-powered applications.

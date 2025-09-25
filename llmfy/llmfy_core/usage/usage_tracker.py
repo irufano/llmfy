@@ -16,13 +16,13 @@ def llmfy_usage_tracker(
     openai_pricing: Optional[Dict[str, Any]] = None,
     bedrock_pricing: Optional[Dict[str, Any]] = None,
 ):
-    """OpenAI usage tracker.
+    """LLMfy usage tracker.
 
     Use this to track token usage all provider.
 
     Example:
     ```python
-    with usage_tracker() as usage:
+    with llmfy_usage_tracker() as usage:
             result = llm.generate(messages)
             ...
             print(usage)

@@ -1,0 +1,14 @@
+:root > * {
+  --md-primary-fg-color: #16a085;
+  --md-primary-fg-color--light: #27AE60;
+  --md-primary-fg-color--dark: #27AE60;
+}
+
+/* Apply gradient to header */
+.md-header {
+  background: linear-gradient(90deg, #16a085, #016B5F);
+}
+
+.md-tabs {
+  background: linear-gradient(90deg, #16a085, #016B5F);
+}

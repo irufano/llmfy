@@ -3,7 +3,6 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
@@ -12,7 +11,7 @@ from llmfy.llmfy_core.messages.tool_call import ToolCall
 class Message(BaseModel):
     """Message class for input to the LLM models.
 
-    Attributes:
+    Args:
         id (str): Id message default UUIDv4.
         role (Role): Message role.
         content (Optional[str] | Optional[List[Content]]): Use str if only using text, but if use image and text use List[Content].
