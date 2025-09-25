@@ -95,25 +95,6 @@ if __name__ == "__main__":
 ```
 
 ## Develop as Contributor
-### Build the container
-```sh
-docker-compose build
-```
-
-### Run the container
-```sh
-docker-compose up -d aigoofusion
-```
-
-### Stop the container
-```sh
-docker-compose stop aigoofusion
-```
-
-### Access the container shell
-```sh
-docker exec -it aigoofusion bash
-```
 
 ### Build package
 ```sh
@@ -123,4 +104,13 @@ python setup.py sdist bdist_wheel
 ### Upload package
 ```sh
 twine upload dist/*
+```
+
+### Trigger buld and deploy to pypi
+```sh
+# TAGE_NAME must starting with "v" (e.g., v1.0.0)
+git tag -a [TAGE_NAME] -m "[TAGE_MESSAGE]"
+ 
+# push tag to remote
+git push origin [TAGE_NAME]
 ```
