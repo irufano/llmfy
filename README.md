@@ -3,7 +3,7 @@
 
   <a href="https://img.shields.io/github/actions/workflow/status/irufano/llmfy/publish.yml">![llmfy](https://img.shields.io/github/actions/workflow/status/irufano/llmfy/publish.yml?style=for-the-badge&logo=pypi&logoColor=blue&label=publish
   )</a>
-  <a href="https://pypi.org/project/llmfy/0.3.1">![llmfy](https://img.shields.io/badge/llmfy-V0.4.1-31CA9C.svg?style=for-the-badge&logo=pypi&logoColor=yellow)</a>
+  <a href="https://pypi.org/project/llmfy/0.4.2">![llmfy](https://img.shields.io/badge/llmfy-V0.4.2-31CA9C.svg?style=for-the-badge&logo=pypi&logoColor=yellow)</a>
   <a href="https://pypi.org/project/llmfy/">![llmfy](https://img.shields.io/pypi/v/llmfy?style=for-the-badge&label=llmfy%20latest%20version&labelColor=691DC6&color=B77309)</a>
   <a href="">![python](https://img.shields.io/badge/python->=3.12-4392FF.svg?style=for-the-badge&logo=python&logoColor=4392FF)</a>
 
@@ -23,6 +23,8 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
   - Install [pydantic](https://pypi.org/project/pydantic) [required], 
   - Install [openai](https://pypi.org/project/openai) to use OpenAI models [optional].
   - Install [boto3](https://pypi.org/project/boto3/) to use AWS Bedrock models [optional].
+  - Install [numpy](https://pypi.org/project/numpy/) to use Embedding, FAISSVectorStore [optional].
+  - Install [faiss-cpu](https://pypi.org/project/faiss-cpu/) to use FAISSVectorStore [optional].
 
 ### Using pip
 ```sh

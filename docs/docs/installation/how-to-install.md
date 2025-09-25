@@ -5,6 +5,8 @@
   - Install [pydantic](https://pypi.org/project/pydantic) [required], 
   - Install [openai](https://pypi.org/project/openai) to use OpenAI models [optional].
   - Install [boto3](https://pypi.org/project/boto3/) to use AWS Bedrock models [optional].
+  - Install [numpy](https://pypi.org/project/numpy/) to use Embedding, FAISSVectorStore [optional].
+  - Install [faiss-cpu](https://pypi.org/project/faiss-cpu/) to use FAISSVectorStore [optional].
 
 ### Using pip
 ```shell
