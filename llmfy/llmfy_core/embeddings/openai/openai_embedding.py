@@ -44,7 +44,9 @@ class OpenAIEmbedding(BaseEmbeddingModel):
         self.model = model
 
     def __call_openai_embedding(self, model: str, text: str):
-        from llmfy.llmfy_core.usage.usage_tracker import track_openai_embedding_usage
+        from llmfy.llmfy_core.models.openai.openai_usage import (
+            track_openai_embedding_usage,
+        )
 
         @track_openai_embedding_usage
         def _call_openai_impl(model: str, text: str):

@@ -1,7 +1,8 @@
 import string
-from typing import Any, Callable, Dict, List, Optional
 import uuid
+from typing import Any, Callable, Dict, Generator, List, Optional
 
+from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.message_temp import MessageTemp
@@ -10,7 +11,6 @@ from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.responses.generation_response import GenerationResponse
 from llmfy.llmfy_core.tools.tool import Tool
-from llmfy.exception.llmfy_exception import LLMfyException
 
 
 class LLMfy:
@@ -247,6 +247,105 @@ class LLMfy:
                 )
         except Exception as e:
             raise LLMfyException(e)
+        
+    def invoke_stream(
+        self,
+        contents: str | List[Content],
+        **kwargs,
+    ) -> Generator[GenerationResponse, Any, None]:
+        """
+        Generate a response based on contents. 
+
+        Example usage:
+        ```python
+        stream = chat.invoke_stream(contents="apa ibukota jakarta?", info=info)
+        full_content = ""
+        num = 0
+        for chunk in stream:
+            if isinstance(chunk, GenerationResponse):
+                if chunk.result.content:
+                    content = chunk.result.content
+                    full_content += content
+                    num += 1
+                    print(f"chunk: {num}")
+                    print(content, flush=True)
+                    print("")
+                    # print(content, end="", flush=True)
+
+        print("--- full ---")
+        print(full_content)
+        ```
+
+        Args:
+            contents (str | List[Content]): Text or List of content objects to process
+            **kwargs: Additional generation parameters
+
+        Returns:
+            stream (Generator[GenerationResponse, Any, None]):  Stream GenerationResponse containing the generated response
+        """
+        try:
+            self.messages_temp.clear()
+
+            # Generate using user role only if invoke
+            messages = [Message(role=Role.USER, content=contents)]
+
+            if self.system_message:
+                # Validate system message
+                final_system_message = self.__validate_system_message(**kwargs)
+
+                # Add system message to history
+                self.messages_temp.add_system_message(
+                    final_system_message if final_system_message else ""
+                )
+
+            # Add new messages to history
+            for message in messages:
+                # always ROLE == USER because invoke
+                if message.role == Role.USER:
+                    self.messages_temp.add_user_message(
+                        message.id,
+                        message.content if message.content else "",
+                    )
+
+            stream = self.model.generate_stream(
+                self.messages_temp.get_messages(provider=self.model.provider),
+                tools=self.__get_tool_definitions(),
+            )
+
+            full_content = ""
+            tool_calls = None
+
+            for chunk in stream:
+                if isinstance(chunk, AIResponse):
+                    content = ""
+                    tool_calls = []
+                    # Yield each chunk
+                    if chunk.content:
+                        content = chunk.content
+                        full_content += content
+
+                    if chunk.tool_calls:
+                        tool_calls = chunk.tool_calls
+
+                    # update content and toolcalls only
+                    yield GenerationResponse(
+                        result=AIResponse(content=content, tool_calls=tool_calls),
+                        messages=[],
+                    )
+
+            self.messages_temp.add_assistant_message(
+                id=str(uuid.uuid4()),
+                content=full_content,
+                tool_calls=tool_calls,
+            )
+
+            # update messages only
+            yield GenerationResponse(
+                result=AIResponse(),
+                messages=self.messages_temp.get_instance_messages(),
+            )
+        except Exception as e:
+            raise LLMfyException(e)
 
     def chat(self, messages: List[Message], **kwargs) -> GenerationResponse:
         """
@@ -401,16 +500,41 @@ class LLMfy:
         except Exception as e:
             raise LLMfyException(e)
 
-    def chat_stream(self, messages: List[Message], **kwargs) -> Any:
+    def chat_stream(
+        self,
+        messages: List[Message],
+        **kwargs,
+    ) -> Generator[GenerationResponse, Any, None]:
         """
         Generate a streaming response based on a list of messages.
+
+        Example usage:
+        ```python
+        messages = [Message(role=Role.USER, content="apa ibukota jakarta?")]
+        stream = chat.chat_stream(messages, info=info)
+        full_content = ""
+        num = 0
+        for chunk in stream:
+            if isinstance(chunk, GenerationResponse):
+                if chunk.result.content:
+                    content = chunk.result.content
+                    full_content += content
+                    num += 1
+                    print(f"chunk: {num}")
+                    print(content, flush=True)
+                    print("")
+                    print(content, end="", flush=True)
+
+        print("--- full ---")
+        print(full_content)
+        ```
 
         Args:
             messages (List[Message]): List of Message objects to process
             **kwargs: Additional generation parameters
 
         Returns:
-            Streaming response from the model
+            stream (Generator[GenerationResponse, Any, None]):  Stream GenerationResponse containing the generated response
         """
         try:
             self.messages_temp.clear()

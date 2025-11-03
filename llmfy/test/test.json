@@ -1,0 +1,85 @@
+[
+    {
+        "id": "261005f5-e3ef-4af6-aac2-1499b24d89df",
+        "role": "user",
+        "content": "What time and weather in london?",
+        "name": null,
+        "tool_calls": null,
+        "tool_call_id": null,
+        "tool_results": null,
+        "request_call_id": null
+    },
+    {
+        "id": "1d85170f-a33f-463f-a9a8-8b17660851b3",
+        "role": "assistant",
+        "content": null,
+        "name": null,
+        "tool_calls": [
+            {
+                "tool_call_id": "tooluse_gIG79eCLRESnNvVJJDFnxQ",
+                "request_call_id": "1d85170f-a33f-463f-a9a8-8b17660851b3",
+                "name": "get_current_time",
+                "arguments": {
+                    "location": "London"
+                }
+            }
+        ],
+        "tool_call_id": null,
+        "tool_results": null,
+        "request_call_id": null
+    },
+    {
+        "id": "c4f3915e-dd46-42eb-9b94-03cb4198e73b",
+        "role": "tool",
+        "content": null,
+        "name": "get_current_time",
+        "tool_calls": null,
+        "tool_call_id": "tooluse_gIG79eCLRESnNvVJJDFnxQ",
+        "tool_results": [
+            "The time in London is 09:00 AM"
+        ],
+        "request_call_id": "1d85170f-a33f-463f-a9a8-8b17660851b3"
+    },
+    {
+        "id": "4a080571-2231-4210-ac5e-347146073755",
+        "role": "assistant",
+        "content": null,
+        "name": null,
+        "tool_calls": [
+            {
+                "tool_call_id": "tooluse_k7y3C8SaQ22vk8USjLil7g",
+                "request_call_id": "4a080571-2231-4210-ac5e-347146073755",
+                "name": "get_current_weather",
+                "arguments": {
+                    "location": "London",
+                    "unit": "celsius"
+                }
+            }
+        ],
+        "tool_call_id": null,
+        "tool_results": null,
+        "request_call_id": null
+    },
+    {
+        "id": "31a6e215-560c-418e-bf33-7d18bc03c48f",
+        "role": "tool",
+        "content": null,
+        "name": "get_current_weather",
+        "tool_calls": null,
+        "tool_call_id": "tooluse_k7y3C8SaQ22vk8USjLil7g",
+        "tool_results": [
+            "The weather in London is 22 degrees celsius"
+        ],
+        "request_call_id": "4a080571-2231-4210-ac5e-347146073755"
+    },
+    {
+        "id": "a79749b8-e362-49f8-bc36-45688230900d",
+        "role": "assistant",
+        "content": "Here's the information you requested:\n- Current time in London: 09:00 AM\n- Current temperature in London: 22\u00b0C\n\nIs there anything else I can help you with?",
+        "name": null,
+        "tool_calls": null,
+        "tool_call_id": null,
+        "tool_results": null,
+        "request_call_id": null
+    }
+]

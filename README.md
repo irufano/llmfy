@@ -30,7 +30,7 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
 ```sh
 pip install llmfy
 ```
-### using requirements.txt
+### Using requirements.txt
 - Add into requirements.txt
 ```txt
 llmfy
@@ -38,6 +38,29 @@ llmfy
 - Then install
 ```txt
 pip install -r requirements.txt
+```
+
+### Using github 
+
+#### From a specific branch
+```sh
+# main
+pip install git+https://github.com/irufano/llmfy.git@main
+
+# dev
+pip install git+https://github.com/irufano/llmfy.git@dev
+```
+
+#### From a tag
+```sh
+# example tag version 0.4.2
+pip install git+https://github.com/irufano/llmfy.git@v0.4.2
+```
+
+#### Github in requirements.txt
+
+```txt
+git+https://github.com/irufano/llmfy.git@dev
 ```
 
 ## How to use
@@ -115,4 +138,13 @@ git tag -a [TAGE_NAME] -m "[TAGE_MESSAGE]"
  
 # push tag to remote
 git push origin [TAGE_NAME]
+```
+
+### Mkdocs run on local
+```sh
+# Serve on local
+mkdocs serve
+
+# Build docs
+mkdocs build
 ```

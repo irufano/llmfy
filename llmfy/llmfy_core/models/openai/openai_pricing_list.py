@@ -1,5 +1,8 @@
-# Price per 1M tokens for different models (USD)
-# https://platform.openai.com/docs/pricing
+"""
+Price per 1M tokens for different models (USD):
+
+- [https://platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing)
+"""
 OPENAI_PRICING = {
 	"gpt-4o": {
 		"input": 2.50,

@@ -3,15 +3,16 @@ import os
 from dotenv import load_dotenv
 
 from llmfy import (
-    LLMfyException,
-    LLMfy,
-    Message,
-    Role,
     BedrockConfig,
     BedrockModel,
+    LLMfy,
+    LLMfyException,
+    Message,
     # OpenAIConfig,
     # OpenAIModel,
+    Role,
 )
+from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
 
 env_file = os.getenv("ENV_FILE", ".env")  # Default to .env if ENV_FILE is not set
 load_dotenv(env_file)
@@ -89,11 +90,12 @@ def retrieval_invoke_example():
 
     try:
         content = "Apa ibukota china?"
-
-        response = framework.invoke(content, info=info)
+        
+        with llmfy_usage_tracker() as usage:
+            response = framework.invoke(content, info=info)
 
         print(f"\n>> {response.result.content}\n")
-        # print(f"\nUsage:\n{usage}\n")
+        print(f"\nUsage:\n{usage}\n")
 
     except LLMfyException as e:
         print(f"{e}")

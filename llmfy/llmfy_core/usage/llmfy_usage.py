@@ -190,9 +190,10 @@ class LLMfyUsage:
     ) -> Dict[str, ModelPricing]:
         """
         Load openai pricing from dictionary.
+
+        Price per 1M tokens for different models (USD)
+        - https://platform.openai.com/docs/pricing
         """
-        # Price per 1M tokens for different models (USD)
-        # https://platform.openai.com/docs/pricing
         pricing_data = pricing_source
         return {
             model: ModelPricing(token_input=data["input"], token_output=data["output"])
@@ -205,11 +206,12 @@ class LLMfyUsage:
     ) -> Dict[str, Dict[str, ModelPricing]]:
         """
         Load bedrock pricing from dictionary.
+
+        Price per 1K tokens for different models (USD)
+        - https://aws.amazon.com/bedrock/pricing/
+        - https://aws.amazon.com/bedrock/pricing/
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html
         """
-        # Price per 1K tokens for different models (USD)
-        # https://aws.amazon.com/bedrock/pricing/
-        # https://aws.amazon.com/bedrock/pricing/
-        # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html
         pricing_data = pricing_source
         return {
             model: {

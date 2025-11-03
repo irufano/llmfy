@@ -11,12 +11,6 @@ from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy_core.models.openai.openai_stream_usage_tracker import (
-    track_openai_stream_usage,
-)
-from llmfy.llmfy_core.models.openai.openai_usage import OpenAIUsage
-
-# from app.llmfy.models.openai.openai_usage_tracker import track_openai_usage
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -48,19 +42,11 @@ class OpenAIModel(BaseAIModel):
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config
-        self.usage_callback = OpenAIUsage()
-
-    # @track_openai_usage
-    # def __call_openai(self, params: dict[str, Any]):
-    #     try:
-    #         response = self.client.chat.completions.create(**params)
-    #         return response
-    #     except Exception as e:
-    #         raise e
 
     def __call_openai(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from llmfy.llmfy_core.usage.usage_tracker import track_openai_usage
+        # from llmfy.llmfy_core.usage.usage_tracker import track_openai_usage
+        from llmfy.llmfy_core.models.openai.openai_usage import track_openai_usage
 
         @track_openai_usage
         def _call_openai_impl(params: dict[str, Any]):
@@ -72,14 +58,23 @@ class OpenAIModel(BaseAIModel):
 
         return _call_openai_impl(params)
 
-    @track_openai_stream_usage
     def __call_stream_openai(self, params: dict[str, Any]):
-        try:
-            params["stream"] = True
-            params["stream_options"] = {"include_usage": True}
-            return self.client.chat.completions.create(**params)
-        except Exception as e:
-            raise e
+        # Import the decorator when the method is first defined/called
+        # from llmfy.llmfy_core.usage.usage_tracker import track_openai_stream_usage
+        from llmfy.llmfy_core.models.openai.openai_usage import (
+            track_openai_stream_usage,
+        )
+
+        @track_openai_stream_usage
+        def __call_stream_openai_impl(params: dict[str, Any]):
+            try:
+                params["stream"] = True
+                params["stream_options"] = {"include_usage": True}
+                return self.client.chat.completions.create(**params)
+            except Exception as e:
+                raise e
+
+        return __call_stream_openai_impl(params)
 
     def generate(
         self,
@@ -124,8 +119,6 @@ class OpenAIModel(BaseAIModel):
             message = response.choices[0].message
             tool_calls = None
             content = None
-            # print(f"usage openai: {response.usage.model_dump()}")
-            # token_usage = self.usage_callback.update(self.model_name, response.usage)
 
             if hasattr(message, "tool_calls") and message.tool_calls:
                 tool_calls = [

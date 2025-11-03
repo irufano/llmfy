@@ -12,6 +12,11 @@ plugins:
             docstring_style: google # or numpy, sphinx
             show_source: true
             show_root_heading: true
+            show_root_toc_entry: true
+            show_inheritance: true
+            show_symbol_type_heading: true
+            show_if_no_docstring: true
+            members_order: source
 
 nav:
   - LLMfy: index.md
@@ -56,9 +61,11 @@ nav:
           - reference/llmfy_core.models.base_ai_model.md
           - reference/llmfy_core.models.bedrock.bedrock_config.md
           - reference/llmfy_core.models.bedrock.bedrock_model.md
+          - reference/llmfy_core.models.bedrock.bedrock_usage.md
           - reference/llmfy_core.models.bedrock.bedrock_pricing_list.md
           - reference/llmfy_core.models.openai.openai_config.md
           - reference/llmfy_core.models.openai.openai_model.md
+          - reference/llmfy_core.models.openai.openai_usage.md
           - reference/llmfy_core.models.openai.openai_pricing_list.md
           - reference/llmfy_core.embeddings.base_embedding_model.md
           - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md

@@ -1,7 +1,10 @@
-# Price per 1K tokens for different models (USD)
-# https://aws.amazon.com/bedrock/pricing/
-# https://aws.amazon.com/bedrock/pricing/
-# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html
+"""
+Price per 1K tokens for different models (USD):
+
+- [https://aws.amazon.com/bedrock/pricing/](https://aws.amazon.com/bedrock/pricing/)
+- [https://aws.amazon.com/bedrock/pricing/](https://aws.amazon.com/bedrock/pricing/)
+- [https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html)
+"""
 BEDROCK_PRICING = {
     "anthropic.claude-3-5-sonnet-20240620-v1:0": {
         "us-east-1": {

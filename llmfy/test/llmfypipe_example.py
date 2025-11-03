@@ -1,21 +1,22 @@
 import asyncio
+import json
+
 from dotenv import load_dotenv
 
 from llmfy import (
-    LLMfy,
-    Message,
-    Role,
-    BedrockConfig,
-    BedrockModel,
-    Tool,
-    ToolRegistry,
-    tools_node,
-    LLMfyPipe,
     END,
     START,
+    BedrockConfig,
+    BedrockModel,
+    LLMfy,
+    LLMfyPipe,
+    Message,
+    Role,
+    Tool,
+    ToolRegistry,
     WorkflowState,
+    tools_node,
 )
-
 
 load_dotenv()
 
@@ -23,12 +24,12 @@ load_dotenv()
 # Test flow
 async def llmfypipe_example():
     # llm
-    # model="anthropic.claude-3-haiku-20240307-v1:0",
-    # model="us.anthropic.claude-3-5-haiku-20241022-v1:0",
-    # model="amazon.nova-lite-v1:0",
+    # model="anthropic.claude-3-haiku-20240307-v1:0"
+    model="us.anthropic.claude-3-5-haiku-20241022-v1:0"
+    # model="amazon.nova-lite-v1:0"
 
     llm = BedrockModel(
-        model="anthropic.claude-3-haiku-20240307-v1:0",
+        model=model,
         config=BedrockConfig(temperature=0.7),
     )
 
@@ -63,6 +64,7 @@ async def llmfypipe_example():
         messages = state.get("messages", [])
         response = chat.chat(messages)
         messages.append(response.messages[-1])
+        print(f"\n--- \n{json.dumps([msg.model_dump() for msg in messages])} \n")
         return {"messages": messages, "system": response.messages[0]}
 
     async def node_tools(state: WorkflowState) -> dict:
