@@ -79,3 +79,162 @@ chunk_1: new content. This capability is driving innovations in healthcare, fina
 chunk_2: robotics, and autonomous systems suggest possibilities we are only beginning to imagine. With careful oversight and thoughtful use, AI has the potential to enhance human capabilities and solve some of the world’s most complex problems. 
 {'source': 'doc1.pdf', 'page': 2}
 ```
+
+## Chunking markdown by headers
+
+Split Markdown into chunks based on header levels. The content of each chunk includes the header itself. Optionally attaches metadata if provided. We can use `chunk_markdown_by_header`. 
+
+```python
+from llmfy import chunk_markdown_by_header
+```
+
+### Chunking markdown by headers
+```python
+md_text = """
+# Main Title
+
+Intro paragraph for the document.
+
+## Section 1
+Details for section 1.
+
+### Subsection 1.1
+Information about subsection 1.1.
+
+## Section 2
+Content for section 2.
+
+### Subsection 2.1
+Nested content here.
+
+#### Sub-subsection 2.1.1
+Even more nested content.
+"""
+```
+```python
+print("🔹 All headers (default):")
+chunks_all = chunk_markdown_by_header(md_text)
+for c in chunks_all:
+    print(f"\nLevel {c['level']} - {c['header']}")
+    print(c["content"])
+    print("-" * 60)
+
+print("\n🔹 Only up to level 2:")
+chunks_lvl2 = chunk_markdown_by_header(md_text, header_level=2)
+for c in chunks_lvl2:
+    print(f"\nLevel {c['level']} - {c['header']}")
+    print(c["content"])
+    print("-" * 60)
+```
+
+Output:
+```txt
+🔹 All headers (default):
+
+Level 1 - Main Title
+# Main Title
+
+Intro paragraph for the document.
+------------------------------------------------------------
+
+Level 2 - Section 1
+## Section 1
+Details for section 1.
+------------------------------------------------------------
+
+Level 3 - Subsection 1.1
+### Subsection 1.1
+Information about subsection 1.1.
+------------------------------------------------------------
+
+Level 2 - Section 2
+## Section 2
+Content for section 2.
+------------------------------------------------------------
+
+Level 3 - Subsection 2.1
+### Subsection 2.1
+Nested content here.
+------------------------------------------------------------
+
+Level 4 - Sub-subsection 2.1.1
+#### Sub-subsection 2.1.1
+Even more nested content.
+------------------------------------------------------------
+
+🔹 Only up to level 2:
+
+Level 1 - Main Title
+# Main Title
+
+Intro paragraph for the document.
+------------------------------------------------------------
+
+Level 2 - Section 1
+## Section 1
+Details for section 1.
+
+### Subsection 1.1
+Information about subsection 1.1.
+------------------------------------------------------------
+
+Level 2 - Section 2
+## Section 2
+Content for section 2.
+
+### Subsection 2.1
+Nested content here.
+
+#### Sub-subsection 2.1.1
+Even more nested content.
+------------------------------------------------------------
+```
+
+### Chunking markdown by headers with metadata
+```python
+md_w_data = (
+    """
+# Main Title
+
+Intro paragraph.
+
+## Section 1
+Details for section 1.
+
+### Subsection 1.1
+More info here.
+""",
+    {"source": "doc1.md", "author": "irufano"},
+)
+```
+```python
+print("\n🔹 Meta data:")
+chunks_lvl2 = chunk_markdown_by_header(md_w_data, header_level=2)
+for c in chunks_lvl2:
+    print(f"Level {c['level']} - {c['header']}")
+    print(f"Metadata: {c.get('metadata')}")
+    print(f"Content:\n{c['content']}")
+    print("-" * 60)
+
+```
+
+Output:
+```txt
+🔹 Meta data:
+Level 1 - Main Title
+Metadata: {'source': 'doc1.md', 'author': 'irufano'}
+Content:
+# Main Title
+
+Intro paragraph.
+------------------------------------------------------------
+Level 2 - Section 1
+Metadata: {'source': 'doc1.md', 'author': 'irufano'}
+Content:
+## Section 1
+Details for section 1.
+
+### Subsection 1.1
+More info here.
+------------------------------------------------------------
+```

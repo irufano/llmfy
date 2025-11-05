@@ -20,19 +20,20 @@ plugins:
 
 nav:
   - LLMfy: index.md
-  - Docs:
+  - Documentation:
       - Intallation:
-          - docs/installation/how-to-install.md
-          - docs/installation/configuration.md
+          - documentation/installation/how-to-install.md
+          - documentation/installation/configuration.md
       - Features:
-          - docs/features/framework.md
-          - docs/features/providers.md
-          - docs/features/generate.md
-          - docs/features/content.md
-          - docs/features/tool-calling.md
-          - docs/features/embedding.md
-          - docs/features/chunk-text.md
-          - docs/features/usage.md
+          - documentation/features/framework.md
+          - documentation/features/providers.md
+          - documentation/features/generate.md
+          - documentation/features/content.md
+          - documentation/features/tool-calling.md
+          - documentation/features/embedding.md
+          - documentation/features/chunk-text.md
+          - documentation/features/usage.md
+          - documentation/features/faiss-vector-store.md
   - Examples:
       - examples/example-retrieval.md
       - examples/example-tool-calling.md
@@ -70,6 +71,8 @@ nav:
           - reference/llmfy_core.embeddings.base_embedding_model.md
           - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
           - reference/llmfy_core.embeddings.openai.openai_embedding.md
+      - llmfy_utis:
+          - reference/llmfy_utils.text_processor.md
       - llmfypipe:
           - reference/llmfypipe.md
       - vector_store:

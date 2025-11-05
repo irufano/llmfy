@@ -46,4 +46,4 @@ embeddings = embedding.encode_batch(
 
 ### Usage
 
-To view usage embedding you can use `llmfy_usage_tracker` [here](/docs/features/usage/). Usually embedding use `input token` only for usage the output token not count.
+To view usage embedding you can use `llmfy_usage_tracker` [here](../../documentation/features/usage.md). Usually embedding use `input token` only for usage the output token not count.
