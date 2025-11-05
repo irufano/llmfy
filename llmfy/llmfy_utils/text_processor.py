@@ -32,11 +32,12 @@ def chunk_text(
     Split text into overlapping chunks.
 
     example:
-    ```
+    ```python
     text = "This is a long text " * 200
     chunks = chunk_text(text=text, chunk_size=100, chunk_overlap=20)
     for text, chunk_id, meta in chunks:
-        print(f"{chunk_id}: {text} \n{meta}\n")
+        print(f"{chunk_id}: {text}")
+        print(f"{meta}")
 
     # OR
 
@@ -44,7 +45,8 @@ def chunk_text(
     data = (text, {"source": "doc1.pdf", "page": 2})
     chunks = chunk_text(text=data, chunk_size=100, chunk_overlap=20)
     for text, chunk_id, meta in chunks:
-        print(f"{chunk_id}: {text} \n{meta}\n")
+        print(f"{chunk_id}: {text}")
+        print(f"{meta}")
     ```
 
     Args:
@@ -77,5 +79,69 @@ def chunk_text(
             chunk_id = f"chunk_{index}"
             chunks.append((chunk_text, chunk_id, metadata))
             index += 1
+
+    return chunks
+
+
+def chunk_markdown_by_header(
+    markdown_text: Union[str, Tuple[str, Any]],
+    header_level: int | None = None,
+) -> List[Dict[str, Any]]:
+    """
+    Split Markdown into chunks based on header levels.
+    The content of each chunk includes the header itself.
+    Optionally attaches metadata if provided.
+
+    Args:
+        markdown_text: str or (str, metadata_dict)
+            Example: ("# Title", {"source": "doc1.md", "page": 2})
+        header_level: int | None
+            - None: include all headers (#-######)
+            - int: include headers up to that level
+
+    Returns:
+        chunks (List[dict]): Each chunk with keys:
+            - 'header': the header text (without #)
+            - 'level': header level (1-6)
+            - 'content': header + content text
+            - 'metadata': optional metadata if provided
+    """
+    # Unpack metadata if provided
+    if isinstance(markdown_text, tuple):
+        text, metadata = markdown_text
+        if not isinstance(metadata, dict):
+            metadata = {"meta": metadata}
+    else:
+        text = markdown_text
+        metadata = None
+
+    # Choose regex based on header level
+    if header_level is None:
+        pattern = r"^(#{1,6}) (.+)$"  # all headers
+    else:
+        pattern = rf"^(#{{1,{header_level}}}) (.+)$"  # up to header_level
+
+    matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
+    chunks: List[Dict[str, Any]] = []
+
+    for i, match in enumerate(matches):
+        hashes = match.group(1)
+        header_text = match.group(2).strip()
+        level = len(hashes)
+
+        start = match.start()  # include header in content
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        content = text[start:end].strip()
+
+        chunk = {
+            "header": header_text,
+            "level": level,
+            "content": content,
+        }
+
+        if metadata:
+            chunk["metadata"] = metadata
+
+        chunks.append(chunk)
 
     return chunks
