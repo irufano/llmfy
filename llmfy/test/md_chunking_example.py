@@ -1,6 +1,7 @@
-from llmfy.llmfy_utils.text_processor import chunk_markdown_by_header
 
 # Example Markdown
+from llmfy import chunk_markdown_by_header
+
 md_text = """
 # Main Title
 
@@ -41,22 +42,22 @@ More info here.
 print("🔹 All headers (default):")
 chunks_all = chunk_markdown_by_header(md_text)
 for c in chunks_all:
-    print(f"\nLevel {c['level']} - {c['header']}")
-    print(c["content"])
+    print(f"\nLevel {c.level} - {c.header}")
+    print(c.content)
     print("-" * 60)
 
 print("\n🔹 Only up to level 2:")
 chunks_lvl2 = chunk_markdown_by_header(md_text, header_level=2)
 for c in chunks_lvl2:
-    print(f"\nLevel {c['level']} - {c['header']}")
-    print(c["content"])
+    print(f"\nLevel {c.level} - {c.header}")
+    print(c.content)
     print("-" * 60)
 
 
 print("\n🔹 Meta data:")
 chunks_lvl2 = chunk_markdown_by_header(md_w_data, header_level=2)
 for c in chunks_lvl2:
-    print(f"Level {c['level']} - {c['header']}")
-    print(f"Metadata: {c.get('metadata')}")
-    print(f"Content:\n{c['content']}")
+    print(f"Level {c.level} - {c.header}")
+    print(f"Metadata: {c.metadata}")
+    print(f"Content:\n{c.content}")
     print("-" * 60)

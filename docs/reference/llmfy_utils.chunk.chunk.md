@@ -1,6 +1,6 @@
-# text_processor
+# chunk
 
-::: llmfy.llmfy_utils.text_processor
+::: llmfy.llmfy_utils.chunk.chunk
     options:
       show_source: true
       heading_level: 2

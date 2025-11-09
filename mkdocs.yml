@@ -71,8 +71,9 @@ nav:
           - reference/llmfy_core.embeddings.base_embedding_model.md
           - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
           - reference/llmfy_core.embeddings.openai.openai_embedding.md
-      - llmfy_utis:
-          - reference/llmfy_utils.text_processor.md
+      - llmfy_utils:
+          - reference/llmfy_utils.chunk.chunk.md
+          - reference/llmfy_utils.text_preprocessing.text_preprocessing.md
       - llmfypipe:
           - reference/llmfypipe.md
       - vector_store:

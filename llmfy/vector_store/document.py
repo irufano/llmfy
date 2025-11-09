@@ -8,5 +8,5 @@ class Document(BaseModel):
     text: str
 
     model_config = {
-        "extra": "allow"  # Allow extra fields to be set dynamically
+        "extra": "allow"  # Allow extra fields to be set dynamically (for metadata needs)
     }

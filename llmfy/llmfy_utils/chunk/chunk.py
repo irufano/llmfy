@@ -1,33 +1,15 @@
 import re
-import unicodedata
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Tuple, Union
 
-
-def clean_text_for_embedding(text: str) -> str:
-    """
-    Light cleaning for embeddings/vector search
-
-    Args:
-        text (str): text to clean.
-
-    Returns:
-        str: cleaned text
-    """
-    # Normalize Unicode (e.g., full-width chars → normal width)
-    text = unicodedata.normalize("NFKC", text)
-
-    # Collapse multiple spaces/newlines into one space
-    text = re.sub(r"\s+", " ", text)
-
-    # Trim leading/trailing whitespace
-    return text.strip()
+from llmfy.llmfy_utils.chunk.result.base_chunk_result import BaseChunkResult
+from llmfy.llmfy_utils.chunk.result.md_chunk_result import MarkdownChunkResult
 
 
 def chunk_text(
     text: Union[str, Tuple[str, Any]],
     chunk_size: int = 800,
     chunk_overlap: int = 100,
-) -> List[Tuple[str, str, Optional[Dict[str, Any]]]]:
+) -> List[BaseChunkResult]:
     """
     Split text into overlapping chunks.
 
@@ -35,18 +17,18 @@ def chunk_text(
     ```python
     text = "This is a long text " * 200
     chunks = chunk_text(text=text, chunk_size=100, chunk_overlap=20)
-    for text, chunk_id, meta in chunks:
-        print(f"{chunk_id}: {text}")
-        print(f"{meta}")
+    for chunk in chunks:
+        print(f"{chunk.id}: {chunk.content}")
+        print(f"{chunk.metadata}")
 
     # OR
 
     text = "This is a long text " * 200
     data = (text, {"source": "doc1.pdf", "page": 2})
     chunks = chunk_text(text=data, chunk_size=100, chunk_overlap=20)
-    for text, chunk_id, meta in chunks:
-        print(f"{chunk_id}: {text}")
-        print(f"{meta}")
+    for chunk in chunks:
+        print(f"{chunk.id}: {chunk.content}")
+        print(f"{chunk.metadata}")
     ```
 
     Args:
@@ -55,29 +37,35 @@ def chunk_text(
         chunk_overlap (int, optional): Defaults to 100.
 
     Returns:
-        List[Tuple[str, str, dict | None]]: (chunk_text, chunk_id, metadata)
+        chunks (List[BaseChunkResult]): Each chunk property:
+            - 'id': chunk id
+            - 'content': chunk content
+            - 'metadata': optional metadata if provided
     """
 
-    chunks: List[Tuple[str, str, Optional[Dict[str, Any]]]] = []
+    chunks: List[BaseChunkResult] = []
 
     # Extract text and metadata
     if isinstance(text, tuple):
         raw_text, metadata = text
-        if not isinstance(metadata, dict):
-            metadata = {"meta": metadata}
+        metadata = metadata if isinstance(metadata, dict) else {"meta": metadata}
     else:
-        raw_text, metadata = text, None
+        raw_text, metadata = text, {}
 
     words = raw_text.split()
     index = 0
 
     for i in range(0, len(words), chunk_size - chunk_overlap):
         chunk_words = words[i : i + chunk_size]
-        chunk_text = " ".join(chunk_words)
+        chunk_content = " ".join(chunk_words).strip()
 
-        if len(chunk_text.strip()) > 100:  # Only substantial chunks
-            chunk_id = f"chunk_{index}"
-            chunks.append((chunk_text, chunk_id, metadata))
+        if len(chunk_content) > 100:  # Only substantial chunks
+            chunk = BaseChunkResult(
+                id=f"chunk_{index}",
+                content=chunk_content,
+                metadata=metadata,
+            )
+            chunks.append(chunk)
             index += 1
 
     return chunks
@@ -86,7 +74,7 @@ def chunk_text(
 def chunk_markdown_by_header(
     markdown_text: Union[str, Tuple[str, Any]],
     header_level: int | None = None,
-) -> List[Dict[str, Any]]:
+) -> List[MarkdownChunkResult]:
     """
     Split Markdown into chunks based on header levels.
     The content of each chunk includes the header itself.
@@ -100,48 +88,48 @@ def chunk_markdown_by_header(
             - int: include headers up to that level
 
     Returns:
-        chunks (List[dict]): Each chunk with keys:
+        chunks (List[MarkdownChunkResult]): Each chunk property:
+            - 'id': chunk id
             - 'header': the header text (without #)
             - 'level': header level (1-6)
             - 'content': header + content text
             - 'metadata': optional metadata if provided
     """
     # Unpack metadata if provided
+
+    # Unpack metadata if provided
     if isinstance(markdown_text, tuple):
         text, metadata = markdown_text
-        if not isinstance(metadata, dict):
-            metadata = {"meta": metadata}
+        base_metadata = metadata if isinstance(metadata, dict) else {"meta": metadata}
     else:
         text = markdown_text
-        metadata = None
+        base_metadata = {}
 
-    # Choose regex based on header level
-    if header_level is None:
-        pattern = r"^(#{1,6}) (.+)$"  # all headers
-    else:
-        pattern = rf"^(#{{1,{header_level}}}) (.+)$"  # up to header_level
-
+    # Regex for headers
+    pattern = (
+        r"^(#{1,6}) (.+)$"
+        if header_level is None
+        else rf"^(#{{1,{header_level}}}) (.+)$"
+    )
     matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
-    chunks: List[Dict[str, Any]] = []
+    chunks: List[MarkdownChunkResult] = []
 
     for i, match in enumerate(matches):
         hashes = match.group(1)
         header_text = match.group(2).strip()
         level = len(hashes)
 
-        start = match.start()  # include header in content
+        start = match.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         content = text[start:end].strip()
 
-        chunk = {
-            "header": header_text,
-            "level": level,
-            "content": content,
-        }
-
-        if metadata:
-            chunk["metadata"] = metadata
-
+        chunk = MarkdownChunkResult(
+            id=f"chunk_{i}",
+            header=header_text,
+            level=level,
+            content=content,
+            metadata=base_metadata,
+        )
         chunks.append(chunk)
 
     return chunks

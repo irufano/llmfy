@@ -1,4 +1,6 @@
-from llmfy.llmfy_utils.text_processor import chunk_text
+
+
+from llmfy import chunk_text
 
 text = """Artificial intelligence (AI) is one of the most transformative technologies of our time. It refers to computer systems that can perform tasks traditionally requiring human intelligence, such as learning, reasoning, and problem-solving. From voice assistants to recommendation engines, AI has become deeply embedded in our daily lives.
 
@@ -10,8 +12,8 @@ Looking ahead, AI will likely continue shaping the future in profound ways. Adva
 """
 
 chunks = chunk_text(text=text, chunk_size=100, chunk_overlap=20)
-for text, chunk_id, meta in chunks:
-    print(f"{chunk_id}: {text} \n{meta}\n")
+for chunk in chunks:
+    print(f"{chunk.id}: {chunk.content} \n{chunk.metadata}\n")
 
 
 # OR 
@@ -28,5 +30,5 @@ Looking ahead, AI will likely continue shaping the future in profound ways. Adva
 data = (text, {"source": "doc1.pdf", "page": 2})
 
 chunks = chunk_text(text=data, chunk_size=100, chunk_overlap=20)
-for text, chunk_id, meta in chunks:
-    print(f"{chunk_id}: {text} \n{meta}\n")
+for chunk in chunks:
+    print(f"{chunk.id}: {chunk.content} \n{chunk.metadata}\n")

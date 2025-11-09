@@ -33,8 +33,8 @@ Looking ahead, AI will likely continue shaping the future in profound ways. Adva
 """
 
 chunks = chunk_text(text=text, chunk_size=100, chunk_overlap=20)
-for text, chunk_id, meta in chunks:
-    print(f"{chunk_id}: {text} \n{meta}\n")
+for chunk in chunks:
+    print(f"{chunk.id}: {chunk.content} \n{chunk.metadata}\n")
 ```
 
 output:
@@ -64,8 +64,8 @@ Looking ahead, AI will likely continue shaping the future in profound ways. Adva
 data = (text, {"source": "doc1.pdf", "page": 2})
 
 chunks = chunk_text(text=data, chunk_size=100, chunk_overlap=20)
-for text, chunk_id, meta in chunks:
-    print(f"{chunk_id}: {text} \n{meta}\n")
+for chunk in chunks:
+    print(f"{chunk.id}: {chunk.content} \n{chunk.metadata}\n")
 ```
 
 output:
@@ -115,15 +115,15 @@ Even more nested content.
 print("🔹 All headers (default):")
 chunks_all = chunk_markdown_by_header(md_text)
 for c in chunks_all:
-    print(f"\nLevel {c['level']} - {c['header']}")
-    print(c["content"])
+    print(f"\nLevel {c.level} - {c.header}")
+    print(c.content)
     print("-" * 60)
 
 print("\n🔹 Only up to level 2:")
 chunks_lvl2 = chunk_markdown_by_header(md_text, header_level=2)
 for c in chunks_lvl2:
-    print(f"\nLevel {c['level']} - {c['header']}")
-    print(c["content"])
+    print(f"\nLevel {c.level} - {c.header}")
+    print(c.content)
     print("-" * 60)
 ```
 
@@ -211,11 +211,10 @@ More info here.
 print("\n🔹 Meta data:")
 chunks_lvl2 = chunk_markdown_by_header(md_w_data, header_level=2)
 for c in chunks_lvl2:
-    print(f"Level {c['level']} - {c['header']}")
-    print(f"Metadata: {c.get('metadata')}")
-    print(f"Content:\n{c['content']}")
+    print(f"Level {c.level} - {c.header}")
+    print(f"Metadata: {c.metadata}")
+    print(f"Content:\n{c.content}")
     print("-" * 60)
-
 ```
 
 Output:

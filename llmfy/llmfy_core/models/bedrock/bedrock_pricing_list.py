@@ -138,7 +138,7 @@ BEDROCK_PRICING = {
             "output": 0,
         },
     },
-    "amazon.titan-embed-text-v2": {
+    "amazon.titan-embed-text-v2:0": {
         "us-east-1": {
             "region": "US East (N. Virginia)",
             "input": 0.00002,
