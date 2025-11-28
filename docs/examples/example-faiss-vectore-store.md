@@ -301,6 +301,13 @@ def get_index_buffers(
         )
         # then add to redis
         add_to_redis(r, prefix, buffers)
+
+        # RESET ALL BUFFERS after Redis write
+        # The BytesIO objects returned from S3 have their file pointers at the end of the stream after being read, causing the EOFError.
+        # After downloading from S3, we call `add_to_redis()` which reads all the buffers to store them in Redis. This moves all the file pointers to the end. so it needs reset all buffers.
+        for buf in buffers.values():
+            buf.seek(0)
+
         print("Buffers get from s3 and added to redis.")
         return buffers
 
