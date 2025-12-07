@@ -9,7 +9,6 @@ from llmfy import (
     BedrockConfig,
     BedrockModel,
     LLMfy,
-    LLMfyPipe,
     Message,
     Role,
     Tool,
@@ -17,12 +16,13 @@ from llmfy import (
     WorkflowState,
     tools_node,
 )
+from llmfy.flow_engine.llmfy_pipe import LLMfyPipe
 
 load_dotenv()
 
 
 # Test flow
-async def llmfypipe_example():
+async def flow_example():
     # llm
     # model="anthropic.claude-3-haiku-20240307-v1:0"
     model="us.anthropic.claude-3-5-haiku-20241022-v1:0"
@@ -34,7 +34,7 @@ async def llmfypipe_example():
     )
 
     # Initialize framework
-    chat = LLMfy(llm, system_message="You are a helpful assistant.")
+    llmfy = LLMfy(llm, system_message="You are a helpful assistant.")
 
     # Define a sample tool
     @Tool()
@@ -48,7 +48,7 @@ async def llmfypipe_example():
     tools = [get_current_weather, get_current_time]
 
     # Register tool
-    chat.register_tool(tools)
+    llmfy.register_tool(tools)
 
     # Register to ToolRegistry
     tool_registry = ToolRegistry(tools, llm)
@@ -62,7 +62,7 @@ async def llmfypipe_example():
 
     async def main_agent(state: WorkflowState) -> dict:
         messages = state.get("messages", [])
-        response = chat.chat(messages)
+        response = llmfy.chat(messages)
         messages.append(response.messages[-1])
         print(f"\n--- \n{json.dumps([msg.model_dump() for msg in messages])} \n")
         return {"messages": messages, "system": response.messages[0]}
@@ -90,6 +90,8 @@ async def llmfypipe_example():
     workflow.add_conditional_edge("main_agent", ["tools", END], should_continue)
     workflow.add_edge("tools", "main_agent")
 
+    print(workflow.get_diagram_url())
+
     async def call_agent(question: str):
         try:
             res = await workflow.execute(
@@ -116,7 +118,7 @@ async def llmfypipe_example():
 
 
 async def run():
-    await llmfypipe_example()
+    await flow_example()
 
 
 asyncio.run(run())

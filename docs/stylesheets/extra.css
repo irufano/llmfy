@@ -1,14 +1,35 @@
 :root > * {
   --md-primary-fg-color: #16a085;
-  --md-primary-fg-color--light: #27AE60;
-  --md-primary-fg-color--dark: #27AE60;
+  --md-accent-fg-color: #15cfa9;
+  --md-primary-fg-color--light: #16a085;
+  --md-primary-fg-color--dark: #16a085;
 }
 
 /* Apply gradient to header */
 .md-header {
-  background: linear-gradient(90deg, #16a085, #016B5F);
+  background: linear-gradient(90deg, #12836d, #023731);
 }
 
 .md-tabs {
-  background: linear-gradient(90deg, #16a085, #016B5F);
+  background: linear-gradient(90deg, #12836d, #023731);
 }
+
+[data-md-color-scheme="slate"] {
+  .md-header {
+    background: linear-gradient(90deg, #1f2129, #01312b);
+  }
+
+  .md-tabs {
+    background: linear-gradient(90deg, #1f2129, #01312b);
+  }
+
+  .md-header {
+    box-shadow: none;
+    border-bottom: 2px solid #2c2f38;
+  }
+}
+
+/* Active menu */
+/* .md-nav__item .md-nav__link--active {
+  color: red;
+} */

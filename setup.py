@@ -41,5 +41,8 @@ setup(
         "boto3": ["boto3"],
         "numpy": ["numpy"],
         "faiss-cpu": ["faiss-cpu"],
+        "typing_extensions": ["typing_extensions"],
+        "redis": ["redis"],
+        "SQLAlchemy": ["SQLAlchemy"],
     },
 )

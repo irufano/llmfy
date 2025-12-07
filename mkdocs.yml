@@ -46,6 +46,7 @@ nav:
       - examples/example-embedding.md
       - examples/example-chunking.md
       - examples/example-faiss-vectore-store.md
+      - examples/example-flowengine-agent-basic.md
   - API Reference:
       - llmfy_core:
           - reference/llmfy_core.llmfy.md
@@ -74,8 +75,20 @@ nav:
       - llmfy_utils:
           - reference/llmfy_utils.chunk.chunk.md
           - reference/llmfy_utils.text_preprocessing.text_preprocessing.md
-      - llmfypipe:
-          - reference/llmfypipe.md
+      - flow_engine:
+          - reference/flow_engine.md
+          - reference/flow_engine.checkpointer.base_checkpointer.md
+          - reference/flow_engine.checkpointer.in_memory_checkpointer.md
+          - reference/flow_engine.checkpointer.redis_checkpointer.md
+          - reference/flow_engine.checkpointer.sql_checkpointer.md
+          - reference/flow_engine.edge.edge.md
+          - reference/flow_engine.node.node.md
+          - reference/flow_engine.helper.messages_trimmer.messages_trimmer.md
+          - reference/flow_engine.helper.tools_node.tools_node.md
+          - reference/flow_engine.stream.flow_engine_stream_response.md
+          - reference/flow_engine.stream.node_stream_response.md
+          - reference/flow_engine.stream.tool_node_stream_response.md
+          - reference/flow_engine.visualizer.visualizer.md
       - vector_store:
           - reference/vector_store.document.md
           - reference/vector_store.faiss_index.faiss_index.md
