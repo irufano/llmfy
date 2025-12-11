@@ -1,6 +1,7 @@
 from typing import Callable, List, Literal, Optional, Tuple, Union
 
-from llmfy import Message, Role
+from llmfy.llmfy_core.messages.message import Message
+from llmfy.llmfy_core.messages.role import Role
 
 
 def count_tokens_approximately(messages: List[Message]) -> int:
