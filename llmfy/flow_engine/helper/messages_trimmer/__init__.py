@@ -1,3 +1,11 @@
-from .messages_trimmer import trim_messages, count_tokens_approximately
+from .messages_trimmer import (
+    count_tokens_approximately,
+    safe_trim_messages,
+    trim_messages,
+)
 
-__all__ = ["trim_messages", "count_tokens_approximately"]
+__all__ = [
+    "trim_messages",
+    "safe_trim_messages",
+    "count_tokens_approximately",
+]

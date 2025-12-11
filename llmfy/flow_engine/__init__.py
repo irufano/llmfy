@@ -8,6 +8,7 @@ from .edge import Edge
 from .flow_engine import FlowEngine
 from .helper import (
     count_tokens_approximately,
+    safe_trim_messages,
     tools_node,
     tools_stream_node,
     trim_messages,
@@ -41,6 +42,7 @@ __all__ = [
     "tools_node",
     "tools_stream_node",
     "trim_messages",
+    "safe_trim_messages",
     "count_tokens_approximately",
     "FlowEngineStreamResponse",
     "FlowEngineStreamType",
