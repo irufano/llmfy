@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -47,9 +48,14 @@ class Message(BaseModel):
     request_call_id: Optional[str] = None  # For Message with `tool` role
     """[`tool` role ONLY] Tool call id request."""
 
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        description="Message timestamp in ISO 8601. Default UTC",
+    )
+    """Message timestamp in ISO 8601. Default UTC"""
+
     # def __init__(self, **kwargs):
     def model_post_init(self, __context) -> None:
-
         # Ensure tool_results is only used when role is "tool"
         if self.tool_results is not None and self.role != Role.TOOL:
             raise ValueError("tool_results can only be set when role is 'tool'.")
