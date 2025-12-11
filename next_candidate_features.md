@@ -10,3 +10,10 @@ bedrock:
 https://docs.aws.amazon.com/bedrock/latest/userguide/count-tokens.html
 openai:
 https://github.com/openai/tiktoken
+
+## Enhance param description parsing on Tool definitions
+"""{description}
+
+Args:
+    question (str): This must be enhance.
+"""

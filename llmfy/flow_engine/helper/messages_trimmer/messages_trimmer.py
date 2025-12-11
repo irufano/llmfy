@@ -1,6 +1,6 @@
 from typing import Callable, List, Literal, Optional, Tuple, Union
 
-from llmfy.llmfy_core.messages.message import Message
+from llmfy import Message, Role
 
 
 def count_tokens_approximately(messages: List[Message]) -> int:
@@ -135,6 +135,89 @@ def trim_messages(
     return system_messages + working_messages
 
 
+def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
+    """Trim messages but ALWAYS preserve active tool context"""
+    if len(messages) == 1:
+        return messages
+
+    # Step 1: FORWARD pass - collect all tool_call_ids and their results
+    tool_call_ids = set()  # All tool calls made
+    resolved_tool_ids = set()  # Tool calls that have results
+    last_tool_call_idx = None  # Last index tool calling in messages
+    last_message_is_tool_result = False
+
+    for i, msg in enumerate(messages):
+        # Track tool calls (assistant messages)
+        if msg.role == Role.ASSISTANT and msg.tool_calls:
+            last_tool_call_idx = i
+            for tc in msg.tool_calls:
+                tool_call_ids.add(tc.tool_call_id)
+
+        # Track tool results
+        if msg.role == Role.TOOL:
+            if msg.tool_call_id:
+                resolved_tool_ids.add(msg.tool_call_id)
+
+    # Check if last message is a tool result
+    if messages and messages[-1].role == Role.TOOL:
+        last_message_is_tool_result = True
+
+    # Step 2: Calculate pending tools
+    pending_tool_ids = tool_call_ids - resolved_tool_ids
+
+    # Step 3: If there are pending tools OR last message is tool result, protect the tool context
+    # This is the KEY FIX: Even if tools are "resolved", if we just got a tool result,
+    # we need to preserve the context for the orchestrator to process
+    if (
+        pending_tool_ids and last_tool_call_idx is not None
+    ) or last_message_is_tool_result:
+        # If last message is tool result, we must preserve from the assistant message that called it
+        if last_message_is_tool_result and last_tool_call_idx is not None:
+            protected_messages = messages[last_tool_call_idx:]
+            trimmable_messages = messages[:last_tool_call_idx]
+        else:
+            # Pending tools case
+            protected_messages = messages[last_tool_call_idx:]
+            trimmable_messages = messages[:last_tool_call_idx]
+
+        if not trimmable_messages:
+            return messages
+
+        try:
+            trimmed = trim_messages(
+                trimmable_messages,
+                strategy="last",
+                max_tokens=max_tokens // 2,
+                start_on="user",
+                end_on=("user", "tool"),
+            )
+
+            if not isinstance(trimmed, list):
+                trimmed = []
+
+            return trimmed + protected_messages
+
+        except Exception as e:
+            print(f"Warning: trim_messages failed during tool cycle: {e}")
+            return messages
+
+    # Step 4: No active tool cycle AND last message is NOT a tool result, safe to trim normally
+    try:
+        trimmed = trim_messages(
+            messages,
+            strategy="last",
+            max_tokens=max_tokens,
+            start_on="user",
+            end_on=("user", "tool"),
+        )
+
+        return trimmed
+
+    except Exception as e:
+        print(f"Warning: trim_messages failed: {e}")
+        return messages[-10:] if len(messages) > 10 else messages
+
+
 def _trim_from_end(
     messages: List[Message],
     token_counter: Callable,
@@ -199,15 +282,25 @@ def _apply_start_constraint(
         if role in allowed_roles:
             return messages[i:]
 
-    # If no message found with allowed role, return empty list
-    return []
+    # Fallback: Find the LAST user message and include everything after it
+    # This ensures we have the user's question + all tool executions
+    for i in range(len(messages) - 1, -1, -1):
+        role = get_message_role(messages[i])
+        if role == "user":
+            return messages[i:]
+
+    # Last resort: Keep last 5 messages (better for tool-heavy flows)
+    return messages[-5:] if len(messages) >= 5 else messages
 
 
 def _apply_end_constraint(
-    messages: List[Message], end_on: Union[str, Tuple[str, ...]]
+    messages: List[Message],
+    end_on: Union[str, Tuple[str, ...]],
 ) -> List[Message]:
     """
     Ensure messages end with one of the specified roles.
+
+    Fallback: Find last `user` or `tool` message (messages that expect LLM response)
     """
     if not messages:
         return []
@@ -222,5 +315,13 @@ def _apply_end_constraint(
         if role in allowed_roles:
             return messages[: i + 1]
 
-    # If no message found with allowed role, return empty list
-    return []
+    # Fallback: Find last user or tool message (messages that expect LLM response)
+    for i in range(len(messages) - 1, -1, -1):
+        role = get_message_role(messages[i])
+        if role in ("user", "tool"):
+            return messages[: i + 1]
+
+    # Fallback: Keep only the most recent message
+    # This prevents losing all context in tool-heavy conversations
+    # This ensures we don't return empty while staying within token budget
+    return messages[-1:] if messages else []
