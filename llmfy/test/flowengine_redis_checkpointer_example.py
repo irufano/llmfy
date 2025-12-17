@@ -46,7 +46,7 @@ class AppState(TypedDict):
 
 
 async def example_automatic_continuation():
-    """Example showing automatic continuation when using same thread_id."""
+    """Example showing automatic continuation when using same session_id."""
     print("\n" + "=" * 60)
     print("Example 1: Automatic Continuation with Same Thread ID")
     print("=" * 60 + "\n")
@@ -100,35 +100,35 @@ async def example_automatic_continuation():
 
     # First invocation - starts fresh
     print("🚀 First invocation (fresh start):")
-    thread_id = "user-123"
+    session_id = "user-123"
     initial_state = {"messages": [], "status": "started", "counter": 0}
 
-    final_state = await flow.invoke(initial_state, thread_id=thread_id)
+    final_state = await flow.invoke(initial_state, session_id=session_id)
     print("\n✅ First run completed:")
     print(f"   Messages: {final_state['messages']}")
     print(f"   Counter: {final_state['counter']}")
     print(f"   Status: {final_state['status']}")
 
-    # Second invocation - continues from checkpoint with same thread_id
-    print("\n\n🔄 Second invocation (same thread_id - continues from checkpoint):")
+    # Second invocation - continues from checkpoint with same session_id
+    print("\n\n🔄 Second invocation (same session_id - continues from checkpoint):")
     initial_state = {
         "messages": ["Starting continuation"],
         "status": "continuing",
         "counter": 100,  # This will be added/updated based on reducer
     }
 
-    final_state = await flow.invoke(initial_state, thread_id=thread_id)
+    final_state = await flow.invoke(initial_state, session_id=session_id)
     print("\n✅ Second run completed:")
     print(f"   Messages: {final_state['messages']}")
     print(f"   Counter: {final_state['counter']}")
     print(f"   Status: {final_state['status']}")
 
-    # Third invocation - different thread_id (fresh start)
-    print("\n\n🆕 Third invocation (different thread_id - fresh start):")
+    # Third invocation - different session_id (fresh start)
+    print("\n\n🆕 Third invocation (different session_id - fresh start):")
     new_thread_id = "user-456"
     initial_state = {"messages": [], "status": "fresh_start", "counter": 0}
 
-    final_state = await flow.invoke(initial_state, thread_id=new_thread_id)
+    final_state = await flow.invoke(initial_state, session_id=new_thread_id)
     print("\n✅ Third run completed:")
     print(f"   Messages: {final_state['messages']}")
     print(f"   Counter: {final_state['counter']}")
@@ -165,12 +165,12 @@ async def example_reducer_behavior():
     flow.add_edge("process", END)
     flow.build()
 
-    thread_id = "demo-reducers"
+    session_id = "demo-reducers"
 
     # First run
     print("Run 1: Initial state")
     state1 = await flow.invoke(
-        {"messages": [], "status": "start", "counter": 0}, thread_id=thread_id
+        {"messages": [], "status": "start", "counter": 0}, session_id=session_id
     )
     print(f"  Messages (with reducer): {state1['messages']}")
     print(f"  Status (no reducer): {state1['status']}")
@@ -180,7 +180,7 @@ async def example_reducer_behavior():
     print("\nRun 2: Continue with updates")
     state2 = await flow.invoke(
         {"messages": ["New message"], "status": "updated", "counter": 50},
-        thread_id=thread_id,
+        session_id=session_id,
     )
     print(f"  Messages (APPENDED with reducer): {state2['messages']}")
     print(f"  Status (REPLACED, no reducer): {state2['status']}")
@@ -188,7 +188,7 @@ async def example_reducer_behavior():
 
     # Third run - with empty updates
     print("\nRun 3: Continue without updates")
-    state3 = await flow.invoke(None, thread_id=thread_id)
+    state3 = await flow.invoke(None, session_id=session_id)
     print(f"  Messages: {state3['messages']}")
     print(f"  Status: {state3['status']}")
     print(f"  Counter: {state3['counter']}")
@@ -224,28 +224,28 @@ async def example_reset_thread():
     flow.add_edge("process", END)
     flow.build()
 
-    thread_id = "user-reset-demo"
+    session_id = "user-reset-demo"
 
     # First run
     print("Run 1: First execution")
     state1 = await flow.invoke(
-        {"messages": [], "status": "start", "counter": 0}, thread_id=thread_id
+        {"messages": [], "status": "start", "counter": 0}, session_id=session_id
     )
     print(f"  Counter: {state1['counter']}, Status: {state1['status']}")
 
     # Continue (would add to checkpoint)
     print("\nRun 2: Continue from checkpoint")
-    state2 = await flow.invoke(None, thread_id=thread_id)
+    state2 = await flow.invoke(None, session_id=session_id)
     print(f"  Counter: {state2['counter']}, Status: {state2['status']}")
 
     # Reset the thread
     print("\n🔄 Resetting thread...")
-    await flow.reset_thread(thread_id)
+    await flow.reset_session(session_id)
 
     # After reset, starts fresh
     print("\nRun 3: After reset (fresh start)")
     state3 = await flow.invoke(
-        {"messages": [], "status": "fresh", "counter": 0}, thread_id=thread_id
+        {"messages": [], "status": "fresh", "counter": 0}, session_id=session_id
     )
     print(f"  Counter: {state3['counter']}, Status: {state3['status']}")
 
@@ -280,34 +280,34 @@ async def example_check_state():
     flow.add_edge("process", END)
     flow.build()
 
-    thread_id = "check-state-demo"
+    session_id = "check-state-demo"
 
     # Check state before any execution
     print("Checking state before execution...")
-    state = await flow.get_state(thread_id)
+    state = await flow.get_state(session_id)
     print(f"  State: {state}")
 
     # First run
     print("\nRun 1: First execution")
     await flow.invoke(
-        {"messages": [], "status": "start", "counter": 0}, thread_id=thread_id
+        {"messages": [], "status": "start", "counter": 0}, session_id=session_id
     )
 
     # Check state after execution
     print("\nChecking state after execution...")
-    state = await flow.get_state(thread_id)
+    state = await flow.get_state(session_id)
     print(f"  State: {state}")
 
     # Check if we should continue or start fresh
     if state and state.get("status") == "done":
         print("\n✅ Workflow already completed. Starting fresh with reset...")
-        await flow.reset_thread(thread_id)
+        await flow.reset_session(session_id)
         await flow.invoke(
-            {"messages": [], "status": "restart", "counter": 0}, thread_id=thread_id
+            {"messages": [], "status": "restart", "counter": 0}, session_id=session_id
         )
     else:
         print("\n🔄 Continuing from checkpoint...")
-        await flow.invoke(None, thread_id=thread_id)
+        await flow.invoke(None, session_id=session_id)
 
 
 # ============================================================================
@@ -349,21 +349,21 @@ async def example_multistep_updates():
     flow.add_edge("step3", END)
     flow.build()
 
-    thread_id = "multistep-demo"
+    session_id = "multistep-demo"
 
     # Execute in parts with different status updates
     print("Execution 1: Starting workflow")
     state = await flow.invoke(
-        {"messages": [], "status": "initializing", "counter": 0}, thread_id=thread_id
+        {"messages": [], "status": "initializing", "counter": 0}, session_id=session_id
     )
     print(f"  Final: {state}")
 
     print("\nExecution 2: Continue with status update")
-    state = await flow.invoke({"status": "continuing phase 2"}, thread_id=thread_id)
+    state = await flow.invoke({"status": "continuing phase 2"}, session_id=session_id)
     print(f"  Final: {state}")
 
     print("\nExecution 3: Continue with message addition")
-    state = await flow.invoke({"messages": ["Additional info"]}, thread_id=thread_id)
+    state = await flow.invoke({"messages": ["Additional info"]}, session_id=session_id)
     print(f"  Final: {state}")
     print(f"  All messages: {state['messages']}")
 
@@ -427,12 +427,12 @@ async def example_conditional_continuation():
     flow.add_edge("finalize", END)
     flow.build()
 
-    thread_id = "conditional-demo"
+    session_id = "conditional-demo"
 
     # First run with low counter
     print("Run 1: counter=2 (should take LOW path)")
     state = await flow.invoke(
-        {"messages": [], "status": "start", "counter": 2}, thread_id=thread_id
+        {"messages": [], "status": "start", "counter": 2}, session_id=session_id
     )
     print(f"  Result: {state}\n")
 
@@ -440,7 +440,7 @@ async def example_conditional_continuation():
     print("Run 2: Continue (workflow was complete, restarts)")
     state = await flow.invoke(
         {"counter": 7},  # High counter this time
-        thread_id=thread_id,
+        session_id=session_id,
     )
     print(f"  Result: {state}\n")
 
@@ -512,7 +512,7 @@ async def example_complex_state():
 
     print("RUN 1:")
     initial_state = {"messages": [], "metadata": {}}
-    final_state = await flow.invoke(initial_state, thread_id="complex-001")
+    final_state = await flow.invoke(initial_state, session_id="complex-001")
 
     print("Messages in final state:")
     for msg in final_state["messages"]:
@@ -525,7 +525,7 @@ async def example_complex_state():
         {
             "messages": [Message(role=Role.USER, content="Apa kabar?")],
         },
-        thread_id="complex-001",
+        session_id="complex-001",
     )
 
     print("Messages in final state:")

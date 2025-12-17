@@ -150,7 +150,7 @@ async def chat(message: str):
         {
             "messages": [Message(role=Role.USER, content=message)],
         },
-        thread_id="cobalagi",
+        session_id="cobalagi",
     )
     return cast(Message, result["messages"][-1])
 

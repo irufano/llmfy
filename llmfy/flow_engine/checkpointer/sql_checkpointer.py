@@ -70,14 +70,14 @@ if SQLALCHEMY_AVAILABLE:
         __tablename__ = "llmfy_checkpoint"
 
         checkpoint_id = Column(String(255), primary_key=True)
-        thread_id = Column(String(255), nullable=False, index=True)
+        session_id = Column(String(255), nullable=False, index=True)
         timestamp = Column(TimestampMilliseconds, nullable=False)
         node_name = Column(String(255), nullable=False)
         step = Column(Integer, nullable=False)
         state = Column(LongText, nullable=False)
 
         # Composite index for efficient queries
-        __table_args__ = (Index("idx_thread_timestamp", "thread_id", "timestamp"),)
+        __table_args__ = (Index("idx_thread_timestamp", "session_id", "timestamp"),)
 
 else:
     raise LLMfyException(
@@ -182,7 +182,7 @@ class SQLCheckpointer(BaseCheckpointer):
 
         model = CheckpointModel(
             checkpoint_id=checkpoint.metadata.checkpoint_id,
-            thread_id=checkpoint.metadata.thread_id,
+            session_id=checkpoint.metadata.session_id,
             timestamp=checkpoint.metadata.timestamp,
             node_name=checkpoint.metadata.node_name,
             step=checkpoint.metadata.step,
@@ -206,35 +206,35 @@ class SQLCheckpointer(BaseCheckpointer):
 
     async def load(
         self,
-        thread_id: str,
+        session_id: str,
         checkpoint_id: Optional[str] = None,
     ) -> Optional[Checkpoint]:
         """Load a checkpoint from SQL database."""
         await self._ensure_initialized()
 
         if self.is_async:
-            return await self._load_async(thread_id, checkpoint_id)
+            return await self._load_async(session_id, checkpoint_id)
         else:
             # Sync operation - run in executor
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
-                None, self._load_sync, thread_id, checkpoint_id
+                None, self._load_sync, session_id, checkpoint_id
             )
 
     async def _load_async(
-        self, thread_id: str, checkpoint_id: Optional[str]
+        self, session_id: str, checkpoint_id: Optional[str]
     ) -> Optional[Checkpoint]:
         """Helper for async load."""
         async with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
                 stmt = select(CheckpointModel).where(
                     CheckpointModel.checkpoint_id == checkpoint_id,
-                    CheckpointModel.thread_id == thread_id,
+                    CheckpointModel.session_id == session_id,
                 )
             else:
                 stmt = (
                     select(CheckpointModel)
-                    .where(CheckpointModel.thread_id == thread_id)
+                    .where(CheckpointModel.session_id == session_id)
                     .order_by(CheckpointModel.timestamp.desc())
                     .limit(1)
                 )
@@ -246,7 +246,7 @@ class SQLCheckpointer(BaseCheckpointer):
 
     def _load_sync(
         self,
-        thread_id: str,
+        session_id: str,
         checkpoint_id: Optional[str],
     ) -> Optional[Checkpoint]:
         """Helper for sync load."""
@@ -254,12 +254,12 @@ class SQLCheckpointer(BaseCheckpointer):
             if checkpoint_id:
                 stmt = select(CheckpointModel).where(
                     CheckpointModel.checkpoint_id == checkpoint_id,
-                    CheckpointModel.thread_id == thread_id,
+                    CheckpointModel.session_id == session_id,
                 )
             else:
                 stmt = (
                     select(CheckpointModel)
-                    .where(CheckpointModel.thread_id == thread_id)
+                    .where(CheckpointModel.session_id == session_id)
                     .order_by(CheckpointModel.timestamp.desc())
                     .limit(1)
                 )
@@ -269,22 +269,22 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return self._model_to_checkpoint(model) if model else None
 
-    async def list(self, thread_id: str, limit: int = 10) -> List[Checkpoint]:
-        """List checkpoints for a thread."""
+    async def list(self, session_id: str, limit: int = 10) -> List[Checkpoint]:
+        """List checkpoints for a session."""
         await self._ensure_initialized()
 
         if self.is_async:
-            return await self._list_async(thread_id, limit)
+            return await self._list_async(session_id, limit)
         else:
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, self._list_sync, thread_id, limit)
+            return await loop.run_in_executor(None, self._list_sync, session_id, limit)
 
-    async def _list_async(self, thread_id: str, limit: int) -> List[Checkpoint]:
+    async def _list_async(self, session_id: str, limit: int) -> List[Checkpoint]:
         """Helper for async list."""
         async with self.session_maker() as session:  # type: ignore
             stmt = (
                 select(CheckpointModel)
-                .where(CheckpointModel.thread_id == thread_id)
+                .where(CheckpointModel.session_id == session_id)
                 .order_by(CheckpointModel.timestamp.desc())
                 .limit(limit)
             )
@@ -293,12 +293,12 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return [self._model_to_checkpoint(model) for model in models]
 
-    def _list_sync(self, thread_id: str, limit: int) -> List[Checkpoint]:
+    def _list_sync(self, session_id: str, limit: int) -> List[Checkpoint]:
         """Helper for sync list."""
         with self.session_maker() as session:  # type: ignore
             stmt = (
                 select(CheckpointModel)
-                .where(CheckpointModel.thread_id == thread_id)
+                .where(CheckpointModel.session_id == session_id)
                 .order_by(CheckpointModel.timestamp.desc())
                 .limit(limit)
             )
@@ -307,45 +307,45 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return [self._model_to_checkpoint(model) for model in models]
 
-    async def delete(self, thread_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
         """Delete checkpoint(s) from SQL database."""
         await self._ensure_initialized()
 
         if self.is_async:
-            await self._delete_async(thread_id, checkpoint_id)
+            await self._delete_async(session_id, checkpoint_id)
         else:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
-                None, self._delete_sync, thread_id, checkpoint_id
+                None, self._delete_sync, session_id, checkpoint_id
             )
 
-    async def _delete_async(self, thread_id: str, checkpoint_id: Optional[str]):
+    async def _delete_async(self, session_id: str, checkpoint_id: Optional[str]):
         """Helper for async delete."""
         async with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
                 stmt = delete(CheckpointModel).where(
                     CheckpointModel.checkpoint_id == checkpoint_id,
-                    CheckpointModel.thread_id == thread_id,
+                    CheckpointModel.session_id == session_id,
                 )
             else:
                 stmt = delete(CheckpointModel).where(
-                    CheckpointModel.thread_id == thread_id
+                    CheckpointModel.session_id == session_id
                 )
 
             await session.execute(stmt)
             await session.commit()
 
-    def _delete_sync(self, thread_id: str, checkpoint_id: Optional[str]):
+    def _delete_sync(self, session_id: str, checkpoint_id: Optional[str]):
         """Helper for sync delete."""
         with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
                 stmt = delete(CheckpointModel).where(
                     CheckpointModel.checkpoint_id == checkpoint_id,
-                    CheckpointModel.thread_id == thread_id,
+                    CheckpointModel.session_id == session_id,
                 )
             else:
                 stmt = delete(CheckpointModel).where(
-                    CheckpointModel.thread_id == thread_id
+                    CheckpointModel.session_id == session_id
                 )
 
             session.execute(stmt)
@@ -380,7 +380,7 @@ class SQLCheckpointer(BaseCheckpointer):
         """Convert SQLAlchemy model to Checkpoint object."""
         metadata = CheckpointMetadata(
             checkpoint_id=model.checkpoint_id,  # type: ignore
-            thread_id=model.thread_id,  # type: ignore
+            session_id=model.session_id,  # type: ignore
             timestamp=model.timestamp,  # type: ignore
             node_name=model.node_name,  # type: ignore
             step=model.step,  # type: ignore

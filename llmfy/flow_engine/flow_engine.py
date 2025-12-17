@@ -71,7 +71,7 @@ class FlowEngine:
 
         # Checkpointer configuration
         self.checkpointer = checkpointer
-        self._thread_id: Optional[str] = None
+        self._session_id: Optional[str] = None
         self._step_counter: int = 0
         self._checkpoint_enabled: bool = checkpointer is not None
 
@@ -516,7 +516,7 @@ class FlowEngine:
         checkpoint_id = str(uuid.uuid4())
         metadata = CheckpointMetadata(
             checkpoint_id=checkpoint_id,
-            thread_id=self._thread_id,  # type: ignore
+            session_id=self._session_id,  # type: ignore
             timestamp=datetime.now(timezone.utc),
             node_name=node_name,
             step=self._step_counter,
@@ -650,7 +650,7 @@ class FlowEngine:
     async def invoke(
         self,
         apply_state: Optional[Dict[str, Any]] = None,
-        thread_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Execute the workflow starting from START node or continue from last checkpoint.
@@ -658,7 +658,7 @@ class FlowEngine:
         Args:
             apply_state: Optional state updates to apply. If continuing from checkpoint,
                 these are merged with the checkpoint state using reducers.
-            thread_id: Thread ID for checkpoint management. If provided and a checkpoint
+            session_id: Session ID for checkpoint management. If provided and a checkpoint
                 exists, continues from last checkpoint. If None, always starts fresh.
 
         Returns:
@@ -669,17 +669,17 @@ class FlowEngine:
             raise LLMfyException("Build first. Use `your_flow.build()`")
 
         # Set thread ID
-        self._thread_id = thread_id or str(uuid.uuid4())
+        self._session_id = session_id or str(uuid.uuid4())
         self._step_counter = 0
 
         # Initialize state
         if apply_state is None:
             apply_state = {}
 
-        # Try to load from last checkpoint if thread_id is provided
+        # Try to load from last checkpoint if session_id is provided
         loaded_checkpoint = None
-        if thread_id and self.checkpointer:
-            loaded_checkpoint = await self.checkpointer.load(thread_id)
+        if session_id and self.checkpointer:
+            loaded_checkpoint = await self.checkpointer.load(session_id)
 
         if loaded_checkpoint:
             # Continue from checkpoint - deserialize objects
@@ -701,7 +701,7 @@ class FlowEngine:
                 start_edges = [e for e in self.edges if e.source == START]
                 current_node = start_edges[0].targets[0]
         else:
-            # Start fresh - no checkpoint found or no thread_id provided
+            # Start fresh - no checkpoint found or no session_id provided
             self.state = deepcopy(apply_state)
 
             # Find the starting node from START edges
@@ -763,7 +763,7 @@ class FlowEngine:
     async def stream(
         self,
         apply_state: Optional[Dict[str, Any]] = None,
-        thread_id: Optional[str] = None,
+        session_id: Optional[str] = None,
         stream_callback: Optional[Callable] = None,
     ):
         """
@@ -772,7 +772,7 @@ class FlowEngine:
         Args:
             apply_state: Optional state updates to apply. If continuing from checkpoint,
                 these are merged with the checkpoint state using reducers.
-            thread_id: Thread ID for checkpoint management. If provided and a checkpoint
+            session_id: Session ID for checkpoint management. If provided and a checkpoint
                 exists, continues from last checkpoint. If None, always starts fresh.
             stream_callback: Optional callback function for handling streaming chunks (content only)
 
@@ -784,17 +784,17 @@ class FlowEngine:
             raise LLMfyException("Build first. Use `your_flow.build()`")
 
         # Set thread ID
-        self._thread_id = thread_id or str(uuid.uuid4())
+        self._session_id = session_id or str(uuid.uuid4())
         self._step_counter = 0
 
         # Initialize state
         if apply_state is None:
             apply_state = {}
 
-        # Try to load from last checkpoint if thread_id is provided
+        # Try to load from last checkpoint if session_id is provided
         loaded_checkpoint = None
-        if thread_id and self.checkpointer:
-            loaded_checkpoint = await self.checkpointer.load(thread_id)
+        if session_id and self.checkpointer:
+            loaded_checkpoint = await self.checkpointer.load(session_id)
 
         if loaded_checkpoint:
             # Continue from checkpoint - deserialize objects
@@ -816,7 +816,7 @@ class FlowEngine:
                 start_edges = [e for e in self.edges if e.source == START]
                 current_node = start_edges[0].targets[0]
         else:
-            # Start fresh - no checkpoint found or no thread_id provided
+            # Start fresh - no checkpoint found or no session_id provided
             self.state = deepcopy(apply_state)
 
             # Find the starting node from START edges
@@ -902,12 +902,12 @@ class FlowEngine:
                 # Determine next node (now async)
                 current_node = await self._get_next_node(current_node)
 
-    async def get_state(self, thread_id: str) -> Optional[Dict[str, Any]]:
+    async def get_state(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
         Get the current state for a thread from the last checkpoint.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
 
         Returns:
             The state if checkpoint exists, None otherwise
@@ -915,7 +915,7 @@ class FlowEngine:
         if not self.checkpointer:
             raise LLMfyException("No checkpointer configured")
 
-        checkpoint = await self.checkpointer.load(thread_id)
+        checkpoint = await self.checkpointer.load(session_id)
         if checkpoint:
             # Deserialize the state to reconstruct objects
             return self._deserialize_state(checkpoint.state)
@@ -923,14 +923,14 @@ class FlowEngine:
 
     async def list_checkpoints(
         self,
-        thread_id: str,
+        session_id: str,
         limit: int = 10,
     ) -> list[Checkpoint]:
         """
         List checkpoints for a specific thread.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             limit: Maximum number of checkpoints to return
 
         Returns:
@@ -939,18 +939,18 @@ class FlowEngine:
         if not self.checkpointer:
             raise LLMfyException("No checkpointer configured")
 
-        return await self.checkpointer.list(thread_id, limit)
+        return await self.checkpointer.list(session_id, limit)
 
     async def get_checkpoint(
         self,
-        thread_id: str,
+        session_id: str,
         checkpoint_id: Optional[str] = None,
     ) -> Optional[Checkpoint]:
         """
         Get a specific checkpoint or the latest checkpoint for a thread.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Optional checkpoint ID, or None for latest
 
         Returns:
@@ -959,37 +959,37 @@ class FlowEngine:
         if not self.checkpointer:
             raise LLMfyException("No checkpointer configured")
 
-        return await self.checkpointer.load(thread_id, checkpoint_id)
+        return await self.checkpointer.load(session_id, checkpoint_id)
 
     async def delete_checkpoints(
         self,
-        thread_id: str,
+        session_id: str,
         checkpoint_id: Optional[str] = None,
     ):
         """
         Delete checkpoint(s) for a thread.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Optional checkpoint ID to delete, or None to delete all
         """
         if not self.checkpointer:
             raise LLMfyException("No checkpointer configured")
 
-        await self.checkpointer.delete(thread_id, checkpoint_id)
+        await self.checkpointer.delete(session_id, checkpoint_id)
 
-    async def reset_thread(self, thread_id: str):
+    async def reset_session(self, session_id: str):
         """
-        Reset a thread by deleting all its checkpoints.
-        This allows starting fresh with the same thread_id.
+        Reset a session by deleting all its checkpoints.
+        This allows starting fresh with the same session_id.
 
         Args:
-            thread_id: The thread ID to reset
+            session: The session ID to reset
         """
         if not self.checkpointer:
             raise LLMfyException("No checkpointer configured")
 
-        await self.checkpointer.delete(thread_id)
+        await self.checkpointer.delete(session_id)
 
     def details(self) -> str:
         """

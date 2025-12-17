@@ -202,7 +202,7 @@ async def chat(message: str):
         {
             "messages": [Message(role=Role.USER, content=message)],
         },
-        thread_id="cobalagi1",
+        session_id="cobalagi1",
     )
     return stream
 

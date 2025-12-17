@@ -51,9 +51,9 @@ class RedisCheckpointer(BaseCheckpointer):
             )
         return self._client
 
-    def _thread_key(self, thread_id: str) -> str:
-        """Get Redis key for thread's checkpoint list."""
-        return f"{self.prefix}thread:{thread_id}"
+    def _session_key(self, session_id: str) -> str:
+        """Get Redis key for session's checkpoint list."""
+        return f"{self.prefix}session:{session_id}"
 
     def _checkpoint_key(self, checkpoint_id: str) -> str:
         """Get Redis key for specific checkpoint."""
@@ -68,7 +68,7 @@ class RedisCheckpointer(BaseCheckpointer):
         """
         client = await self._get_client()
 
-        thread_id = checkpoint.metadata.thread_id
+        session_id = checkpoint.metadata.session_id
         checkpoint_id = checkpoint.metadata.checkpoint_id
         timestamp = checkpoint.metadata.timestamp.timestamp()
 
@@ -82,20 +82,22 @@ class RedisCheckpointer(BaseCheckpointer):
             await client.expire(checkpoint_key, self.ttl)
 
         # Add to thread's sorted set (sorted by timestamp)
-        thread_key = self._thread_key(thread_id)
-        await client.zadd(thread_key, {checkpoint_id: timestamp})
+        session_key = self._session_key(session_id)
+        await client.zadd(session_key, {checkpoint_id: timestamp})
 
         if self.ttl:
-            await client.expire(thread_key, self.ttl)
+            await client.expire(session_key, self.ttl)
 
     async def load(
-        self, thread_id: str, checkpoint_id: Optional[str] = None
+        self,
+        session_id: str,
+        checkpoint_id: Optional[str] = None,
     ) -> Optional[Checkpoint]:
         """
         Load a checkpoint from Redis.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Specific checkpoint ID, or None for latest
 
         Returns:
@@ -105,8 +107,8 @@ class RedisCheckpointer(BaseCheckpointer):
 
         if checkpoint_id is None:
             # Get latest checkpoint ID from sorted set
-            thread_key = self._thread_key(thread_id)
-            results = await client.zrevrange(thread_key, 0, 0)
+            session_key = self._session_key(session_id)
+            results = await client.zrevrange(session_key, 0, 0)
 
             if not results:
                 return None
@@ -123,12 +125,12 @@ class RedisCheckpointer(BaseCheckpointer):
         checkpoint_dict = json.loads(data)
         return Checkpoint.from_dict(checkpoint_dict)
 
-    async def list(self, thread_id: str, limit: int = 10) -> list[Checkpoint]:
+    async def list(self, session_id: str, limit: int = 10) -> list[Checkpoint]:
         """
         List checkpoints for a thread.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             limit: Maximum number of checkpoints to return
 
         Returns:
@@ -137,7 +139,7 @@ class RedisCheckpointer(BaseCheckpointer):
         client = await self._get_client()
 
         # Get checkpoint IDs from sorted set (newest first)
-        thread_key = self._thread_key(thread_id)
+        thread_key = self._session_key(session_id)
         checkpoint_ids = await client.zrevrange(thread_key, 0, limit - 1)
 
         if not checkpoint_ids:
@@ -146,39 +148,39 @@ class RedisCheckpointer(BaseCheckpointer):
         # Load all checkpoints
         checkpoints = []
         for checkpoint_id in checkpoint_ids:
-            checkpoint = await self.load(thread_id, checkpoint_id)
+            checkpoint = await self.load(session_id, checkpoint_id)
             if checkpoint:
                 checkpoints.append(checkpoint)
 
         return checkpoints
 
-    async def delete(self, thread_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
         """
         Delete checkpoint(s) from Redis.
 
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Specific checkpoint ID, or None to delete all for thread
         """
         client = await self._get_client()
-        thread_key = self._thread_key(thread_id)
+        session_key = self._session_key(session_id)
 
         if checkpoint_id:
             # Delete specific checkpoint
             checkpoint_key = self._checkpoint_key(checkpoint_id)
             await client.delete(checkpoint_key)
-            await client.zrem(thread_key, checkpoint_id)
+            await client.zrem(session_key, checkpoint_id)
         else:
             # Delete all checkpoints for thread
-            checkpoint_ids = await client.zrange(thread_key, 0, -1)
+            checkpoint_ids = await client.zrange(session_key, 0, -1)
 
             if checkpoint_ids:
                 # Delete all checkpoint data
                 checkpoint_keys = [self._checkpoint_key(cid) for cid in checkpoint_ids]
                 await client.delete(*checkpoint_keys)
 
-            # Delete thread sorted set
-            await client.delete(thread_key)
+            # Delete session sorted set
+            await client.delete(session_key)
 
     async def clear_all(self) -> None:
         """Clear all checkpoints from Redis."""

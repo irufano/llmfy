@@ -191,7 +191,7 @@ def build_agent(use_redis: bool = True):
 # Main execution
 # ============================================================================
 
-agent = build_agent(use_redis=False)
+agent = build_agent(use_redis=True)
 
 
 async def chat(message: str):
@@ -199,7 +199,7 @@ async def chat(message: str):
         {
             "messages": [Message(role=Role.USER, content=message)],
         },
-        thread_id="cobalagi1",
+        session_id="cobalagi4",
     )
     return stream
 

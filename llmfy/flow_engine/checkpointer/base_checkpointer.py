@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 class CheckpointMetadata:
     """Metadata for a checkpoint."""
     checkpoint_id: str
-    thread_id: str
+    session_id: str
     timestamp: datetime
     node_name: str
     step: int
@@ -26,7 +26,7 @@ class Checkpoint:
         """Convert checkpoint to dictionary for storage."""
         return {
             "checkpoint_id": self.metadata.checkpoint_id,
-            "thread_id": self.metadata.thread_id,
+            "session_id": self.metadata.session_id,
             "timestamp": self.metadata.timestamp.isoformat(),
             "node_name": self.metadata.node_name,
             "step": self.metadata.step,
@@ -91,7 +91,7 @@ class Checkpoint:
         """Create checkpoint from dictionary."""
         metadata = CheckpointMetadata(
             checkpoint_id=data["checkpoint_id"],
-            thread_id=data["thread_id"],
+            session_id=data["session_id"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
             node_name=data["node_name"],
             step=data["step"]
@@ -115,12 +115,12 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def load(self, thread_id: str, checkpoint_id: Optional[str] = None) -> Optional[Checkpoint]:
+    async def load(self, session_id: str, checkpoint_id: Optional[str] = None) -> Optional[Checkpoint]:
         """
         Load a checkpoint.
         
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Specific checkpoint ID, or None for latest
             
         Returns:
@@ -129,12 +129,12 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def list(self, thread_id: str, limit: int = 10) -> List[Checkpoint]:
+    async def list(self, session_id: str, limit: int = 10) -> List[Checkpoint]:
         """
         List checkpoints for a thread.
         
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             limit: Maximum number of checkpoints to return
             
         Returns:
@@ -143,12 +143,12 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def delete(self, thread_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
         """
         Delete checkpoint(s).
         
         Args:
-            thread_id: The thread ID
+            session_id: The session ID
             checkpoint_id: Specific checkpoint ID, or None to delete all for thread
         """
         pass
