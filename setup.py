@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="llmfy",
-    version="0.4.11",
+    version="0.4.12",
     packages=find_packages(),
     include_package_data=True,
     description="`LLMfy` is a framework for developing applications with large language models (LLMs).",
