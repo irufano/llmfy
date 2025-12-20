@@ -45,6 +45,51 @@ llm = OpenAIModel(
 framework = LLMfy(llm, system_message="You are helpful assistant.")
 ```
 
+### Define System Message
+#### Basic System Message
+```python linenums="1"
+SYSTEM_PROMPT = """
+You are Lemfy a helpful assistant. 
+Yor objective is answer user question.
+"""
+
+llmfy = LLMfy(llm, system_message=SYSTEM_PROMPT)
+```
+
+#### System Message with Placholder Variable
+
+To use varible inside prompt, we can use double curly brackets `{{var_name}}`. When initiate `LLMfy` class don't forget to add `input_variables` according to the placeholder variables that defined in system prompt. And When calling the api we must add `kwargs` or Keyword Argument that reference the placeholder variables.
+
+```python linenums="1"
+info = """
+LLMfy is framework for integrating LLM-powered applications.
+"""
+
+# Define placeholder var with double curly brackets `{{var_name}}`
+SYSTEM_PROMPT = """
+Answer any user questions based on the data:
+{{info}}
+Answer only relevant questions, otherwise, say I don't know.
+"""
+
+llm = BedrockModel(
+    model="amazon.nova-lite-v1:0", 
+    config=BedrockConfig(temperature=0.7),
+)
+
+# Add input variables as defined in system prompt
+framework = LLMfy(
+    llm, 
+    system_message=SYSTEM_PROMPT, 
+    input_variables=["info"],
+)
+
+# When invoke add keyword argument (kwargs) based on placeholder variables. 
+# In this example is `info`
+content = "What is LLMfy?"
+response = framework.invoke(content, info=info)
+```
+
 ### Define tools
 ```python linenums="1"
 @Tool()
