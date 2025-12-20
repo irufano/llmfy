@@ -14,9 +14,11 @@ class FunctionParser:
         parameters = signature.parameters
         type_hints = get_type_hints(func)
 
-        # Extract short description
+        # Extract short description (accept Google, reST and Sphinx style)
         desc_match = re.search(
-            r"^(.*?)(?:\n\s*(Args|Parameters):)", docstring, re.DOTALL
+            r"^(.*?)(?:\n\s*(?:Args|Arguments|Parameters|Returns?|Raises?|Yields?|Examples?|Attributes?|Notes?|Warnings?):|\n\s*:(?:param|returns?|rtype|raises?|type|var|ivar|cvar)\s)",
+            docstring,
+            re.DOTALL,
         )
         description = desc_match.group(1).strip() if desc_match else docstring
 

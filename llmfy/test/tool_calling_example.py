@@ -65,6 +65,32 @@ def tool_calling_example():
     except Exception as e:
         print(e)
 
+doc_g_style = """Google style doc
+
+Args:
+    location (str): hai ini location. hai hia.
+        locat colasded sdsads. dasdas
+    unit (str, optional): ini unit.
+
+Returns:
+    str: _description_
+"""
+
+doc_r_style = """reST style doc
+
+:param location: hai ini location. hai hia.
+    locat colasded sdsads.
+:param unit: ini unit.
+:returns: description
+"""
+
+doc_s_style = """Sphinx style with type
+
+:param str location: hai ini location. hai hia.
+    locat colasded sdsads.
+:param str unit: ini unit.
+:returns: description
+"""
 
 def tool_calling_with_invoke_example():
     # llm
@@ -91,9 +117,19 @@ def tool_calling_with_invoke_example():
     @Tool()
     def get_current_weather(location: str, unit: str = "celsius") -> str:
         return f"The weather in {location} is 22 degrees {unit}"
+    
+    get_current_weather.__doc__ = doc_g_style
 
     @Tool()
     def get_current_time(location: str) -> str:
+        """_summary_
+
+        Args:
+            location (str): _description_
+
+        Returns:
+            str: _description_
+        """
         return f"The time in {location} is 09:00 AM"
 
     tools = [get_current_weather, get_current_time]

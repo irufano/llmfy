@@ -1,8 +1,7 @@
-import json
 import inspect
-import re
-
+import json
 from typing import Any, Dict, List, Union
+
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
@@ -77,7 +76,6 @@ class OpenAIFormatter(ModelFormatter):
                 # content can be text or image
                 message_dict["content"] = []
                 for c in message.content:
-
                     if c.type == ContentType.TEXT:
                         # Content.value value is str.
                         message_dict["content"].append(
@@ -204,27 +202,16 @@ class OpenAIFormatter(ModelFormatter):
             param_type = type_mapping.get(python_type, "string")
 
             # Extract parameter description
-            param_description = ""
-            param_patterns = [
-                f"{param_name} (",  # Google style
-                f"{param_name}:",  # Sphinx style
-                f":param {param_name}:",  # reST style
-            ]
+            from llmfy.llmfy_core.tools.function_param_desc_extractor import (
+                extract_param_desc,
+            )
 
-            for pattern in param_patterns:
-                if pattern in metadata["docstring"]:
-                    start = metadata["docstring"].find(pattern) + len(pattern)
-                    end = metadata["docstring"].find("\n", start)
-                    param_description = metadata["docstring"][start:end].strip()
-                    if "):" in param_description:
-                        match = re.search(r"\):\s*(.*)", param_description)
-                        if match:
-                            param_description = match.group(1)
-                    break
+            docstring = metadata["docstring"]
+            param_description = extract_param_desc(param_name, docstring)
 
             # Extract default value
             param_default = (
-                f" (default: {param.default})"
+                f"(default: {param.default})"
                 if param.default != inspect.Parameter.empty
                 else ""
             )
@@ -233,7 +220,7 @@ class OpenAIFormatter(ModelFormatter):
             tool_def["parameters"]["properties"][param_name] = {
                 "type": param_type,
                 "description": param_description
-                + (" " if param_description else "")
+                + (" " if param_default else "")
                 + param_default,
             }
 
