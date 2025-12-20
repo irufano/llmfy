@@ -8,7 +8,7 @@ from llmfy.flow_engine.node.node import END, START, Node, NodeType
 from llmfy.flow_engine.state.memory_manager import MemoryManager
 from llmfy.flow_engine.state.workflow_state import WorkflowState
 from llmfy.flow_engine.visualizer.visualizer import WorkflowVisualizer
-from llmfy.llmfy_core.tools.deprecated import deprecated
+from llmfy.llmfy_core.utils.deprecated import deprecated
 
 
 @deprecated(alternative='FlowEngine')

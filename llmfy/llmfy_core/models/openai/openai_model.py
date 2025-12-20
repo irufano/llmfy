@@ -30,7 +30,14 @@ class OpenAIModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: OpenAIConfig):
+    def __init__(self, model: str, config: OpenAIConfig = OpenAIConfig()):
+        """
+        OpenAIModel
+
+        Args:
+            model (str): Model ID
+            config (OpenAIConfig, optional): Configuration. Defaults to OpenAIConfig().
+        """
         if openai is None:
             raise LLMfyException(
                 'openai package is not installed. Install it using `pip install "llmy[openai]"`'

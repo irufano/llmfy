@@ -32,7 +32,14 @@ class BedrockModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: BedrockConfig):
+    def __init__(self, model: str, config: BedrockConfig = BedrockConfig()):
+        """
+        BedrockModel
+
+        Args:
+            model (str): Model ID
+            config (BedrockConfig, optional): Configuration. Defaults to BedrockConfig().
+        """
         if boto3 is None:
             raise LLMfyException(
                 'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'

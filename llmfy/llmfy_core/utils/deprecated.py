@@ -1,6 +1,6 @@
-import warnings
 import functools
-from typing import Union, Callable, Optional
+import warnings
+from typing import Callable, Optional, Union
 
 
 def deprecated(
