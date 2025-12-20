@@ -202,7 +202,9 @@ class LLMfy:
                 messages=self.messages_temp.get_instance_messages(),
             )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def invoke_with_tools(
         self,
@@ -280,7 +282,9 @@ class LLMfy:
                     messages=self.messages_temp.get_instance_messages(),
                 )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def invoke_stream(
         self,
@@ -379,7 +383,9 @@ class LLMfy:
                 messages=self.messages_temp.get_instance_messages(),
             )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def chat(self, messages: List[Message], **kwargs) -> GenerationResponse:
         """
@@ -445,7 +451,9 @@ class LLMfy:
                 messages=self.messages_temp.get_instance_messages(),
             )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def chat_with_tools(self, messages: List[Message], **kwargs) -> GenerationResponse:
         """
@@ -532,7 +540,9 @@ class LLMfy:
                     messages=self.messages_temp.get_instance_messages(),
                 )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def chat_stream(
         self,
@@ -645,7 +655,9 @@ class LLMfy:
                 messages=self.messages_temp.get_instance_messages(),
             )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def clear_messages_temp(self) -> None:
         self.messages_temp.clear()

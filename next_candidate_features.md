@@ -1,7 +1,5 @@
 # The Next Candidate Features 
 
-## Include rate imit error on exception
-
 ## Google LLM (Gemini) boilerplate abstraction
 https://ai.google.dev/gemini-api/docs
 

@@ -62,6 +62,9 @@ class BedrockModel(BaseAIModel):
 
     def __call_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
+        from botocore.exceptions import ClientError
+
+        from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.models.bedrock.bedrock_usage import track_bedrock_usage
 
         @track_bedrock_usage
@@ -69,13 +72,17 @@ class BedrockModel(BaseAIModel):
             try:
                 response = self.client.converse(**params)
                 return response
-            except Exception as e:
-                raise e
+            except ClientError as e:
+                raise handle_bedrock_error(e)
+            # Any non-ClientError exceptions will naturally propagate up the call stack.
 
         return _call_bedrock_impl(params)
 
     def __call_stream_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
+        from botocore.exceptions import ClientError
+
+        from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.models.bedrock.bedrock_usage import (
             track_bedrock_stream_usage,
         )
@@ -84,8 +91,8 @@ class BedrockModel(BaseAIModel):
         def _call_stream_bedrock_impl(params: dict[str, Any]):
             try:
                 return self.client.converse_stream(**params)
-            except Exception as e:
-                raise e
+            except ClientError as e:
+                raise handle_bedrock_error(e)
 
         return _call_stream_bedrock_impl(params)
 
@@ -204,7 +211,9 @@ class BedrockModel(BaseAIModel):
                 tool_calls=tool_calls,
             )
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def generate_stream(
         self,
@@ -357,4 +366,6 @@ class BedrockModel(BaseAIModel):
                     )
 
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)

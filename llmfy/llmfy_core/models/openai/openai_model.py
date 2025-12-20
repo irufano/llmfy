@@ -45,7 +45,9 @@ class OpenAIModel(BaseAIModel):
 
     def __call_openai(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        # from llmfy.llmfy_core.usage.usage_tracker import track_openai_usage
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
         from llmfy.llmfy_core.models.openai.openai_usage import track_openai_usage
 
         @track_openai_usage
@@ -53,14 +55,17 @@ class OpenAIModel(BaseAIModel):
             try:
                 response = self.client.chat.completions.create(**params)
                 return response
-            except Exception as e:
-                raise e
+            except openai.APIError as e:
+                raise handle_openai_error(e)
+            # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return _call_openai_impl(params)
 
     def __call_stream_openai(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        # from llmfy.llmfy_core.usage.usage_tracker import track_openai_stream_usage
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
         from llmfy.llmfy_core.models.openai.openai_usage import (
             track_openai_stream_usage,
         )
@@ -71,8 +76,9 @@ class OpenAIModel(BaseAIModel):
                 params["stream"] = True
                 params["stream_options"] = {"include_usage": True}
                 return self.client.chat.completions.create(**params)
-            except Exception as e:
-                raise e
+            except openai.APIError as e:
+                raise handle_openai_error(e)
+            # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return __call_stream_openai_impl(params)
 
@@ -139,7 +145,9 @@ class OpenAIModel(BaseAIModel):
             )
 
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
 
     def generate_stream(
         self,
@@ -265,4 +273,6 @@ class OpenAIModel(BaseAIModel):
                     )
 
         except Exception as e:
-            raise LLMfyException(e)
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e)
