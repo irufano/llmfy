@@ -36,7 +36,7 @@ def usage_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
     
     Answer only relevant questions, otherwise, say sorry."""

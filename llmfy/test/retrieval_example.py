@@ -39,10 +39,10 @@ def retrieval_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
     
-    Answer only relevant questions, otherwise, say I don't know."""
+    Answer only relevant questions, otherwise say I don't know."""
 
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT, input_variables=["info"])
@@ -80,10 +80,10 @@ def retrieval_invoke_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
-    
-    Answer only relevant questions, otherwise, say I don't know."""
+
+    Answer only relevant questions, otherwise say I don't know."""
 
     # Initialize framework
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT, input_variables=["info"])
@@ -101,5 +101,5 @@ def retrieval_invoke_example():
         print(f"{e}")
 
 
-# retrieval_example()
-retrieval_invoke_example()
+retrieval_example()
+# retrieval_invoke_example()

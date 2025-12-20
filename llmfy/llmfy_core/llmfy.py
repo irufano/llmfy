@@ -1,4 +1,4 @@
-import string
+import re
 import uuid
 from typing import Any, Callable, Dict, Generator, List, Optional
 
@@ -14,12 +14,25 @@ from llmfy.llmfy_core.tools.tool import Tool
 
 
 class LLMfy:
+    """
+    LLMfy framework for integrating LLM-powered applications. 
+    """
+    
     def __init__(
         self,
         llm: BaseAIModel,
         system_message: Optional[str] = None,
         input_variables: Optional[List[str]] = None,
     ):
+        """
+        LLMfy init.
+
+        Args:
+            llm (BaseAIModel): Base LLM Model.
+            system_message (Optional[str], optional): System message/prompt. Defaults to None.
+            input_variables (Optional[List[str]], optional): Input variables, Required if in system message there are placeholder var `{{var_name}}`. 
+                Example: ["var_name_1", "var_name_2"]. Defaults to None.
+        """
         self.model: BaseAIModel = llm
         self.messages_temp: MessageTemp = MessageTemp()
         self.system_message = system_message
@@ -28,17 +41,11 @@ class LLMfy:
         self._tool_definitions: Dict[str, Dict[str, Any]] = {}
 
         def _has_variable_placeholder(s):
-            return bool(
-                list(string.Formatter().parse(s))
-                and any(
-                    field for _, field, _, _ in string.Formatter().parse(s) if field
-                )
-            )
+            return bool(re.search(r"\{\{[^{}]+\}\}", s))
 
         def _extract_variable_names(s):
-            return list(
-                set([field for _, field, _, _ in string.Formatter().parse(s) if field])
-            )
+            pattern = r"\{\{(\w+)\}\}"
+            return re.findall(pattern, s)
 
         # Validate that if system message has variable then input variable should not be empty
         if (
@@ -48,7 +55,7 @@ class LLMfy:
         ) and not self.input_variables:
             variable_names = _extract_variable_names(self.system_message)
             raise LLMfyException(
-                f"System messages have placeholder variables, so the `input variable` should not be empty. "
+                f"System messages have placeholder variables, so the `input_variables` should not be empty. "
                 f"Missing input variables: {variable_names}. "
             )
 
@@ -85,9 +92,34 @@ class LLMfy:
             raise LLMfyException(f"Tool not found: {name}")
         return self._tools[name](**arguments)
 
+    def __render_template(self, template: str, variables: dict) -> str:
+        """
+        Render system message template use replace.
+
+        Note on f"{{{{{var}}}}}"
+        This looks confusing but breaks down as:
+        1. {{ → literal {
+        2. {{ → literal {
+        3. {var} → the variable name
+        4. }} → literal }
+        5. }} → literal }
+        So f"{{{{{var}}}}}" with var="name" produces {{name}}.
+
+        Args:
+            template (str): _description_
+            variables (dict): _description_
+
+        Returns:
+            Final template
+        """
+        for var, value in variables.items():
+            template = template.replace(f"{{{{{var}}}}}", str(value))
+        return template
+
     def __validate_system_message(self, **kwargs) -> str | None:
         # If we have a system message and input variables
         try:
+            # TODO enhance system prompt
             final_system_message = self.system_message if self.system_message else ""
             if self.system_message and self.input_variables:
                 # Validate that all required input variables are in kwargs
@@ -108,8 +140,10 @@ class LLMfy:
                     if var in kwargs
                 }
 
-                # Update the system message with the variables
-                final_system_message = self.system_message.format(**format_variables)
+                final_system_message = self.__render_template(
+                    self.system_message, format_variables
+                )
+                print(final_system_message)
 
             return final_system_message
         except KeyError as e:
@@ -247,14 +281,14 @@ class LLMfy:
                 )
         except Exception as e:
             raise LLMfyException(e)
-        
+
     def invoke_stream(
         self,
         contents: str | List[Content],
         **kwargs,
     ) -> Generator[GenerationResponse, Any, None]:
         """
-        Generate a response based on contents. 
+        Generate a response based on contents.
 
         Example usage:
         ```python

@@ -4,7 +4,7 @@
 <a href="https://img.shields.io/github/actions/workflow/status/irufano/llmfy/publish.yml">![llmfy](https://img.shields.io/github/actions/workflow/status/irufano/llmfy/publish.yml?style=for-the-badge&logo=pypi&logoColor=blue&label=publish
 )</a>
 <a href="https://pypi.org/project/llmfy/0.4.11">![llmfy](https://img.shields.io/badge/llmfy-V0.4.11-31CA9C.svg?style=for-the-badge)</a>
-<a href="https://pypi.org/project/llmfy/">![llmfy](https://img.shields.io/pypi/v/llmfy?style=for-the-badge&label=latest%20version&labelColor=691DC6&color=B77309)</a>
+<a href="https://pypi.org/project/llmfy/">![llmfy](https://img.shields.io/pypi/v/llmfy?style=for-the-badge&label=latest&labelColor=691DC6&color=B77309)</a>
 <a href="">![python](https://img.shields.io/badge/python->=3.12-4392FF.svg?style=for-the-badge&logo=python&logoColor=4392FF)</a>
 
 
@@ -18,7 +18,7 @@ def example():
 
     SYSTEM_PROMPT = """
     Answer any user questions based on the data:
-    {info}
+    {{info}}
     Answer only relevant questions, otherwise, say I don't know."""
 
     llm = BedrockModel(model="amazon.nova-lite-v1:0", config=BedrockConfig(temperature=0.7))

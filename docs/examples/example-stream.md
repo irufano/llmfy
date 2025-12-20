@@ -34,7 +34,7 @@ def stream_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
     
     DO NOT response outside context."""

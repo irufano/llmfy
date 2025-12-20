@@ -41,7 +41,7 @@ def retrieval_chat_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
     
     Answer only relevant questions, otherwise, say I don't know."""
@@ -81,7 +81,7 @@ def retrieval_invoke_example():
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
-    {info}
+    {{info}}
     </data>
     
     Answer only relevant questions, otherwise, say I don't know."""
