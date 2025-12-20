@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Dict, List
 
-from llmfy.llmfy_core.utils.deprecated import deprecated
+from llmfy.llmfy_utils.deprecated.deprecated import deprecated
 
 
 @deprecated(alternative='TypedDict')

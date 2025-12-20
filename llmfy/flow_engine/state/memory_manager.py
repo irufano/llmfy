@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from threading import Lock, Timer
 from typing import Any, Dict, List, Optional
 
-from llmfy.llmfy_core.utils.deprecated import deprecated
+from llmfy.llmfy_utils.deprecated.deprecated import deprecated
 
 @deprecated(alternative='InMemoryCheckpointer, RedisCheckpointer, SQLCheckpointer')
 class MemoryManager:
