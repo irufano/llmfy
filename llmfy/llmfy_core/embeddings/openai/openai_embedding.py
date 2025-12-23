@@ -5,6 +5,7 @@ from typing import List
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
 from llmfy.llmfy_core.service_provider import ServiceProvider
+from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 
 try:
     import openai
@@ -15,6 +16,8 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
+logger = LLMfyLogger("LLMfy").get_logger()
 
 
 class OpenAIEmbedding(BaseEmbeddingModel):
@@ -91,11 +94,11 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                 "rate_limit_exceeded" in error_message.lower()
                 or "rate limit" in error_message.lower()
             ):
-                print(f"Rate limit exceeded: {e}")
+                logger.error(f"Rate limit exceeded: {e}")
             elif "invalid" in error_message.lower():
-                print(f"Invalid request: {text[:100]}...")
+                logger.error(f"Invalid request: {text[:100]}...")
             else:
-                print(f"OpenAI API error: {e}")
+                logger.error(f"OpenAI API error: {e}")
             raise e
 
     def encode_batch(
@@ -131,13 +134,13 @@ class OpenAIEmbedding(BaseEmbeddingModel):
         embeddings = []
 
         if show_progress_bar:
-            print(f"Generating embeddings for {len(texts)} texts...")
+            logger.info(f"Generating embeddings for {len(texts)} texts...")
 
         for i in range(0, len(texts), batch_size):
             batch_texts = texts[i : i + batch_size]
 
             if show_progress_bar:
-                print(
+                logger.info(
                     f"Processing batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size}"
                 )
 
@@ -159,14 +162,14 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                                 wait_time = retry_delay * (
                                     2**attempt
                                 )  # Exponential backoff
-                                print(
+                                logger.warning(
                                     f"Rate limited, waiting {wait_time}s before retry..."
                                 )
                                 time.sleep(wait_time)
                                 continue
-                            print(f"Rate limit error after {max_retries} attempts: {e}")
+                            logger.error(f"Rate limit error after {max_retries} attempts: {e}")
                             raise
-                        print(f"Error processing text: {e}")
+                        logger.error(f"Error processing text: {e}")
                         if attempt < max_retries - 1:
                             time.sleep(retry_delay)
                             continue

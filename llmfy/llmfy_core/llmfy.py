@@ -143,7 +143,6 @@ class LLMfy:
                 final_system_message = self.__render_template(
                     self.system_message, format_variables
                 )
-                print(final_system_message)
 
             return final_system_message
         except KeyError as e:

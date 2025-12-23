@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
+from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 from llmfy.vector_store.document import Document
 from llmfy.vector_store.faiss_index.faiss_index import FAISSIndex
 
@@ -20,6 +21,8 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
+logger = LLMfyLogger("LLMfy").get_logger()
 
 
 class FAISSVectorStore:
@@ -150,6 +153,7 @@ class FAISSVectorStore:
         self,
         documents: List[Document],
         batch_size: int = 5,
+        show_logs: bool = False,
     ):
         """
         Encode documents to faiss vector store.
@@ -186,8 +190,9 @@ class FAISSVectorStore:
         # Dimension (D)
         self.dim_vectors = self.embeddings.shape[1]
 
-        print("Number of vectors (N):", self.total_vectors)
-        print("Dimension (D):", self.dim_vectors)
+        if show_logs:
+            logger.info("Number of vectors (N):", self.total_vectors)
+            logger.info("Dimension (D):", self.dim_vectors)
 
         # Create  index
         if self.faiss_index is None:
@@ -223,11 +228,12 @@ class FAISSVectorStore:
         # Add embedding to index
         self.faiss_index.add(vectors)
 
-        print(
-            f"Successfully added {len(self.documents)} documents to index `{self.index_type}`. \n"
-            f"Vectors total: {self.faiss_index.index.ntotal} \n"  # type: ignore
-            f"Config: {self.index_configs}"
-        )
+        if show_logs:
+            logger.info(
+                f"Successfully added {len(self.documents)} documents to index `{self.index_type}`. \n"
+                f"Vectors total: {self.faiss_index.index.ntotal} \n"  # type: ignore
+                f"Config: {self.index_configs}"
+            )
 
     def search(
         self,
@@ -289,7 +295,7 @@ class FAISSVectorStore:
 
         return results
 
-    def save_to_path(self, path: str):
+    def save_to_path(self, path: str, show_logs: bool = False):
         """
         Save the FAISS index and metadata separately to disk.
         """
@@ -348,9 +354,10 @@ class FAISSVectorStore:
         with open(os.path.join(path, "config.pkl"), "wb") as f:
             pickle.dump(config, f)
 
-        print(f"Index saved to {path}")
+        if show_logs:
+            logger.info(f"Index saved to {path}")
 
-    def load_from_path(self, path: str):
+    def load_from_path(self, path: str, show_logs: bool = False):
         """
         Load the FAISS vector store from disk
         """
@@ -390,8 +397,11 @@ class FAISSVectorStore:
         with open(os.path.join(path, "embeddings.pkl"), "rb") as f:
             self.embeddings = pickle.load(f)
 
-        print(f"Vector store loaded from {path}")
-        print(f"Model: {configs['embedding_model']}, Documents: {len(self.documents)}")
+        if show_logs:
+            logger.info(f"Vector store loaded from {path}")
+            logger.info(
+                f"Model: {configs['embedding_model']}, Documents: {len(self.documents)}"
+            )
 
     def create_buffers(self) -> dict[Any, Any]:
         """
@@ -461,7 +471,7 @@ class FAISSVectorStore:
 
         return buffers
 
-    def load_from_buffers(self, buffers: dict):
+    def load_from_buffers(self, buffers: dict, show_logs: bool = False):
         """
         Load the FAISS vector store from in-memory buffers (e.g., from S3).
 
@@ -508,5 +518,6 @@ class FAISSVectorStore:
         # Load embeddings
         self.embeddings = pickle.load(buffers["embeddings.pkl"])
 
-        print("Vector store loaded from buffers")
-        print(f"Model: {configs['embedding_model']}, Documents: {len(self.documents)}")
+        if show_logs:
+            logger.info("Vector store loaded from buffers")
+            logger.info(f"Model: {configs['embedding_model']}, Documents: {len(self.documents)}")

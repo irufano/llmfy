@@ -6,6 +6,7 @@ from typing import List
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
 from llmfy.llmfy_core.service_provider import ServiceProvider
+from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 
 try:
     import boto3
@@ -17,6 +18,9 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
+
+logger = LLMfyLogger('LLMfy').get_logger()
 
 
 class BedrockEmbedding(BaseEmbeddingModel):
@@ -110,7 +114,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "ValidationException":
-                print(f"Input text too long or invalid: {text[:100]}...")
+                logger.error(f"Input text too long or invalid: {text[:100]}...")
             raise e
 
     def encode_batch(
@@ -146,13 +150,13 @@ class BedrockEmbedding(BaseEmbeddingModel):
         embeddings = []
 
         if show_progress_bar:
-            print(f"Generating embeddings for {len(texts)} texts...")
+            logger.info(f"Generating embeddings for {len(texts)} texts...")
 
         for i in range(0, len(texts), batch_size):
             batch_texts = texts[i : i + batch_size]
 
             if show_progress_bar:
-                print(
+                logger.info(
                     f"Processing batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size}"
                 )
 
@@ -171,15 +175,15 @@ class BedrockEmbedding(BaseEmbeddingModel):
                                 wait_time = retry_delay * (
                                     2**attempt
                                 )  # Exponential backoff
-                                print(
+                                logger.warning(
                                     f"Rate limited, waiting {wait_time}s before retry..."
                                 )
                                 time.sleep(wait_time)
                                 continue
-                        print(f"Error processing text: {e}")
+                        logger.error(f"Error processing text: {e}")
                         raise
                     except Exception as e:
-                        print(f"Unexpected error: {e}")
+                        logger.error(f"Unexpected error: {e}")
                         if attempt < max_retries - 1:
                             time.sleep(retry_delay)
                             continue

@@ -16,6 +16,7 @@ def bedrock_embed_text():
         print(result)
         print(usage)
 
+
 def openai_embed_text():
     # Sample texts
     with llmfy_usage_tracker() as usage:
@@ -26,6 +27,37 @@ def openai_embed_text():
         print(usage)
 
 
+def bedrock_embed_batch_text():
+    # Sample texts
+    with llmfy_usage_tracker() as usage:
+        texts = [
+            "The cat sits on the mat",
+            "Dogs are loyal animals",
+            "Artificial intelligence is transforming the world",
+            "Quantum computing is the future of technology",
+            "The sun rises in the east",
+        ]
+        embedding = BedrockEmbedding(model="amazon.titan-embed-text-v1")
+        result = embedding.encode_batch(texts=texts, show_progress_bar=True)
+        print(result)
+        print(usage)
+
+def openai_embed_batch_text():
+    # Sample texts
+    with llmfy_usage_tracker() as usage:
+        texts = [
+            "The cat sits on the mat",
+            "Dogs are loyal animals",
+            "Artificial intelligence is transforming the world",
+            "Quantum computing is the future of technology",
+            "The sun rises in the east",
+        ]
+        embedding = OpenAIEmbedding(model="text-embedding-3-small")
+        result = embedding.encode_batch(texts=texts,  show_progress_bar=True)
+        print(result)
+        print(usage)
 
 # bedrock_embed_text()
-openai_embed_text()
+# openai_embed_text()
+# bedrock_embed_batch_text()
+openai_embed_batch_text()
