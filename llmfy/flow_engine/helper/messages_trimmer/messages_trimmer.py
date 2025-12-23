@@ -2,6 +2,9 @@ from typing import Callable, List, Literal, Optional, Tuple, Union
 
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
+
+logger = LLMfyLogger("LLMfy").get_logger()
 
 
 def count_tokens_approximately(messages: List[Message]) -> int:
@@ -199,7 +202,7 @@ def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
             return trimmed + protected_messages
 
         except Exception as e:
-            print(f"Warning: trim_messages failed during tool cycle: {e}")
+            logger.warning(f"Warning: trim_messages failed during tool cycle: {e}")
             return messages
 
     # Step 4: No active tool cycle AND last message is NOT a tool result, safe to trim normally
@@ -215,9 +218,80 @@ def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
         return trimmed
 
     except Exception as e:
-        print(f"Warning: trim_messages failed: {e}")
+        logger.warning(f"Warning: trim_messages failed: {e}")
         return messages[-10:] if len(messages) > 10 else messages
 
+
+def tool_trim_messages(messages: List[Message]):
+    """Trim messages but ALWAYS preserve active tool context"""
+    if len(messages) == 1:
+        return messages
+
+    # Step 1: FORWARD pass - collect all tool_call_ids and their results
+    tool_call_ids = set()  # All tool calls made
+    resolved_tool_ids = set()  # Tool calls that have results
+    last_tool_call_idx = None  # Last index tool calling in messages
+    last_message_is_tool_result = False
+
+    for i, msg in enumerate(messages):
+        # Track tool calls (assistant messages)
+        if msg.role == Role.ASSISTANT and msg.tool_calls:
+            last_tool_call_idx = i
+            for tc in msg.tool_calls:
+                tool_call_ids.add(tc.tool_call_id)
+
+        # Track tool results
+        if msg.role == Role.TOOL:
+            if msg.tool_call_id:
+                resolved_tool_ids.add(msg.tool_call_id)
+
+    # Check if last message is a tool result
+    if messages and messages[-1].role == Role.TOOL:
+        last_message_is_tool_result = True
+
+    # Step 2: Calculate pending tools
+    pending_tool_ids = tool_call_ids - resolved_tool_ids
+
+    # print("\n")
+    # print("tool_call_ids: ", tool_call_ids)
+    # print("resolved_tool_ids: ", resolved_tool_ids)
+    # print("pending_tool_ids: ", pending_tool_ids)
+    # print("last_tool_call_idx: ", last_tool_call_idx)
+    # print("last_message_is_tool_result: ", last_message_is_tool_result)
+    # print(
+    #     "IS TOOL PENDING: ", bool(pending_tool_ids and last_tool_call_idx is not None)
+    # )
+    # print("\n")
+
+    # Step 3: If there are pending tools OR last message is tool result, protect the tool context
+    # This is the KEY FIX: Even if tools are "resolved", if we just got a tool result,
+    # we need to preserve the context for the orchestrator to process
+    if (
+        pending_tool_ids and last_tool_call_idx is not None
+    ) or last_message_is_tool_result:
+        logger.info("There are active tool cycle or just completed tool execution")
+
+        # If last message is tool result, we must preserve from the assistant message that called it
+        if last_message_is_tool_result and last_tool_call_idx is not None:
+            protected_messages = messages[last_tool_call_idx:]
+            trimmable_messages = messages[:last_tool_call_idx]
+        else:
+            # Pending tools case
+            protected_messages = messages[last_tool_call_idx:]
+            trimmable_messages = messages[:last_tool_call_idx]
+
+        if not trimmable_messages:
+            return messages[-1:]
+
+        try:
+            return trimmable_messages[-1:] + protected_messages
+
+        except Exception as e:
+            logger.warning(f"Warning: trim_messages failed during tool cycle: {e}")
+            return messages[-1:]
+
+    else:
+        return messages[-1:]
 
 def _trim_from_end(
     messages: List[Message],
