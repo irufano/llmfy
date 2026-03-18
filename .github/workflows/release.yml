@@ -61,6 +61,15 @@ jobs:
           echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
         fi
 
+    - name: Trigger ReadTheDocs build
+      run: |
+        TAG=${{ steps.get_tag.outputs.tag }}
+        for version in stable ${TAG}; do
+          curl -s -X POST \
+            -H "Authorization: Token ${{ secrets.READTHEDOCS_TOKEN }}" \
+            "https://readthedocs.org/api/v3/projects/llmfy/versions/${version}/builds/"
+        done
+
   # Step 2: Build and publish to PyPI (checkout the tag for correct version)
   publish:
     needs: update-version
