@@ -33,43 +33,65 @@ jobs:
           echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         fi
     
+    - name: Update version badges
+      run: |
+        TAG=${{ steps.get_tag.outputs.tag }}
+        VERSION=${TAG#v}  # Remove "v" prefix
+        # Update hardcoded version in badge
+        for file in README.md docs/index.md; do
+          sed -i "s|llmfy-v[0-9]*\.[0-9]*\.[0-9]*-31CA9C|llmfy-v${VERSION}-31CA9C|g" "$file"
+          sed -i "s|llmfy/[0-9]*\.[0-9]*\.[0-9]*\"|llmfy/${VERSION}\"|g" "$file"
+        done
+
+    - name: Commit version badge update
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add README.md docs/index.md
+        git diff --cached --quiet || git commit -m "update version badges to ${{ steps.get_tag.outputs.tag }}"
+        git push origin HEAD:main
+
     - name: Generate changelog
       id: changelog
       run: |
         # Get the previous tag
         PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
         
+        CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
+
         if [ -z "$PREVIOUS_TAG" ]; then
           # If no previous tag, get all commits
           CHANGELOG=$(git log --pretty=format:"- %s (%an)" --no-merges)
+          COMPARE_URL="https://github.com/${{ github.repository }}/commits/${CURRENT_TAG}"
         else
           # Get commits since the previous tag
           CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+          COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
         fi
-        
+
         # Handle empty changelog
         if [ -z "$CHANGELOG" ]; then
           CHANGELOG="- Initial release"
         fi
-        
-        # Save changelog to output (handle multiline)
+
+        # Save outputs
         echo "changelog<<EOF" >> $GITHUB_OUTPUT
         echo "$CHANGELOG" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+        echo "compare_url=${COMPARE_URL}" >> $GITHUB_OUTPUT
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_tag.outputs.tag }}
-        name: Release ${{ steps.get_tag.outputs.tag }}
+        name: Release - LLMFY ${{ steps.get_tag.outputs.tag }}
         body: |
           ## What's Changed
-          
+
           ${{ steps.changelog.outputs.changelog }}
-          
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.get_tag.outputs.tag }}...HEAD
+
+          **Full Changelog**: ${{ steps.changelog.outputs.compare_url }}
         draft: false
         prerelease: false
-        generate_release_notes: true  # GitHub will auto-generate additional notes
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

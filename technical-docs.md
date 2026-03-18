@@ -188,7 +188,10 @@ UV_PUBLISH_TOKEN=your_token uv publish
 ### Release (`release.yml`)
 
 - **Trigger**: Push tag matching `v*` or manual dispatch
-- **Action**: Creates a GitHub Release with auto-generated changelog
+- **Action**:
+  1. Updates the hardcoded version badges in `README.md` and `docs/index.md` to match the new tag
+  2. Commits and pushes the changes back to `main`
+  3. Creates a GitHub Release with auto-generated changelog
 
 ### Release Process
 
@@ -200,7 +203,22 @@ git tag v0.4.14
 git push origin main --tags
 ```
 
-Both workflows trigger on the tag push — the package is built with the version from the tag, published to PyPI, and a GitHub Release is created.
+Both workflows trigger on the tag push:
+1. **publish.yml** — builds the package with the version from the tag and publishes to PyPI
+2. **release.yml** — updates version badges in `README.md` and `docs/index.md`, commits the changes to `main`, and creates a GitHub Release
+
+### Version Badges
+
+Both `README.md` and `docs/index.md` contain two version badges:
+
+- **Current version** (hardcoded, green `31CA9C`) — shows the version at the time of that commit. Automatically updated by `release.yml` on each tag push via `sed` replacement.
+- **Latest version** (dynamic from PyPI, `691DC6`) — always shows the latest published version on PyPI.
+
+This means when viewing an old commit on GitHub, you can see both the version at that point in time and the current latest version.
+
+**Files auto-updated by CI:**
+- `README.md`
+- `docs/index.md`
 
 ---
 

@@ -98,8 +98,8 @@ nav:
 
 theme:
   name: material
-  logo: assets/logo.png
-  favicon: assets/logo.png
+  logo: assets/logo.webp
+  favicon: assets/logo.webp
   features:
     - navigation.instant
     - navigation.instant.progress
