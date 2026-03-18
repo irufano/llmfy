@@ -61,7 +61,7 @@ jobs:
           echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
         fi
 
-  # Step 2: Build and publish to PyPI (after version badges are updated)
+  # Step 2: Build and publish to PyPI (checkout the tag for correct version)
   publish:
     needs: update-version
     runs-on: ubuntu-latest
@@ -69,7 +69,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: ${{ needs.update-version.outputs.commit_sha }}
+        ref: ${{ needs.update-version.outputs.tag }}
         fetch-depth: 0
 
     - name: Install uv
