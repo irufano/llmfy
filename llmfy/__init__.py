@@ -1,3 +1,5 @@
+from ._version import __version__
+
 from .exception import (
     AuthenticationException,
     ContentFilterException,
@@ -119,4 +121,5 @@ __all__ = [
     "RateLimitException",
     "ServiceUnavailableException",
     "TimeoutException",
+    "__version__",
 ]

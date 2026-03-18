@@ -39,3 +39,9 @@ __pycache__
 
 site/
 .cache/
+
+# UV
+uv.lock
+
+# Auto-generated version file
+llmfy/_version.py

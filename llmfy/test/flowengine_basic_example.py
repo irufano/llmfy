@@ -55,7 +55,12 @@ async def condition(state: AppState) -> str:
 
     if counter == 3:
         return END
+    elif counter == 2:
+        return "node_tiga"
     return "loop_node"
+
+async def node3(state: AppState):
+    return {}
 
 
 async def example_simple_workflow():
@@ -69,12 +74,14 @@ async def example_simple_workflow():
     # Add nodes
     flow.add_node("main_node", main_node)
     flow.add_node("loop_node", loop_node)
+    flow.add_node("node_tiga", node3)
 
     # Add edges
     flow.add_edge(START, "main_node")
     # flow.add_edge("main_node", "loop_node")
-    flow.add_conditional_edge("main_node", ["loop_node", END], condition)
+    flow.add_conditional_edge("main_node", ["loop_node","node_tiga", END], condition)
     flow.add_edge("loop_node", "main_node")
+    flow.add_edge("node_tiga", "main_node")
 
     # Build
     flow.build()

@@ -122,6 +122,7 @@ def build_agent(use_redis: bool = True):
     def should_continue(state):
         messages = state.get("messages", [])
         last_message = messages[-1]
+        print("last_message :", last_message)
         if last_message.tool_calls:
             return "tools"
         return END
@@ -133,7 +134,11 @@ def build_agent(use_redis: bool = True):
     flow.add_edge("tools", "main")
     flow.add_conditional_edge("main", ["tools", END], should_continue)
 
-    return flow.build()
+    a = flow.build()
+
+    print(flow.visualize())
+
+    return a
 
 
 # ============================================================================

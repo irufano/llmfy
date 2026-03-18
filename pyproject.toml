@@ -1,0 +1,99 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llmfy"
+dynamic = ["version"]
+description = "`LLMfy` is a framework for developing applications with large language models (LLMs)."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "irufano", email = "irufano.official@gmail.com" },
+]
+keywords = [
+    "llm",
+    "ai",
+    "llm-framework",
+    "llm-abstraction",
+    "bedrock",
+    "openai",
+    "google",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pydantic",
+]
+
+[project.urls]
+Homepage = "https://github.com/irufano/llmfy"
+Repository = "https://github.com/irufano/llmfy"
+
+[project.optional-dependencies]
+openai = ["openai"]
+boto3 = ["boto3"]
+numpy = ["numpy"]
+faiss-cpu = ["faiss-cpu"]
+typing_extensions = ["typing_extensions"]
+redis = ["redis"]
+SQLAlchemy = ["SQLAlchemy"]
+all = [
+    "openai",
+    "boto3",
+    "numpy",
+    "faiss-cpu",
+    "typing_extensions",
+    "redis",
+    "SQLAlchemy",
+]
+
+[dependency-groups]
+dev = [
+    "python-dotenv>=1.1.0",
+    "openai>=1.81.0",
+    "boto3>=1.38.21",
+    "numpy>=2.3.3",
+    "faiss-cpu>=1.12.0",
+    "redis>=7.1.0",
+    "SQLAlchemy>=2.0.44",
+    "typing_extensions>=4.15.0",
+    "PyMySQL>=1.1.2",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-get-deps>=0.2.0",
+    "mkdocstrings>=0.30.1",
+    "mkdocstrings-python>=1.18.2",
+    "mkdocs-material>=9.6.20",
+    "mkdocs-material-extensions>=1.3.1",
+    "mkdocs-material[imaging]",
+]
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = "v(?P<version>.*)"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "llmfy/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["llmfy"]
+exclude = ["llmfy/test/"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "llmfy/",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+exclude = ["llmfy/test/"]
