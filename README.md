@@ -10,9 +10,6 @@
 
 </div>
 
-
-# LLMFY
-
 `LLMfy` is a flexible and developer-friendly framework designed to streamline the creation of applications powered by large language models (LLMs). It provides essential tools and abstractions that simplify the integration, orchestration, and management of LLMs across various use cases, enabling developers to focus on building intelligent, context-aware solutions without getting bogged down in low-level model handling. With support for modular components, prompt engineering, and extensibility, LLMfy accelerates the development of AI-driven applications from prototyping to production.
 
 See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.readthedocs.io/)
