@@ -138,6 +138,15 @@ git tag -a [TAG_NAME] -m "[TAG_MESSAGE]"
 git push origin [TAG_NAME]
 ```
 
+### After deploy on local 
+After the CI moves the tag, your local tag still points to the old commit. To sync:
+
+```sh
+git fetch --tags --force
+```
+
+The --force flag is needed because git fetch --tags alone won't update tags that already exist locally.
+
 ### Mkdocs run on local
 ```sh
 # Serve on local
