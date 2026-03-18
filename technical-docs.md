@@ -23,8 +23,7 @@ llmfy/
 ├── .readthedocs.yaml           # ReadTheDocs build configuration
 ├── .github/
 │   └── workflows/
-│       ├── publish.yml         # PyPI publish workflow (triggered on v* tags)
-│       └── release.yml         # GitHub release workflow (triggered on v* tags)
+│       └── release.yml         # Release & Publish workflow (triggered on v* tags)
 ├── docs/                       # Documentation source files
 ├── llmfy/                      # Main package
 │   ├── __init__.py             # Package exports
@@ -150,18 +149,15 @@ The build uses **Hatchling** as the backend. Configuration in `pyproject.toml`:
 
 ### Automated (GitHub Actions)
 
-Publishing is fully automated via `.github/workflows/publish.yml`:
+Publishing is fully automated via `.github/workflows/release.yml`. See [GitHub Workflow](#github-workflow) for details.
 
 1. Create and push a version tag:
    ```bash
-   git tag v0.4.13
-   git push origin v0.4.13
+   git tag v0.4.14
+   git push origin v0.4.14
    ```
 
-2. The workflow automatically:
-   - Installs UV
-   - Builds the package with `uv build`
-   - Publishes to PyPI with `uv publish`
+2. The workflow automatically handles version badge updates, PyPI publishing, and GitHub Release creation in order.
 
 **Required secret**: `PYPI_API_TOKEN` must be configured in the GitHub repository settings.
 
@@ -177,21 +173,27 @@ UV_PUBLISH_TOKEN=your_token uv publish
 
 ---
 
-## GitHub Workflows
+## GitHub Workflow
 
-### Publish (`publish.yml`)
+All release automation is consolidated in a single workflow: `.github/workflows/release.yml`.
 
-- **Trigger**: Push tag matching `v*`
-- **Action**: Builds and publishes to PyPI using UV
-- **Secret**: `PYPI_API_TOKEN`
-
-### Release (`release.yml`)
+### Release & Publish (`release.yml`)
 
 - **Trigger**: Push tag matching `v*` or manual dispatch
-- **Action**:
-  1. Updates the hardcoded version badges in `README.md` and `docs/index.md` to match the new tag
-  2. Commits and pushes the changes back to `main`
-  3. Creates a GitHub Release with auto-generated changelog
+- **Secret**: `PYPI_API_TOKEN`
+
+The workflow runs three jobs **in sequence** to ensure version badges are updated before publishing:
+
+| Job | Depends On | Action |
+|-----|-----------|--------|
+| **1. update-version** | — | Updates hardcoded version badges in `README.md` and `docs/index.md`, commits and pushes to `main` |
+| **2. publish** | update-version | Checks out the updated commit, builds with `uv build`, publishes to PyPI with `uv publish` |
+| **3. create-release** | update-version, publish | Generates changelog from git history, creates GitHub Release |
+
+This ensures:
+- PyPI package is built from the commit with updated version badges
+- ReadTheDocs picks up the push to `main` with correct badges in `docs/index.md`
+- GitHub Release is only created after successful publish
 
 ### Release Process
 
@@ -200,18 +202,14 @@ The version is **automatically derived from git tags** using `hatch-vcs`. No nee
 ```bash
 # 1. Create and push tag
 git tag v0.4.14
-git push origin main --tags
+git push origin v0.4.14
 ```
-
-Both workflows trigger on the tag push:
-1. **publish.yml** — builds the package with the version from the tag and publishes to PyPI
-2. **release.yml** — updates version badges in `README.md` and `docs/index.md`, commits the changes to `main`, and creates a GitHub Release
 
 ### Version Badges
 
 Both `README.md` and `docs/index.md` contain two version badges:
 
-- **Current version** (hardcoded, green `31CA9C`) — shows the version at the time of that commit. Automatically updated by `release.yml` on each tag push via `sed` replacement.
+- **Current version** (hardcoded, green `31CA9C`) — shows the version at the time of that commit. Automatically updated by the `update-version` job on each tag push via `sed` replacement.
 - **Latest version** (dynamic from PyPI, `691DC6`) — always shows the latest published version on PyPI.
 
 This means when viewing an old commit on GitHub, you can see both the version at that point in time and the current latest version.
@@ -288,8 +286,8 @@ print(__version__)  # e.g., "0.4.14"
 # 1. Create a version tag
 git tag v0.4.14
 
-# 2. Push the tag (triggers publish + release workflows)
-git push origin main --tags
+# 2. Push the tag (triggers release.yml workflow)
+git push origin v0.4.14
 ```
 
 The tag `v0.4.14` is automatically stripped of the `v` prefix, so the package is published to PyPI as version `0.4.14`.

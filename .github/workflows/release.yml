@@ -1,4 +1,4 @@
-name: Create Release
+name: Release & Publish
 
 on:
   push:
@@ -13,78 +13,121 @@ on:
         default: 'v0.3.1'
 
 jobs:
-  create-release:
+  # Step 1: Update version badges in README.md and docs/index.md
+  update-version:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required to create releases
-    
+      contents: write
+    outputs:
+      tag: ${{ steps.get_tag.outputs.tag }}
+      version: ${{ steps.get_tag.outputs.version }}
+      commit_sha: ${{ steps.push_update.outputs.commit_sha }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Fetch all history for changelog generation
-    
+        fetch-depth: 0
+
     - name: Get tag name
       id: get_tag
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          TAG=${{ github.event.inputs.tag }}
         else
-          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          TAG=${GITHUB_REF#refs/tags/}
         fi
-    
+        echo "tag=${TAG}" >> $GITHUB_OUTPUT
+        echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
     - name: Update version badges
       run: |
-        TAG=${{ steps.get_tag.outputs.tag }}
-        VERSION=${TAG#v}  # Remove "v" prefix
-        # Update hardcoded version in badge
+        VERSION=${{ steps.get_tag.outputs.version }}
         for file in README.md docs/index.md; do
           sed -i "s|llmfy-v[0-9]*\.[0-9]*\.[0-9]*-31CA9C|llmfy-v${VERSION}-31CA9C|g" "$file"
           sed -i "s|llmfy/[0-9]*\.[0-9]*\.[0-9]*\"|llmfy/${VERSION}\"|g" "$file"
         done
 
-    - name: Commit version badge update
+    - name: Commit and push version badge update
+      id: push_update
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add README.md docs/index.md
-        git diff --cached --quiet || git commit -m "update version badges to ${{ steps.get_tag.outputs.tag }}"
-        git push origin HEAD:main
+        if git diff --cached --quiet; then
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        else
+          git commit -m "update version badges to ${{ steps.get_tag.outputs.tag }}"
+          git push origin HEAD:main
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        fi
+
+  # Step 2: Build and publish to PyPI (after version badges are updated)
+  publish:
+    needs: update-version
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.update-version.outputs.commit_sha }}
+        fetch-depth: 0
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Build package
+      run: uv build
+
+    - name: Publish to PyPI
+      env:
+        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: uv publish
+
+  # Step 3: Create GitHub Release (after publish)
+  create-release:
+    needs: [update-version, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Generate changelog
       id: changelog
       run: |
-        # Get the previous tag
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-        
-        CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
+        CURRENT_TAG=${{ needs.update-version.outputs.tag }}
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${CURRENT_TAG}^ 2>/dev/null || echo "")
 
         if [ -z "$PREVIOUS_TAG" ]; then
-          # If no previous tag, get all commits
           CHANGELOG=$(git log --pretty=format:"- %s (%an)" --no-merges)
           COMPARE_URL="https://github.com/${{ github.repository }}/commits/${CURRENT_TAG}"
         else
-          # Get commits since the previous tag
-          CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+          CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%an)" --no-merges)
           COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
         fi
 
-        # Handle empty changelog
         if [ -z "$CHANGELOG" ]; then
           CHANGELOG="- Initial release"
         fi
 
-        # Save outputs
         echo "changelog<<EOF" >> $GITHUB_OUTPUT
         echo "$CHANGELOG" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         echo "compare_url=${COMPARE_URL}" >> $GITHUB_OUTPUT
-    
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.get_tag.outputs.tag }}
-        name: Release - LLMFY ${{ steps.get_tag.outputs.tag }}
+        tag_name: ${{ needs.update-version.outputs.tag }}
+        name: Release - LLMFY ${{ needs.update-version.outputs.tag }}
         body: |
           ## What's Changed
 
