@@ -58,6 +58,10 @@ jobs:
         else
           git commit -m "update version badges to ${{ steps.get_tag.outputs.tag }}"
           git push origin HEAD:main
+          # Move tag to the updated commit
+          TAG=${{ steps.get_tag.outputs.tag }}
+          git tag -f "${TAG}"
+          git push origin "${TAG}" --force
           echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
         fi
 
