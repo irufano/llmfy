@@ -12,17 +12,18 @@ def track_bedrock_usage(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return response
         model = args[0][
             "modelId"
         ]  # args is tuple[BedrockModel, params] and params contain `modelId`
         if response["usage"]:
-            usage = response["usage"]
-            usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
             usage_tracker.update(
                 provider=ServiceProvider.BEDROCK,
                 type=ServiceType.LLM,
                 model=model,
-                usage=usage,
+                usage=response["usage"],
             )
         return response
 
@@ -35,6 +36,9 @@ def track_bedrock_stream_usage(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return response
         # args is tuple[params] and params contain `modelId`
         model = args[0]["modelId"]
         stream = response.get("stream")
@@ -44,7 +48,6 @@ def track_bedrock_stream_usage(func):
             stream, stream_copy = itertools.tee(stream)  # Duplicate the generator
             response["stream"] = stream  # Replace original stream
 
-            stream_usage = None
             for event in stream_copy:  # Iterate over the copy
                 if "metadata" in event:
                     metadata = event["metadata"]
@@ -53,8 +56,6 @@ def track_bedrock_stream_usage(func):
                         break  # No need to iterate further
 
         if stream_usage:
-            usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
-            # usage_tracker.update(model=model, usage=stream_usage)
             usage_tracker.update(
                 provider=ServiceProvider.BEDROCK,
                 type=ServiceType.LLM,
@@ -73,19 +74,20 @@ def track_bedrock_embedding_usage(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return response
         model = args[0]
         # Extract token usage from headers
         headers = response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
         input_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
         usage = {"x-amzn-bedrock-input-token-count": input_tokens}
-        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
         usage_tracker.update(
             provider=ServiceProvider.BEDROCK,
             type=ServiceType.EMBEDDING,
             model=model,
             usage=usage,
         )
-
         return response
 
     return wrapper

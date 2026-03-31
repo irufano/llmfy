@@ -29,10 +29,12 @@ def track_googleai_usage(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return response
         model = args[0]["model"]  # args is tuple[params] and params contain `model`
         if response.usage_metadata:
             usage = _extract_usage(response.usage_metadata)
-            usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
             usage_tracker.update(
                 provider=ServiceProvider.GOOGLE,
                 type=ServiceType.LLM,
@@ -50,24 +52,25 @@ def track_googleai_stream_usage(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         stream_origin = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return stream_origin
         model = args[0]["model"]  # args is tuple[params] and params contain `model`
 
         stream_usage = None
 
         if stream_origin:
-            stream, stream_copy = itertools.tee(stream_origin)  # Duplicate the generator
+            stream, stream_copy = itertools.tee(
+                stream_origin
+            )  # Duplicate the generator
             stream_origin = stream  # Replace original stream
 
             for chunk in stream_copy:  # Iterate over the copy
-                if (
-                    chunk.usage_metadata
-                    and chunk.usage_metadata.prompt_token_count
-                ):
+                if chunk.usage_metadata and chunk.usage_metadata.prompt_token_count:
                     stream_usage = _extract_usage(chunk.usage_metadata)
                     break  # No need to iterate further
 
         if stream_usage:
-            usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
             usage_tracker.update(
                 provider=ServiceProvider.GOOGLE,
                 type=ServiceType.LLM,
@@ -89,6 +92,10 @@ def track_googleai_embedding_usage(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        if usage_tracker is None:
+            return response
         model = args[0]
         contents = args[1]
         client = args[2]
@@ -103,9 +110,6 @@ def track_googleai_embedding_usage(func):
         except Exception:
             pass
 
-        response = func(*args, **kwargs)
-
-        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
         usage_tracker.update(
             provider=ServiceProvider.GOOGLE,
             type=ServiceType.EMBEDDING,

@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 from llmfy.llmfy_core.usage.llmfy_usage import LLMfyUsage
 
 # Thread-safe storage for token usage per request
-LLMFY_USAGE_TRACKER_VAR = ContextVar("LLMFY_USAGE_TRACKER", default=LLMfyUsage())
+LLMFY_USAGE_TRACKER_VAR: ContextVar[Optional[LLMfyUsage]] = ContextVar("LLMFY_USAGE_TRACKER", default=None)
 
 
 @contextmanager
