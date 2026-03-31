@@ -1,5 +1,6 @@
 from .embeddings.base_embedding_model import BaseEmbeddingModel
 from .embeddings.bedrock.bedrock_embedding import BedrockEmbedding
+from .embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy import LLMfy
 from .messages import Content, ContentType, Message, MessageTemp, Role, ToolCall
@@ -51,5 +52,6 @@ __all__ = [
     "LLMfyUsage",
     "BaseEmbeddingModel",
     "BedrockEmbedding",
+    "GoogleAIEmbedding",
     "OpenAIEmbedding",
 ]

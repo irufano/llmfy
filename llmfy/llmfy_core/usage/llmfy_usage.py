@@ -367,6 +367,8 @@ class LLMfyUsage:
                         self.__openai_embedding_update(model=model, usage=usage)
                     case ServiceProvider.BEDROCK:
                         self.__bedrock_embedding_update(model=model, usage=usage)
+                    case ServiceProvider.GOOGLE:
+                        self.__googleai_embedding_update(model=model, usage=usage)
                     case _:
                         pass
             case _:
@@ -723,6 +725,71 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": token_input_price,
                 "output_price": token_output_price,
+                "price_per_tokens": ONE_MILLION,
+                "total_cost": total_cost_per_request,
+            }
+        )
+        pass
+
+    def __googleai_embedding_update(self, model: str, usage: Dict) -> None:
+        """
+        Update usage statistics and calculate price.
+
+        Args:
+            model: Model name
+            usage: usage of input token (for embedding use input token only).
+        """
+        ONE_MILLION = 1000000
+
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        # usage per-request
+        input_tokens = usage_dict.get("prompt_token_count", 0)
+        output_tokens = 0  # in embedding no output tokens usage
+        total_tokens = input_tokens + output_tokens
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+
+        # Calculate price
+        price_info = None
+        token_input_price = None
+        total_cost_per_request = 0
+
+        if model in self.googleai_pricing:
+            price_info = self.googleai_pricing[model]
+            active_input_price = price_info["input"]
+
+            if isinstance(active_input_price, dict):
+                token_input_price = active_input_price["default"]
+            else:
+                token_input_price = active_input_price
+
+            i_price = (input_tokens / ONE_MILLION) * token_input_price
+            total_cost_per_request = i_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`"
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "provider": ServiceProvider.GOOGLE,
+                "type": ServiceType.EMBEDDING,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": token_input_price,
+                "output_price": None,
                 "price_per_tokens": ONE_MILLION,
                 "total_cost": total_cost_per_request,
             }

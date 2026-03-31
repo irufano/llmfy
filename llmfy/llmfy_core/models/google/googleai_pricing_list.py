@@ -105,4 +105,7 @@ GOOGLEAI_PRICING = {
         "output_high": 18.00,
         "threshold": 200000,
     },
+    # Gemini Embedding
+    "gemini-embedding-001": {"input": 0.15, "output": 0},
+    "gemini-embedding-2-preview": {"input": 0.20, "output": 0}
 }

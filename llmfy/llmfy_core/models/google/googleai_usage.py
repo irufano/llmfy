@@ -77,3 +77,41 @@ def track_googleai_stream_usage(func):
         return stream_origin
 
     return wrapper
+
+
+def track_googleai_embedding_usage(func):
+    """Decorator to wrap `__call_googleai_embedding` calls on `GoogleAIEmbedding`.
+
+    The wrapped function must accept (model, contents, client) so the decorator
+    can call count_tokens before embedding, since EmbedContentResponse carries
+    no usage metadata.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        model = args[0]
+        contents = args[1]
+        client = args[2]
+
+        token_count = 0
+        try:
+            count_response = client.models.count_tokens(
+                model=model,
+                contents=contents,
+            )
+            token_count = count_response.total_tokens or 0
+        except Exception:
+            pass
+
+        response = func(*args, **kwargs)
+
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        usage_tracker.update(
+            provider=ServiceProvider.GOOGLE,
+            type=ServiceType.EMBEDDING,
+            model=model,
+            usage={"prompt_token_count": token_count},
+        )
+        return response
+
+    return wrapper

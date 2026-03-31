@@ -58,6 +58,7 @@ from .llmfy_core import (
 )
 from .llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
 from .llmfy_core.embeddings.bedrock.bedrock_embedding import BedrockEmbedding
+from .llmfy_core.embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .llmfy_core.embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy_utils.chunk import chunk_markdown_by_header, chunk_text
 from .llmfy_utils.text_preprocessing import clean_text_for_embedding
@@ -88,6 +89,7 @@ __all__ = [
     "FAISSVectorStore",
     "BaseEmbeddingModel",
     "BedrockEmbedding",
+    "GoogleAIEmbedding",
     "OpenAIEmbedding",
     "chunk_text",
     "clean_text_for_embedding",
