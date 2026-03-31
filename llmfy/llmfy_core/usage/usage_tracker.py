@@ -12,6 +12,7 @@ LLMFY_USAGE_TRACKER_VAR = ContextVar("LLMFY_USAGE_TRACKER", default=LLMfyUsage()
 def llmfy_usage_tracker(
     openai_pricing: Optional[Dict[str, Any]] = None,
     bedrock_pricing: Optional[Dict[str, Any]] = None,
+    googleai_pricing: Optional[Dict[str, Any]] = None,
 ):
     """LLMfy usage tracker.
 
@@ -95,6 +96,7 @@ def llmfy_usage_tracker(
     usage_tracker = LLMfyUsage(
         openai_pricing=openai_pricing,
         bedrock_pricing=bedrock_pricing,
+        googleai_pricing=googleai_pricing,
     )
     LLMFY_USAGE_TRACKER_VAR.set(usage_tracker)  # Store usage_tracker it in the context
     try:

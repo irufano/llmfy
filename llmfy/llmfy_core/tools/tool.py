@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.models.google.googleai_formatter import GoogleAIFormatter
 from llmfy.llmfy_core.models.model_formatter import ModelFormatter
 from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.service_provider import ServiceProvider
@@ -18,6 +19,7 @@ class Tool:
     _formatters: Dict[ServiceProvider, ModelFormatter] = {
         ServiceProvider.OPENAI: OpenAIFormatter(),
         ServiceProvider.BEDROCK: BedrockFormatter(),
+        ServiceProvider.GOOGLE: GoogleAIFormatter(),
     }
 
     def __init__(self, strict: bool = True):

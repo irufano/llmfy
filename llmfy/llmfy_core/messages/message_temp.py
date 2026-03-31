@@ -6,6 +6,7 @@ from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.models.google.googleai_formatter import GoogleAIFormatter
 from llmfy.llmfy_core.models.model_formatter import ModelFormatter
 from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.service_provider import ServiceProvider
@@ -18,6 +19,7 @@ class MessageTemp:
     _formatters: Dict[ServiceProvider, ModelFormatter] = {
         ServiceProvider.OPENAI: OpenAIFormatter(),
         ServiceProvider.BEDROCK: BedrockFormatter(),
+        ServiceProvider.GOOGLE: GoogleAIFormatter(),
     }
 
     def __init__(self):

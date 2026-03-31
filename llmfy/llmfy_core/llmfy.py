@@ -15,9 +15,9 @@ from llmfy.llmfy_core.tools.tool import Tool
 
 class LLMfy:
     """
-    LLMfy framework for integrating LLM-powered applications. 
+    LLMfy framework for integrating LLM-powered applications.
     """
-    
+
     def __init__(
         self,
         llm: BaseAIModel,
@@ -30,7 +30,7 @@ class LLMfy:
         Args:
             llm (BaseAIModel): Base LLM Model.
             system_message (Optional[str], optional): System message/prompt. Defaults to None.
-            input_variables (Optional[List[str]], optional): Input variables, Required if in system message there are placeholder var `{{var_name}}`. 
+            input_variables (Optional[List[str]], optional): Input variables, Required if in system message there are placeholder var `{{var_name}}`.
                 Example: ["var_name_1", "var_name_2"]. Defaults to None.
         """
         self.model: BaseAIModel = llm

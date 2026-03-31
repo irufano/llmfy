@@ -1,14 +1,16 @@
 from dotenv import load_dotenv
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    # BedrockConfig,
+    # BedrockModel,
+    # OpenAIConfig,
+    # OpenAIModel,
+    GoogleAIConfig,
+    GoogleAIModel,
     LLMfy,
     Message,
     Role,
     Tool,
-    # OpenAIConfig,
-    # OpenAIModel,
 )
 
 load_dotenv()
@@ -21,16 +23,22 @@ def tool_calling_example():
     # model="anthropic.claude-3-5-sonnet-20240620-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
-    )
+    # llm = BedrockModel(
+    #     model="amazon.nova-lite-v1:0",
+    #     config=BedrockConfig(temperature=0.7),
+    # )
 
     # config = OpenAIConfig(temperature=0.7)
     # llm = OpenAIModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )
+
+    config = GoogleAIConfig(temperature=0.7)
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=config,
+    )
 
     # Initialize framework
     ai = LLMfy(llm, system_message="You are a helpful assistant.")
@@ -65,6 +73,7 @@ def tool_calling_example():
     except Exception as e:
         print(e)
 
+
 doc_g_style = """Google style doc
 
 Args:
@@ -92,6 +101,7 @@ doc_s_style = """Sphinx style with type
 :returns: description
 """
 
+
 def tool_calling_with_invoke_example():
     # llm
     # model="anthropic.claude-3-haiku-20240307-v1:0",
@@ -99,9 +109,10 @@ def tool_calling_with_invoke_example():
     # model="anthropic.claude-3-5-sonnet-20240620-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+    config = GoogleAIConfig(temperature=0.7)
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=config,
     )
 
     # config = OpenAIConfig(temperature=0.7)
@@ -117,7 +128,7 @@ def tool_calling_with_invoke_example():
     @Tool()
     def get_current_weather(location: str, unit: str = "celsius") -> str:
         return f"The weather in {location} is 22 degrees {unit}"
-    
+
     get_current_weather.__doc__ = doc_g_style
 
     @Tool()
@@ -150,5 +161,5 @@ def tool_calling_with_invoke_example():
 
 
 if __name__ == "__main__":
-    # tool_calling_example()
-    tool_calling_with_invoke_example()
+    tool_calling_example()
+    # tool_calling_with_invoke_example()

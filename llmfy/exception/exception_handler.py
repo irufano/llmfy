@@ -1,6 +1,6 @@
 from llmfy.exception.exception_mapper import (
     BEDROCK_ERROR_MAP,
-    # GOOGLE_ERROR_MAP,
+    GOOGLE_ERROR_MAP,
     OPENAI_ERROR_MAP,
 )
 from llmfy.exception.llmfy_exception import LLMfyException
@@ -86,38 +86,37 @@ def handle_openai_error(e) -> LLMfyException:
     )
 
 
-# def handle_google_error(e) -> LLMfyException:
-#     """
-#     Handle Google Gen AI API exceptions.
+def handle_google_error(e) -> LLMfyException:
+    """
+    Handle Google Gen AI API exceptions.
 
-#     Docs: https://github.com/googleapis/python-genai#error-handling
-#     """
-#     # from google.genai import errors
+    Docs: https://github.com/googleapis/python-genai#error-handling
+    """
+    from google.genai import errors
 
-#     if isinstance(e, errors.APIError):
-#         status_code = e.code
-#         message = e.message
+    if isinstance(e, errors.APIError):
+        status_code = e.code
+        message = e.message
 
-#         raw_error = {
-#             'code': e.code,
-#             'message': e.message,
-#         }
+        raw_error = {
+            "code": e.code,
+            "message": e.message,
+        }
 
-#         # Add any additional attributes
-#         if hasattr(e, 'details'):
-#             raw_error['details'] = e.details
+        if hasattr(e, "details"):
+            raw_error["details"] = e.details
 
-#         exception_class = GOOGLE_ERROR_MAP.get(status_code, LLMfyException)
+        exception_class = GOOGLE_ERROR_MAP.get(status_code, LLMfyException)
 
-#         return exception_class(
-#             message=message,
-#             status_code=status_code,
-#             raw_error=raw_error,
-#             provider='google',
-#         )
+        return exception_class(
+            message=message,
+            status_code=status_code,
+            raw_error=raw_error,
+            provider=ServiceProvider.GOOGLE,
+        )
 
-#     return LLMfyException(
-#         message=str(e),
-#         raw_error={'error': str(e)},
-#         provider='google',
-#     )
+    return LLMfyException(
+        message=str(e),
+        raw_error={"error": str(e)},
+        provider=ServiceProvider.GOOGLE,
+    )

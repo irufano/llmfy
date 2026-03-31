@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
+from llmfy.llmfy_core.models.google.googleai_pricing_list import GOOGLEAI_PRICING
 from llmfy.llmfy_core.models.model_pricing import ModelPricing
 from llmfy.llmfy_core.models.openai.openai_pricing_list import OPENAI_PRICING
 from llmfy.llmfy_core.service_provider import ServiceProvider
@@ -24,6 +25,7 @@ class LLMfyUsage:
         self,
         openai_pricing: Optional[Dict[str, Any]] = None,
         bedrock_pricing: Optional[Dict[str, Any]] = None,
+        googleai_pricing: Optional[Dict[str, Any]] = None,
     ):
         if openai_pricing:
             if not self.__is_valid_openai_pricing_structure(openai_pricing):
@@ -43,6 +45,39 @@ class LLMfyUsage:
 						"input": 0.05,
 						"output": 1.50
 					}
+				}
+				```
+				"""
+                raise LLMfyException(error)
+
+        if googleai_pricing:
+            if not self.__is_valid_googleai_pricing_structure(googleai_pricing):
+                error = """
+				Please provide the right pricing structure for googleai, example:
+                
+				```
+				{
+					"gemini-2.0-flash": {
+						"input": 0.10,
+						"output": 0.40
+					},
+                    "gemini-3-flash-preview": {
+                        "input": {
+                            "default": 0.50,
+                            "text": 0.50,
+                            "image": 0.50,
+                            "video": 0.50,
+                            "audio": 1.00,
+                        },
+                        "output": 3.00,
+                    },
+					"gemini-2.5-pro": {
+                        "input": 1.25,
+                        "output": 10.00,
+                        "input_high": 2.50,
+                        "output_high": 15.00,
+                        "threshold": 200000,
+                    },
 				}
 				```
 				"""
@@ -96,6 +131,12 @@ class LLMfyUsage:
         self.bedrock_pricing: Dict[str, Dict[str, ModelPricing]] = (
             self._load_bedrock_pricing(
                 pricing_source=bedrock_pricing or BEDROCK_PRICING
+            )
+            or {}
+        )
+        self.googleai_pricing: Dict[str, Dict[str, Any]] = (
+            self._load_googleai_pricing(
+                pricing_source=googleai_pricing or GOOGLEAI_PRICING
             )
             or {}
         )
@@ -167,6 +208,63 @@ class LLMfyUsage:
                     return False
         return True
 
+    def __is_valid_googleai_pricing_structure(self, pricing: Any) -> bool:
+        """Validates Google AI pricing structures.
+
+        Supported formats (can be combined):
+          - Flat:          input is float
+          - Per-type:      input is dict with "default" key and optional type keys
+          - Tiered:        has threshold, input_high, output_high
+          - Tiered+typed:  input/input_high are both dicts
+        """
+        if not isinstance(pricing, dict):
+            return False
+
+        for model_pricing in pricing.values():
+            if not isinstance(model_pricing, dict):
+                return False
+            if "input" not in model_pricing or "output" not in model_pricing:
+                return False
+
+            # Validate input: float or per-type dict
+            inp = model_pricing["input"]
+            if isinstance(inp, dict):
+                if "default" not in inp:
+                    return False  # per-type dict must have a "default" fallback
+                for v in inp.values():
+                    if not isinstance(v, (float, int)):
+                        return False
+            elif not isinstance(inp, (float, int)):
+                return False
+
+            # output must be numeric
+            if not isinstance(model_pricing["output"], (float, int)):
+                return False
+
+            # Tiered keys: all three must be present if any one is
+            tier_keys = {"input_high", "output_high", "threshold"}
+            present_tier_keys = tier_keys & model_pricing.keys()
+            if present_tier_keys and present_tier_keys != tier_keys:
+                return False
+
+            if "input_high" in model_pricing:
+                inp_high = model_pricing["input_high"]
+                if isinstance(inp_high, dict):
+                    if "default" not in inp_high:
+                        return False
+                    for v in inp_high.values():
+                        if not isinstance(v, (float, int)):
+                            return False
+                elif not isinstance(inp_high, (float, int)):
+                    return False
+
+                if not isinstance(model_pricing["output_high"], (float, int)):
+                    return False
+                if not isinstance(model_pricing["threshold"], (float, int)):
+                    return False
+
+        return True
+
     def __is_valid_bedrock_pricing_structure(self, pricing: Any) -> bool:
         # First check if it's a dictionary
         if not isinstance(pricing, dict):
@@ -224,6 +322,19 @@ class LLMfyUsage:
             for model, regions in pricing_data.items()
         }
 
+    def _load_googleai_pricing(
+        self,
+        pricing_source: Dict[str, Dict[str, Any]],
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Load Google AI pricing from dictionary.
+
+        Supports both flat and tiered pricing structures.
+        Price per 1M tokens for different models (USD)
+        - https://ai.google.dev/pricing
+        """
+        return dict(pricing_source)
+
     def update(
         self,
         provider: ServiceProvider,
@@ -246,6 +357,8 @@ class LLMfyUsage:
                         self.__openai_update(model=model, usage=usage)
                     case ServiceProvider.BEDROCK:
                         self.__bedrock_update(model=model, usage=usage)
+                    case ServiceProvider.GOOGLE:
+                        self.__googleai_update(model=model, usage=usage)
                     case _:
                         pass
             case ServiceType.EMBEDDING:
@@ -512,6 +625,105 @@ class LLMfyUsage:
                 "input_price": price_info.token_input if price_info else None,
                 "output_price": price_info.token_output if price_info else None,
                 "price_per_tokens": ONE_K,
+                "total_cost": total_cost_per_request,
+            }
+        )
+        pass
+
+    def __googleai_update(self, model: str, usage: Dict[str, int]) -> None:
+        """
+        GOOGLEAI Update usage statistics and calculate price.
+
+        Args:
+            model (str): Model name
+            usage (Dict[str, int]): Dictionary containing token counts
+        """
+        ONE_MILLION = 1000000
+
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        # usage per-request
+        input_tokens = usage_dict.get("prompt_token_count", 0)
+        output_tokens = usage_dict.get("candidates_token_count", 0)
+        total_tokens = input_tokens + output_tokens
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+
+        # Per-type input token counts (from usage_metadata when available)
+        text_tokens = usage_dict.get("text_token_count", 0)
+        image_tokens = usage_dict.get("image_token_count", 0)
+        video_tokens = usage_dict.get("video_token_count", 0)
+        audio_tokens = usage_dict.get("audio_token_count", 0)
+        has_type_breakdown = (
+            text_tokens + image_tokens + video_tokens + audio_tokens
+        ) > 0
+
+        # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+        token_input_price = None
+        token_output_price = None
+
+        if model in self.googleai_pricing:
+            price_info = self.googleai_pricing[model]
+            threshold = price_info.get("threshold")
+
+            # Select tier based on total input tokens vs threshold
+            if threshold and input_tokens > threshold:
+                active_input_price = price_info.get("input_high", price_info["input"])
+                token_output_price = price_info.get("output_high", price_info["output"])
+            else:
+                active_input_price = price_info["input"]
+                token_output_price = price_info["output"]
+
+            # Compute input cost: per-type breakdown or flat
+            if isinstance(active_input_price, dict) and has_type_breakdown:
+
+                def _type_price(key: str) -> float:
+                    return active_input_price.get(key, active_input_price["default"])
+
+                i_price = (
+                    (text_tokens / ONE_MILLION) * _type_price("text")
+                    + (image_tokens / ONE_MILLION) * _type_price("image")
+                    + (video_tokens / ONE_MILLION) * _type_price("video")
+                    + (audio_tokens / ONE_MILLION) * _type_price("audio")
+                )
+                token_input_price = active_input_price  # dict — store as-is for details
+            elif isinstance(active_input_price, dict):
+                # No type breakdown available — fall back to default price
+                token_input_price = active_input_price["default"]
+                i_price = (input_tokens / ONE_MILLION) * token_input_price
+            else:
+                token_input_price = active_input_price
+                i_price = (input_tokens / ONE_MILLION) * token_input_price
+
+            o_price = (output_tokens / ONE_MILLION) * token_output_price
+            total_cost_per_request = i_price + o_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`"
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "provider": ServiceProvider.GOOGLE,
+                "type": ServiceType.LLM,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": token_input_price,
+                "output_price": token_output_price,
+                "price_per_tokens": ONE_MILLION,
                 "total_cost": total_cost_per_request,
             }
         )

@@ -3,13 +3,15 @@ import os
 from dotenv import load_dotenv
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    # BedrockConfig,
+    # BedrockModel,
+    # OpenAIConfig,
+    # OpenAIModel,
+    GoogleAIConfig,
+    GoogleAIModel,
     LLMfy,
     LLMfyException,
     Message,
-    # OpenAIConfig,
-    # OpenAIModel,
     Role,
 )
 from llmfy.llmfy_core.usage.usage_tracker import llmfy_usage_tracker
@@ -25,17 +27,23 @@ def retrieval_example():
 	"""
 
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
-        config=config,
-    )
+    # config = BedrockConfig(temperature=0.7)
+    # llm = BedrockModel(
+    #     model="amazon.nova-lite-v1:0",
+    #     config=config,
+    # )
 
     # config = OpenAIConfig(temperature=0.7)
     # llm = OpenAIModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )
+
+    config = GoogleAIConfig(temperature=0.7)
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=config,
+    )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
@@ -66,17 +74,23 @@ def retrieval_invoke_example():
 	"""
 
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
-        config=config,
-    )
+    # config = BedrockConfig(temperature=0.7)
+    # llm = BedrockModel(
+    #     model="amazon.nova-lite-v1:0",
+    #     config=config,
+    # )
 
     # config = OpenAIConfig(temperature=0.7)
     # llm = OpenAIModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )
+
+    config = GoogleAIConfig(temperature=0.7)
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=config,
+    )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
@@ -90,7 +104,7 @@ def retrieval_invoke_example():
 
     try:
         content = "Apa ibukota china?"
-        
+
         with llmfy_usage_tracker() as usage:
             response = framework.invoke(content, info=info)
 
@@ -101,5 +115,5 @@ def retrieval_invoke_example():
         print(f"{e}")
 
 
-retrieval_example()
-# retrieval_invoke_example()
+# retrieval_example()
+retrieval_invoke_example()
