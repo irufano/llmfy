@@ -1,125 +1,91 @@
 # Framework
-We can use LLMfy to use large language models to interpret language, have conversations, and perform tasks.
 
-## Intialize LLMfy framework
-We can integrate LLM with `LLMfy`
+`LLMfy` is the core class for integrating large language models into your application. It wraps any supported model and provides a unified interface for generation.
+
+## Initialize LLMfy
 
 ```python linenums="1"
+from llmfy import LLMfy, OpenAIModel, OpenAIConfig
+
 llm = OpenAIModel(
-    model="gpt-4o-mini",  
+    model="gpt-4o-mini",
     config=OpenAIConfig(temperature=0.7),
 )
 
-framework = LLMfy(llm, system_message="You are helpful assistant.")
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
 
-Generate
+Generate a response:
 
 ```python linenums="1"
+from llmfy import Message, Role
+
 messages = [
     Message(
-        role=Role.USER, 
+        role=Role.USER,
         content="What is the capital city of Indonesia?",
     )
 ]
-response = framework.chat(messages)
+response = agent.chat(messages)
 
-print(f"\n>> {response.result.content}\n")       
+print(f"\n>> {response.result.content}\n")
 ```
 
 Output:
 ```sh
->> The capital city of Indonesia is Jakarta.   
+>> The capital city of Indonesia is Jakarta.
 ```
 
-## LLMfy with Tools
-To add tools to LLMfy:
+---
 
-### Define LLMfy
-```python linenums="1"
-llm = OpenAIModel(
-    model="gpt-4o-mini",  
-    config=OpenAIConfig(temperature=0.7),
-)
+## System Message
 
-framework = LLMfy(llm, system_message="You are helpful assistant.")
-```
+The `system_message` parameter sets the behavior and context for the model.
 
-### Define System Message
-#### Basic System Message
+### Basic System Message
+
 ```python linenums="1"
 SYSTEM_PROMPT = """
-You are Lemfy a helpful assistant. 
-Yor objective is answer user question.
+You are Lemfy, a helpful assistant.
+Your objective is to answer user questions.
 """
 
-llmfy = LLMfy(llm, system_message=SYSTEM_PROMPT)
+agent = LLMfy(llm, system_message=SYSTEM_PROMPT)
 ```
 
-#### System Message with Placholder Variable
+### System Message with Placeholder Variables
 
-To use varible inside prompt, we can use double curly brackets `{{var_name}}`. When initiate `LLMfy` class don't forget to add `input_variables` according to the placeholder variables that defined in system prompt. And When calling the api we must add `kwargs` or Keyword Argument that reference the placeholder variables.
+Use double curly brackets `{{var_name}}` to define placeholders inside the system prompt. Declare all placeholder names in the `input_variables` list when creating the `LLMfy` instance. Pass the variable values as keyword arguments when calling `invoke` or `chat`.
 
 ```python linenums="1"
 info = """
-LLMfy is framework for integrating LLM-powered applications.
+LLMfy is a framework for integrating LLM-powered applications.
 """
 
-# Define placeholder var with double curly brackets `{{var_name}}`
+# Define placeholder var with double curly brackets {{var_name}}
 SYSTEM_PROMPT = """
 Answer any user questions based on the data:
 {{info}}
-Answer only relevant questions, otherwise, say I don't know.
+Answer only relevant questions, otherwise say I don't know.
 """
 
+from llmfy import LLMfy, BedrockModel, BedrockConfig
+
 llm = BedrockModel(
-    model="amazon.nova-lite-v1:0", 
+    model="amazon.nova-lite-v1:0",
     config=BedrockConfig(temperature=0.7),
 )
 
-# Add input variables as defined in system prompt
-framework = LLMfy(
-    llm, 
-    system_message=SYSTEM_PROMPT, 
+# Add input_variables matching the placeholder names
+agent = LLMfy(
+    llm,
+    system_message=SYSTEM_PROMPT,
     input_variables=["info"],
 )
 
-# When invoke add keyword argument (kwargs) based on placeholder variables. 
-# In this example is `info`
+# Pass the variable value as a keyword argument
 content = "What is LLMfy?"
-response = framework.invoke(content, info=info)
-```
+response = agent.invoke(content, info=info)
 
-### Define tools
-```python linenums="1"
-@Tool()
-def get_current_weather(location: str, unit: str = "celsius") -> str:
-    return f"The weather in {location} is 22 degrees {unit}"
-
-tools = [get_current_weather]
-```
-
-
-### Register tool
-```python linenums="1"
-framework.register_tool(tools)
-```
-
-### Invoke agent
-```python linenums="1"
-# Example conversation with tool use
-messages = [
-    Message(
-        role=Role.USER,
-        content="what is the weather in London?",
-    )
-]
-
-response = framework.chat_with_tools(messages)
 print(f"\n>> {response.result.content}\n")
-```
-
-output:
-```sh 
->> The weather in London is 22 degrees celcius.
 ```

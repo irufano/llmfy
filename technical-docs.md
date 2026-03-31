@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock), workflow orchestration via FlowEngine, vector storage with FAISS, and utility functions for text processing.
+LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock, Google AI), workflow orchestration via FlowEngine, vector storage with FAISS, and utility functions for text processing.
 
 - **Python**: >= 3.11
 - **Package Manager**: [UV](https://docs.astral.sh/uv/)
@@ -30,7 +30,8 @@ llmfy/
 │   ├── py.typed                # PEP 561 type marker
 │   ├── exception/              # Custom exception classes
 │   ├── llmfy_core/             # Core LLM abstractions
-│   │   ├── models/             # LLM model implementations (OpenAI, Bedrock)
+│   │   ├── models/             # LLM model implementations (OpenAI, Bedrock, Google AI)
+│   │   │   ├── google/         # Google AI (Gemini) model, config, usage, pricing
 │   │   ├── embeddings/         # Embedding models
 │   │   ├── messages/           # Message handling
 │   │   ├── tools/              # Tool definitions and registry
@@ -110,6 +111,7 @@ Install with `pip install llmfy[extra_name]` or `pip install llmfy[all]`.
 |--------------------|--------------------|------------------------------|
 | `openai`           | openai             | OpenAI API client            |
 | `boto3`            | boto3              | AWS SDK (Bedrock)            |
+| `google-genai`     | google-genai       | Google AI (Gemini) client    |
 | `numpy`            | numpy              | Numerical computing          |
 | `faiss-cpu`        | faiss-cpu          | FAISS vector similarity      |
 | `typing_extensions`| typing_extensions  | Backported typing features   |
@@ -121,8 +123,67 @@ Install with `pip install llmfy[extra_name]` or `pip install llmfy[all]`.
 
 Defined in `[dependency-groups]` in `pyproject.toml`:
 
-- **dev**: Runtime optional packages with pinned versions, python-dotenv, PyMySQL
+- **dev**: Runtime optional packages with pinned versions, python-dotenv, PyMySQL, google-genai
 - **docs**: mkdocs, mkdocs-material, mkdocstrings, and related plugins
+
+---
+
+## Exception Handling
+
+LLMfy maps provider-specific API errors to a unified exception hierarchy under `llmfy.exception`.
+
+### Base Exception
+
+All exceptions inherit from `LLMfyException`:
+
+```python
+from llmfy import LLMfyException
+```
+
+| Attribute    | Description                              |
+|--------------|------------------------------------------|
+| `message`    | Human-readable error message             |
+| `status_code`| HTTP status code (if applicable)         |
+| `raw_error`  | Original provider error payload          |
+| `provider`   | Provider name (`openai`, `bedrock`, `google`) |
+
+### Exception Classes
+
+| Exception                  | Typical HTTP Code | When Raised                         |
+|----------------------------|-------------------|-------------------------------------|
+| `AuthenticationException`  | 401               | Invalid or missing API key          |
+| `PermissionDeniedException`| 403               | Insufficient permissions            |
+| `InvalidRequestException`  | 400               | Malformed request or invalid params |
+| `ModelNotFoundException`   | 404               | Model ID not found                  |
+| `RateLimitException`       | 429               | Rate limit exceeded                 |
+| `QuotaExceededException`   | 429 / 402         | Quota or billing limit exceeded     |
+| `ContentFilterException`   | 400 / 451         | Content blocked by safety filters   |
+| `ModelErrorException`      | 500               | Internal model error                |
+| `ServiceUnavailableException` | 503            | Provider service down or overloaded |
+| `TimeoutException`         | 408 / 504         | Request timed out                   |
+
+### Provider Error Handlers
+
+Each provider has a dedicated handler that translates native errors:
+
+| Function               | Provider   |
+|------------------------|------------|
+| `handle_openai_error`  | OpenAI     |
+| `handle_bedrock_error` | AWS Bedrock|
+| `handle_google_error`  | Google AI  |
+
+### Usage
+
+```python
+from llmfy import LLMfy, LLMfyException, RateLimitException
+
+try:
+    response = llm.generate(messages)
+except RateLimitException as e:
+    print(f"Rate limited: {e.message} (status={e.status_code})")
+except LLMfyException as e:
+    print(f"LLM error [{e.provider}]: {e.message}")
+```
 
 ---
 
@@ -134,8 +195,8 @@ uv build
 
 # Output is placed in dist/
 ls dist/
-# llmfy-0.4.13.tar.gz
-# llmfy-0.4.13-py3-none-any.whl
+# llmfy-0.4.21.tar.gz
+# llmfy-0.4.21-py3-none-any.whl
 ```
 
 The build uses **Hatchling** as the backend. Configuration in `pyproject.toml`:
@@ -153,8 +214,8 @@ Publishing is fully automated via `.github/workflows/release.yml`. See [GitHub W
 
 1. Create and push a version tag:
    ```bash
-   git tag v0.4.14
-   git push origin v0.4.14
+   git tag v0.4.22
+   git push origin v0.4.22
    ```
 
 2. The workflow automatically handles version badge updates, PyPI publishing, and GitHub Release creation in order.
@@ -201,8 +262,8 @@ The version is **automatically derived from git tags** using `hatch-vcs`. No nee
 
 ```bash
 # 1. Create and push tag
-git tag v0.4.14
-git push origin v0.4.14
+git tag v0.4.22
+git push origin v0.4.22
 ```
 
 ### Version Badges
@@ -263,8 +324,8 @@ version-file = "llmfy/_version.py"
 
 | Git State | Resolved Version |
 |-----------|-----------------|
-| Exactly on tag `v0.4.14` | `0.4.14` |
-| 3 commits after `v0.4.14` | `0.4.15.dev3+g<commit>` |
+| Exactly on tag `v0.4.21` | `0.4.21` |
+| 3 commits after `v0.4.21` | `0.4.22.dev3+g<commit>` |
 | No tags in history | Error (build fails) |
 
 ### Generated File
@@ -277,17 +338,17 @@ At build time, `hatch-vcs` generates `llmfy/_version.py` containing the resolved
 
 ```python
 from llmfy import __version__
-print(__version__)  # e.g., "0.4.14"
+print(__version__)  # e.g., "0.4.21"
 ```
 
 ### Release Flow
 
 ```bash
 # 1. Create a version tag
-git tag v0.4.14
+git tag v0.4.22
 
 # 2. Push the tag (triggers release.yml workflow)
-git push origin v0.4.14
+git push origin v0.4.22
 ```
 
-The tag `v0.4.14` is automatically stripped of the `v` prefix, so the package is published to PyPI as version `0.4.14`.
+The tag `v` prefix is automatically stripped, so the package is published to PyPI as the bare version number (e.g., `v0.4.22` → `0.4.22`).

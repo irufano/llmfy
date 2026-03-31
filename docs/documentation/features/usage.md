@@ -126,6 +126,74 @@ Example pricing structure:
 }
 ```
 
+### Google AI
+
+Google AI supports four pricing structures (all prices are per 1M tokens in USD):
+
+**Flat pricing** — same price for all input types:
+```python linenums="1"
+{
+    "gemini-2.0-flash": {
+        "input": 0.10,
+        "output": 0.40,
+    }
+}
+```
+
+**Per-type input pricing** — different price per modality:
+```python linenums="1"
+{
+    "gemini-3-flash-preview": {
+        "input": {
+            "default": 0.50,
+            "text": 0.50,
+            "image": 0.50,
+            "video": 0.50,
+            "audio": 1.00,
+        },
+        "output": 3.00,
+    }
+}
+```
+
+**Tiered pricing** — different price above a token count threshold:
+```python linenums="1"
+{
+    "gemini-2.5-pro": {
+        "input": 1.25,        # price when prompt <= threshold
+        "input_high": 2.50,   # price when prompt > threshold
+        "output": 10.00,
+        "output_high": 15.00,
+        "threshold": 200000,
+    }
+}
+```
+
+**Tiered + per-type pricing** — combines both tiered and per-modality pricing:
+```python linenums="1"
+{
+    "model-id": {
+        "input": {
+            "default": 0.25,
+            "text": 0.25,
+            "image": 0.25,
+            "video": 0.25,
+            "audio": 0.50,
+        },
+        "input_high": {
+            "default": 0.50,
+            "text": 0.50,
+            "image": 0.50,
+            "video": 0.50,
+            "audio": 1.00,
+        },
+        "output": 1.50,
+        "output_high": 3.00,
+        "threshold": 200000,
+    }
+}
+```
+
 ### Example
 
 ```python linenums="1"
@@ -171,6 +239,24 @@ bedrock_prices = {
     }
 }
 
-with llmfy_usage_tracker(openai_pricing=openai_prices, bedrock_pricing=bedrock_prices) as usage:
+googleai_prices = {
+    "gemini-2.0-flash": {
+        "input": 0.10,
+        "output": 0.40,
+    },
+    "gemini-2.5-pro": {
+        "input": 1.25,
+        "input_high": 2.50,
+        "output": 10.00,
+        "output_high": 15.00,
+        "threshold": 200000,
+    }
+}
+
+with llmfy_usage_tracker(
+    openai_pricing=openai_prices,
+    bedrock_pricing=bedrock_prices,
+    googleai_pricing=googleai_prices,
+) as usage:
     # invoke llmfy
 ```

@@ -21,10 +21,11 @@ plugins:
 nav:
   - LLMfy: index.md
   - Documentation:
-      - Intallation:
+      - Installation:
           - documentation/installation/how-to-install.md
           - documentation/installation/configuration.md
-      - Features:
+      - Core Features:
+          - documentation/features/basic.md
           - documentation/features/framework.md
           - documentation/features/providers.md
           - documentation/features/generate.md
@@ -34,6 +35,17 @@ nav:
           - documentation/features/chunk-text.md
           - documentation/features/usage.md
           - documentation/features/faiss-vector-store.md
+      - Vector Store:
+          - documentation/vector-store/faiss-vector-store.md
+      - Exception:
+          - documentation/exception/exception-handler.md
+  - Flow Engine:
+      - documentation/flow-engine/overview.md
+      - documentation/flow-engine/state.md
+      - documentation/flow-engine/nodes-edges.md
+      - documentation/flow-engine/create-agent.md
+      - documentation/flow-engine/streaming.md
+      - documentation/flow-engine/checkpointer.md
   - Examples:
       - examples/example-retrieval.md
       - examples/example-tool-calling.md
@@ -72,6 +84,10 @@ nav:
           - reference/llmfy_core.embeddings.base_embedding_model.md
           - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
           - reference/llmfy_core.embeddings.openai.openai_embedding.md
+          - reference/llmfy_core.models.google.googleai_config.md
+          - reference/llmfy_core.models.google.googleai_model.md
+          - reference/llmfy_core.models.google.googleai_usage.md
+          - reference/llmfy_core.models.google.googleai_pricing_list.md
       - llmfy_utils:
           - reference/llmfy_utils.chunk.chunk.md
           - reference/llmfy_utils.text_preprocessing.text_preprocessing.md
@@ -139,6 +155,8 @@ theme:
         name: Switch to dark mode
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -146,6 +164,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra:
   social:

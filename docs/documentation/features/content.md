@@ -1,219 +1,318 @@
 # Content
 
-Content is the input to generate a response to llm. Supported content types are: 
+Content is the input used to generate a response from an LLM. Supported content types are:
 
 - `TEXT`
-- `IMAGE` 
+- `IMAGE`
 - `DOCUMENT`
-- `VIDEO` 
+- `VIDEO`
 
-To use `IMAGE`, `DOCUMENT` or `VIDEO` input make sure to use a multi-modal llm that supports the input.
+To use `IMAGE`, `DOCUMENT`, or `VIDEO` input, make sure to use a multi-modal model that supports the type.
+
+---
 
 ## Text
 
-Text on content can be used directly without the `Content` class, example:
+Text content can be passed directly as a string without the `Content` class:
 
-```python linenums="7"
-content = "Hello"
-       
-response = llmfy.invoke(content) 
+```python linenums="1"
+response = llmfy.invoke("Hello")
 ```
 
-or with list of class `Content`, example
+Or as a list of `Content` objects:
 
-```python linenums="7"
+```python linenums="1"
+from llmfy import Content
+
 content = [
-    Content(
-        value="Hello",
-    )
+    Content(value="Hello"),
 ]
-       
-response = llmfy.invoke(content) 
+
+response = llmfy.invoke(content)
 ```
+
+---
 
 ## Image
 
-Image content value has different approaches with the available providers:
+Image input is supported by **OpenAI**, **AWS Bedrock**, and **Google AI**.
 
 ### OpenAI
-  
-  - image url (e.g. "https://image.link.jpg") or base64 (`f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
 
-  - Example using base64 for openai:
-    ```python linenums="7"
-    input_image = "llmfy/test/simple_flowchart.jpg"
-        with open(input_image, "rb") as f:
-            image_base64 = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode("utf-8")}"
+Accepts a base64 data URI or an image URL.
 
-    content = [
-        Content(
-            value="Jelaskan flowchart berikut.",
-        ),
-        Content(
-            type=ContentType.IMAGE,
-            value=image_base64,
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
-  
-### Bedrock
+```python linenums="1"
+import base64
+from llmfy import Content, ContentType
 
-  - image bytes (`image = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
-  - `ContentType.IMAGE` extension must be in ["gif", "jpeg", "png", "webp"]
-Use bytes for bedrock:
-```python linenums="7"
-input_image = "llmfy/test/simple_flowchart.jpg"
-    with open(input_image, "rb") as f:
-        image_bytes = f.read()
+input_image = "path/to/image.jpg"
+with open(input_image, "rb") as f:
+    image = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+
+# Or use an image URL directly:
+# image = "https://example.com/image.jpg"
 
 content = [
-    Content(
-        value="Jelaskan flowchart berikut.",
-    ),
+    Content(value="Describe this image."),
+    Content(type=ContentType.IMAGE, value=image),
+]
+
+response = llmfy.invoke(content)
+```
+
+### AWS Bedrock
+
+Accepts raw image bytes or an S3 URI. Supported formats: `gif`, `jpeg`, `png`, `webp`.
+
+**Using bytes:**
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_image = "path/to/image.jpg"
+with open(input_image, "rb") as f:
+    image_bytes = f.read()
+
+content = [
+    Content(value="Describe this image."),
     Content(
         type=ContentType.IMAGE,
+        format="jpeg",
         value=image_bytes,
     ),
 ]
-       
-response = llmfy.invoke(content) 
-```
-  - Example use AWS S3 for bedrock:
-    ```python linenums="7"
-    content = [
-        Content(
-            value="Jelaskan flowchart berikut.",
-        ),
-        Content(
-            type=ContentType.IMAGE,
-            use_s3=True,
-            bucket_owner="111122223333",
-            value="s3://amzn-s3-demo-bucket/myImage",
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
 
+response = llmfy.invoke(content)
+```
+
+**Using AWS S3:**
+
+```python linenums="1"
+content = [
+    Content(value="Describe this image."),
+    Content(
+        type=ContentType.IMAGE,
+        use_s3=True,
+        bucket_owner="111122223333",
+        value="s3://amzn-s3-demo-bucket/myImage",
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+### Google AI
+
+Accepts a base64 data URI or an HTTP URL.
+
+```python linenums="1"
+import base64
+from llmfy import Content, ContentType
+
+input_image = "path/to/image.jpg"
+with open(input_image, "rb") as f:
+    image = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+
+# Or use an HTTP URL directly:
+# image = "https://example.com/image.jpg"
+
+content = [
+    Content(value="Describe this image."),
+    Content(type=ContentType.IMAGE, value=image),
+]
+
+response = llmfy.invoke(content)
+```
+
+---
 
 ## Document
 
-Document (pdf only) content value has different approaches with the available providers:
+Document (PDF only) input is supported by **OpenAI**, **AWS Bedrock**, and **Google AI**.
 
 ### OpenAI
-  
-  - pdf base64 (`doc = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"`)
-  - Example use base64 for openai (should include `filename` with file extension):
-    ```python linenums="7"
-    input_doc = "llmfy/test/short_stories.pdf"
-        with open(input_doc, "rb") as f:
-            doc = (
-                f"data:application/pdf;base64,{base64.b64encode(f.read()).decode("utf-8")}"
-            )
 
-    content = [
-        Content(
-            type=ContentType.DOCUMENT,
-            filename="short_stories.pdf",
-            value=doc,
-        ),
-        Content(
-            value="Siapa pemeran dalam cerita di dokumen?",
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
+Accepts a base64 data URI. The `filename` must include the `.pdf` extension.
 
-### Bedrock
+```python linenums="1"
+import base64
+from llmfy import Content, ContentType
 
-  - pdf bytes (`doc = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
-  - Example use bytes for bedrock:
-    ```python linenums="7"
-    input_doc = "llmfy/test/short_stories.pdf"
-        with open(input_doc, "rb") as f:
-            doc = f.read()
+input_doc = "path/to/document.pdf"
+with open(input_doc, "rb") as f:
+    doc = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode('utf-8')}"
 
-    content = [
-        Content(
-            type=ContentType.DOCUMENT,
-            filename="short_stories",
-            value=doc,
-        ),
-        Content(
-            type=ContentType.TEXT,
-            value="Siapa pemeran dalam cerita di dokumen?",
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
-  - Example use AWS S3 for bedrock:
-    ```python linenums="7"
-    content = [
-        Content(
-            type=ContentType.DOCUMENT,
-            use_s3=True,
-            bucket_owner="111122223333",
-            value="s3://amzn-s3-demo-bucket/myPdf",
-        ),
-        Content(
-            type=ContentType.TEXT,
-            value="Siapa pemeran dalam cerita di dokumen?",
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
+content = [
+    Content(
+        type=ContentType.DOCUMENT,
+        filename="document.pdf",
+        value=doc,
+    ),
+    Content(value="Who are the characters in this document?"),
+]
 
+response = llmfy.invoke(content)
+```
+
+### AWS Bedrock
+
+Accepts raw PDF bytes or an S3 URI.
+
+**Using bytes:**
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_doc = "path/to/document.pdf"
+with open(input_doc, "rb") as f:
+    doc = f.read()
+
+content = [
+    Content(
+        type=ContentType.DOCUMENT,
+        filename="document",
+        value=doc,
+    ),
+    Content(
+        type=ContentType.TEXT,
+        value="Who are the characters in this document?",
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+**Using AWS S3:**
+
+```python linenums="1"
+content = [
+    Content(
+        type=ContentType.DOCUMENT,
+        use_s3=True,
+        bucket_owner="111122223333",
+        value="s3://amzn-s3-demo-bucket/myPdf",
+    ),
+    Content(
+        type=ContentType.TEXT,
+        value="Who are the characters in this document?",
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+### Google AI
+
+Accepts a base64 data URI. The `filename` must include the `.pdf` extension.
+
+```python linenums="1"
+import base64
+from llmfy import Content, ContentType
+
+input_doc = "path/to/document.pdf"
+with open(input_doc, "rb") as f:
+    doc = f"data:application/pdf;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+
+content = [
+    Content(
+        type=ContentType.DOCUMENT,
+        filename="document.pdf",
+        value=doc,
+    ),
+    Content(value="Who are the characters in this document?"),
+]
+
+response = llmfy.invoke(content)
+```
+
+---
 
 ## Video
 
-Video input only support with `bedrock` provider, `openai` not support video input yet.
+Video input is supported by **AWS Bedrock** and **Google AI**. OpenAI does not support video input yet.
 
 ### OpenAI
 
-- Not supported yet
-  
-### Bedrock
-  - mp4 bytes (`video = f.read()`) or link s3 if use s3 (`bucket_owner` required, `use_s3` set to `TRUE`).
-  - `ContentType.VIDEO` extension must be in ["wmv", "mpg", "mpeg", "three_gp", "flv", "mp4", "mov", "mkv", "webm"]
-  - Example use bytes for bedrock:
-    ```python linenums="7"
-    input_video = "llmfy/test/sample_video.mp4"
-        with open(input_video, "rb") as f:
-            video_bytes = f.read()
+Not supported yet.
 
-    content = [
-        Content(
-            type=ContentType.TEXT,
-            value="Apa yg terjadi di video berikut.",
-        ),
-        Content(
-            type=ContentType.VIDEO,
-            format="mp4",
-            value=video_bytes,
-        ),
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
-  - Example use AWS S3 for bedrock:
-    ```python linenums="7"
-    content = [
-        Content(
-            type=ContentType.TEXT,
-            value="Apa yg terjadi di video berikut.",
-        ),
-        Content(
-            type=ContentType.VIDEO,
-            use_s3=True,
-            bucket_owner="111122223333",
-            value="s3://amzn-s3-demo-bucket/myVideo",
-        )
-    ]
-        
-    response = llmfy.invoke(content) 
-    ```
+### AWS Bedrock
+
+Accepts raw video bytes or an S3 URI. Supported formats: `wmv`, `mpg`, `mpeg`, `three_gp`, `flv`, `mp4`, `mov`, `mkv`, `webm`.
+
+**Using bytes:**
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_video = "path/to/video.mp4"
+with open(input_video, "rb") as f:
+    video_bytes = f.read()
+
+content = [
+    Content(type=ContentType.TEXT, value="What happens in this video?"),
+    Content(
+        type=ContentType.VIDEO,
+        format="mp4",
+        value=video_bytes,
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+**Using AWS S3:**
+
+```python linenums="1"
+content = [
+    Content(type=ContentType.TEXT, value="What happens in this video?"),
+    Content(
+        type=ContentType.VIDEO,
+        use_s3=True,
+        bucket_owner="111122223333",
+        value="s3://amzn-s3-demo-bucket/myVideo",
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+### Google AI
+
+Accepts an HTTP URL, a YouTube URL, or raw video bytes (recommended for files under 20 MB).
+
+**Using a URL:**
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+content = [
+    Content(type=ContentType.TEXT, value="What happens in this video?"),
+    Content(
+        type=ContentType.VIDEO,
+        value="https://example.com/video.mp4",
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+**Using bytes (< 20 MB):**
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_video = "path/to/video.mp4"
+with open(input_video, "rb") as f:
+    video_bytes = f.read()
+
+content = [
+    Content(type=ContentType.TEXT, value="What happens in this video?"),
+    Content(
+        type=ContentType.VIDEO,
+        value=video_bytes,
+        format="mp4",  # optional, defaults to mp4
+    ),
+]
+
+response = llmfy.invoke(content)
+```

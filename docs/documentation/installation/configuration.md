@@ -1,5 +1,5 @@
 # Configuration
-## OpenAI 
+## OpenAI
 To use `OpenAI` services, add below config to your env:
 
 - `OPENAI_API_KEY`
@@ -7,9 +7,14 @@ To use `OpenAI` services, add below config to your env:
 ## AWS Bedrock
 To use `Bedrock` services, add below config to your env:
 
-- `AWS_ACCESS_KEY_ID` 
-- `AWS_SECRET_ACCESS_KEY` 
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 - `AWS_BEDROCK_REGION`
+
+## Google AI
+To use `Google AI` services, add below config to your env:
+
+- `GOOGLE_API_KEY`
 
 ## Example
 
@@ -21,4 +26,5 @@ OPENAI_API_KEY=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_BEDROCK_REGION=
+GOOGLE_API_KEY=
 ```

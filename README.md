@@ -16,8 +16,7 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
 
 ## How to install
 
-- Prerequisites:
-  - Install [pydantic](https://pypi.org/project/pydantic) — ✅ required, 
+- Optional Library:
   - Install [openai](https://pypi.org/project/openai) to use OpenAI models — 🔸 optional.
   - Install [boto3](https://pypi.org/project/boto3/) to use AWS Bedrock models — 🔸 optional.
   - Install [numpy](https://pypi.org/project/numpy/) to use Embedding, `FAISSVectorStore` — 🔸 optional.
@@ -29,18 +28,14 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
       - MySQL (async: [aiomysql](https://pypi.org/project/aiomysql/), sync: [pymysql](https://pypi.org/project/PyMySQL/)) — 🔸 optional.
       - SQLite (async: [aiosqlite](https://pypi.org/project/aiosqlite/), sync: built-in) — 🔸 optional.
 
+### Using UV
+```sh
+uv add llmfy
+```
+
 ### Using pip
 ```sh
 pip install llmfy
-```
-### Using requirements.txt
-- Add into requirements.txt
-```txt
-llmfy
-```
-- Then install
-```txt
-pip install -r requirements.txt
 ```
 
 ### Using github 
@@ -48,15 +43,21 @@ pip install -r requirements.txt
 #### From a specific branch
 ```sh
 # main
+uv add git+https://github.com/irufano/llmfy.git@main
+# or
 pip install git+https://github.com/irufano/llmfy.git@main
 
 # dev
+uv add git+https://github.com/irufano/llmfy.git@dev
+# or
 pip install git+https://github.com/irufano/llmfy.git@dev
 ```
 
 #### From a tag
 ```sh
 # example tag version 0.4.3
+uv add git+https://github.com/irufano/llmfy.git@v0.4.3
+# or
 pip install git+https://github.com/irufano/llmfy.git@v0.4.3
 ```
 
@@ -68,14 +69,18 @@ git+https://github.com/irufano/llmfy.git@dev
 
 ## How to use
 ### OpenAI models
-To use `OpenAIModel`, add below config to your env:
+To use `OpenAIModel`, requires install `"llmfy[openai]"` and add below config to your env:
 - `OPENAI_API_KEY`
 
 ### AWS Bedrock models
-To use `BedrockModel`, add below config to your env:
+To use `BedrockModel`, requires install `"llmfy[boto3]"` and add below config to your env:
 - `AWS_ACCESS_KEY_ID` 
 - `AWS_SECRET_ACCESS_KEY` 
 - `AWS_BEDROCK_REGION`
+
+### Google AI models
+To use `GoogleAIModel`, requires install `"llmfy[google-genai]"` and add below config to your env:
+- `GOOGLE_API_KEY`
 
 ## Example
 ### LLMfy Example
@@ -147,7 +152,23 @@ git fetch --tags --force
 
 The --force flag is needed because git fetch --tags alone won't update tags that already exist locally.
 
+### Package Development on local
+```sh
+uv sync --group dev --group docs
+```
+
+or
+
+```sh
+uv sync --all-groups
+```
+
 ### Mkdocs run on local
+
+```sh
+uv sync --group docs
+```
+
 ```sh
 # Serve on local
 mkdocs serve
