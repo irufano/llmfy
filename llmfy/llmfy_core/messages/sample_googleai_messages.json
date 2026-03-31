@@ -1,0 +1,77 @@
+[
+    {
+        "role": "system",
+        "parts": [
+            {
+                "text": "You are a helpful assistant."
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            {
+                "text": "what time and weather in London?"
+            }
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            {
+                "function_call": {
+                    "id": "f38d3c71-9a63-4fdd-92bd-843b659013ca",
+                    "name": "get_current_time",
+                    "args": {
+                        "location": "London"
+                    }
+                }
+            },
+            {
+                "function_call": {
+                    "id": "bf6a1572-7727-4b0d-9256-48c1d1b0d6e6",
+                    "name": "get_current_weather",
+                    "args": {
+                        "location": "London"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            {
+                "function_response": {
+                    "id": "f38d3c71-9a63-4fdd-92bd-843b659013ca",
+                    "name": "get_current_time",
+                    "response": {
+                        "result": "The time in London is 09:00 AM"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            {
+                "function_response": {
+                    "id": "bf6a1572-7727-4b0d-9256-48c1d1b0d6e6",
+                    "name": "get_current_weather",
+                    "response": {
+                        "result": "The weather in London is 22 degrees celsius"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            {
+                "text": "The time in London is 09:00 AM and the weather is 22 degrees Celsius."
+            }
+        ]
+    }
+]
