@@ -13,7 +13,7 @@ def count_tokens_approximately(messages: List[Message]) -> int:
     Rough estimate: 1 token ≈ 4 characters for English text.
 
     Args:
-        messages: List of Message objects
+        messages: List of Message objectscsada 
 
     Returns:
         Approximate token count
@@ -222,8 +222,73 @@ def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
         return messages[-10:] if len(messages) > 10 else messages
 
 
+
 def tool_trim_messages(messages: List[Message]):
-    """Trim messages but ALWAYS preserve active tool context"""
+    """Trim messages but ALWAYS preserve active tool context.
+
+    Mechanism:
+        Step 1 - Forward scan:
+            Iterates all messages to collect:
+            - tool_call_ids       : all tool calls made by the assistant
+            - resolved_tool_ids   : tool calls that already have a TOOL result
+            - last_tool_call_idx  : index of the last assistant message with tool calls
+            - last_message_is_tool_result : whether the last message is a TOOL result
+
+        Step 2 - Detect pending tools:
+            pending_tool_ids = tool_call_ids - resolved_tool_ids
+            Any tool call without a matching result is "pending."
+
+        Step 3 - Two paths:
+            - Active tool cycle (pending tools OR last msg is tool result):
+                Split at last_tool_call_idx, protect everything from there onward,
+                trim earlier messages down to the last non-TOOL anchor to avoid
+                starting with an orphaned TOOL result.
+            - No active tool cycle:
+                Aggressively trim — keep only messages[-1:].
+
+    Example:
+        -- Example 1:
+        messages = [
+            0: USER   "search for X"
+            1: ASSIST  [tool_call: search, id="tc1"]
+            2: TOOL    [tool_call_id="tc1", result="..."]
+            3: ASSIST  "Based on results..." [tool_call: lookup, id="tc2"]  <- last_tool_call_idx
+            4: TOOL    [tool_call_id="tc2", result="..."]  <- last_message_is_tool_result=True
+        ]
+
+        tool_call_ids     = {tc1, tc2}
+        resolved_tool_ids = {tc1, tc2}
+        pending_tool_ids  = {}  (empty, but last_message_is_tool_result=True -> protect context)
+
+        protected = messages[3:] -> [ASSIST tc2, TOOL tc2]
+        trimmable = messages[:3] -> [USER, ASSIST tc1, TOOL tc1]
+        anchor    = index 1 (last non-TOOL in trimmable) -> ASSIST tc1
+
+        result = [ASSIST tc1, TOOL tc1] + [ASSIST tc2, TOOL tc2]
+        # USER "search for X" is dropped; active tool context is fully preserved.
+
+        -- Example 2 (parallel tool calls in a single ASSIST message):
+        messages = [
+            0: USER   "search for X"
+            1: ASSIST  [tool_call: search, id="tc1", tool_call: search, id="tc2"]  <- last_tool_call_idx
+            2: TOOL    [tool_call_id="tc1", result="..."]
+            3: TOOL    [tool_call_id="tc2", result="..."]  <- last_message_is_tool_result=True
+        ]
+
+        tool_call_ids     = {tc1, tc2}
+        resolved_tool_ids = {tc1, tc2}
+        pending_tool_ids  = {}  (empty, but last_message_is_tool_result=True -> protect context)
+
+        Condition: (False) or True -> True  -> enters protect-context path
+
+        protected = messages[1:] -> [ASSIST(tc1,tc2), TOOL(tc1), TOOL(tc2)]
+        trimmable = messages[:1] -> [USER]
+        anchor    = index 0 (USER is not TOOL, no skip needed)
+
+        result = [USER] + [ASSIST(tc1,tc2), TOOL(tc1), TOOL(tc2)]
+        # All 4 messages preserved; parallel tool results stay intact.
+    """
+    print(messages)
     if len(messages) == 1:
         return messages
 
@@ -281,14 +346,24 @@ def tool_trim_messages(messages: List[Message]):
             trimmable_messages = messages[:last_tool_call_idx]
 
         if not trimmable_messages:
-            return messages[-1:]
+            return protected_messages
 
         try:
-            return trimmable_messages[-1:] + protected_messages
+            # Find the last USER message as the anchor so we never start with an
+            # orphaned tool_result (which happens in multi-step tool chains when
+            # trimmable_messages[-1] is a Role.TOOL message from a prior tool call).
+            anchor_idx = len(trimmable_messages) - 1
+            while anchor_idx >= 0 and trimmable_messages[anchor_idx].role == Role.TOOL:
+                anchor_idx -= 1
+
+            if anchor_idx < 0:
+                return protected_messages
+
+            return trimmable_messages[anchor_idx:] + protected_messages
 
         except Exception as e:
             logger.warning(f"Warning: trim_messages failed during tool cycle: {e}")
-            return messages[-1:]
+            return protected_messages
 
     else:
         return messages[-1:]
