@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 import asyncio
 from typing import List, Optional
-
-from sqlalchemy import TypeDecorator
-from sqlalchemy.dialects import mysql, postgresql
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.flow_engine.checkpointer.base_checkpointer import (
@@ -19,10 +18,12 @@ try:
         Integer,
         String,
         Text,
+        TypeDecorator,
         create_engine,
         delete,
         select,
     )
+    from sqlalchemy.dialects import mysql, postgresql
     from sqlalchemy.ext.asyncio import (
         AsyncSession,
         async_sessionmaker,
@@ -31,37 +32,31 @@ try:
     from sqlalchemy.orm import declarative_base, sessionmaker
 
     SQLALCHEMY_AVAILABLE = True
-except ImportError:
-    SQLALCHEMY_AVAILABLE = False
 
+    class TimestampMilliseconds(TypeDecorator):
+        impl = DateTime
+        cache_ok = True
 
-class TimestampMilliseconds(TypeDecorator):
-    impl = DateTime
-    cache_ok = True
+        def load_dialect_impl(self, dialect):
+            if dialect.name == "mysql":
+                return dialect.type_descriptor(mysql.DATETIME(fsp=3))
+            elif dialect.name == "postgresql":
+                return dialect.type_descriptor(postgresql.TIMESTAMP(precision=3))
+            else:
+                return dialect.type_descriptor(DateTime())
 
-    def load_dialect_impl(self, dialect):
-        if dialect.name == "mysql":
-            return dialect.type_descriptor(mysql.DATETIME(fsp=3))
-        elif dialect.name == "postgresql":
-            return dialect.type_descriptor(postgresql.TIMESTAMP(precision=3))
-        else:
-            return dialect.type_descriptor(DateTime())
+    class LongText(TypeDecorator):
+        impl = Text
+        cache_ok = True
 
+        def load_dialect_impl(self, dialect):
+            if dialect.name == "postgresql":
+                return dialect.type_descriptor(postgresql.TEXT())
+            elif dialect.name == "mysql":
+                return dialect.type_descriptor(mysql.LONGTEXT())
+            else:
+                return dialect.type_descriptor(Text())
 
-class LongText(TypeDecorator):
-    impl = Text
-    cache_ok = True
-
-    def load_dialect_impl(self, dialect):
-        if dialect.name == "postgresql":
-            return dialect.type_descriptor(postgresql.TEXT())
-        elif dialect.name == "mysql":
-            return dialect.type_descriptor(mysql.LONGTEXT())
-        else:
-            return dialect.type_descriptor(Text())
-
-
-if SQLALCHEMY_AVAILABLE:
     Base = declarative_base()
 
     class CheckpointModel(Base):
@@ -76,14 +71,10 @@ if SQLALCHEMY_AVAILABLE:
         step = Column(Integer, nullable=False)
         state = Column(LongText, nullable=False)
 
-        # Composite index for efficient queries
         __table_args__ = (Index("idx_thread_timestamp", "session_id", "timestamp"),)
 
-else:
-    raise LLMfyException(
-        "SQLAlchemy package is not installed. SQLAlchemy package is required for SQLCheckpointer. "
-        'Install it using `pip install "llmfy[SQLAlchemy]"`'
-    )
+except ImportError:
+    SQLALCHEMY_AVAILABLE = False
 
 
 class SQLCheckpointer(BaseCheckpointer):
@@ -128,7 +119,7 @@ class SQLCheckpointer(BaseCheckpointer):
             - pip install sqlalchemy --break-system-packages                  # SQLite (built-in)
         """
         if not SQLALCHEMY_AVAILABLE:
-            raise ImportError(
+            raise LLMfyException(
                 "SQLAlchemy is required for SQLCheckpointer.\n"
                 "Install with: pip install sqlalchemy --break-system-packages\n\n"
                 "Then install your database driver:\n"
