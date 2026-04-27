@@ -46,12 +46,16 @@ nav:
       - documentation/flow-engine/create-agent.md
       - documentation/flow-engine/streaming.md
       - documentation/flow-engine/checkpointer.md
+  - Guardrails:
+      - documentation/guardrails/overview.md
+      - Tutorials:
+          - documentation/guardrails/pii-detection.md
+          - documentation/guardrails/custom-types.md
   - Examples:
       - examples/example-retrieval.md
       - examples/example-tool-calling.md
       - examples/example-stream.md
       - examples/example-usage-tracker.md
-      - examples/example-llmfypipe.md
       - examples/example-input-document.md
       - examples/example-input-image.md
       - examples/example-input-video.md
@@ -59,6 +63,7 @@ nav:
       - examples/example-chunking.md
       - examples/example-faiss-vectore-store.md
       - examples/example-flowengine-agent-basic.md
+      - examples/example-pii.md
   - API Reference:
       - llmfy_core:
           - reference/llmfy_core.llmfy.md
@@ -109,6 +114,12 @@ nav:
           - reference/vector_store.document.md
           - reference/vector_store.faiss_index.faiss_index.md
           - reference/vector_store.faiss_index.faiss_vector_store.md
+      - guardrails:
+          - reference/guardrails.pii.pii_detector.md
+          - reference/guardrails.pii.pii_type.md
+          - reference/guardrails.pii.pii_strategy.md
+          - reference/guardrails.pii.pii_mask_style.md
+          - reference/guardrails.pii.pii_result.md
       - Exception:
           - reference/llmfy_core.exception.llmfy_exception..md
 

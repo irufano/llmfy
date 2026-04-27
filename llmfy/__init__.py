@@ -60,6 +60,14 @@ from .llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
 from .llmfy_core.embeddings.bedrock.bedrock_embedding import BedrockEmbedding
 from .llmfy_core.embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .llmfy_core.embeddings.openai.openai_embedding import OpenAIEmbedding
+from .guardrails import (
+    PIIDetection,
+    PIIDetectionResult,
+    PIIDetector,
+    PIIMaskStyle,
+    PIIStrategy,
+    PIIType,
+)
 from .llmfy_utils.chunk import chunk_markdown_by_header, chunk_text
 from .llmfy_utils.text_preprocessing import clean_text_for_embedding
 from .vector_store.document import Document
@@ -91,6 +99,12 @@ __all__ = [
     "BedrockEmbedding",
     "GoogleAIEmbedding",
     "OpenAIEmbedding",
+    "PIIDetector",
+    "PIIMaskStyle",
+    "PIIDetection",
+    "PIIDetectionResult",
+    "PIIStrategy",
+    "PIIType",
     "chunk_text",
     "clean_text_for_embedding",
     "chunk_markdown_by_header",
