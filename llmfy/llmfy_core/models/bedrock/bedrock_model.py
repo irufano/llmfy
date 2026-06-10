@@ -69,7 +69,7 @@ class BedrockModel(BaseAIModel):
 
     def __call_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from botocore.exceptions import ClientError
+        from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
         from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.models.bedrock.bedrock_usage import track_bedrock_usage
@@ -79,15 +79,14 @@ class BedrockModel(BaseAIModel):
             try:
                 response = self.client.converse(**params)
                 return response
-            except ClientError as e:
+            except (ClientError, ReadTimeoutError, ConnectTimeoutError) as e:
                 raise handle_bedrock_error(e)
-            # Any non-ClientError exceptions will naturally propagate up the call stack.
 
         return _call_bedrock_impl(params)
 
     def __call_stream_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from botocore.exceptions import ClientError
+        from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
         from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.models.bedrock.bedrock_usage import (
@@ -98,7 +97,7 @@ class BedrockModel(BaseAIModel):
         def _call_stream_bedrock_impl(params: dict[str, Any]):
             try:
                 return self.client.converse_stream(**params)
-            except ClientError as e:
+            except (ClientError, ReadTimeoutError, ConnectTimeoutError) as e:
                 raise handle_bedrock_error(e)
 
         return _call_stream_bedrock_impl(params)

@@ -13,7 +13,16 @@ def handle_bedrock_error(e) -> LLMfyException:
 
     Docs: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
     """
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
+
+    from llmfy.exception.llmfy_exception import TimeoutException
+
+    if isinstance(e, (ReadTimeoutError, ConnectTimeoutError)):
+        return TimeoutException(
+            message=str(e),
+            raw_error=e,
+            provider="bedrock",
+        )
 
     if not isinstance(e, ClientError):
         return LLMfyException(
