@@ -93,6 +93,8 @@ class GoogleAIModel(BaseAIModel):
         return types.GenerateContentConfig(**config_kwargs)
 
     def __call_googleai(self, params: dict[str, Any]):
+        import httpx
+
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
@@ -107,13 +109,14 @@ class GoogleAIModel(BaseAIModel):
                     config=params["config"],
                 )
                 return response
-            except errors.APIError as e:
+            except (errors.APIError, httpx.TimeoutException) as e:
                 raise handle_google_error(e)
-            # Any non-APIError exceptions will naturally propagate up the call stack.
 
         return _call_googleai_impl(params)
 
     def __call_stream_googleai(self, params: dict[str, Any]):
+        import httpx
+
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
@@ -129,9 +132,8 @@ class GoogleAIModel(BaseAIModel):
                     contents=params["contents"],
                     config=params["config"],
                 )
-            except errors.APIError as e:
+            except (errors.APIError, httpx.TimeoutException) as e:
                 raise handle_google_error(e)
-            # Any non-APIError exceptions will naturally propagate up the call stack.
 
         return _call_stream_googleai_impl(params)
 

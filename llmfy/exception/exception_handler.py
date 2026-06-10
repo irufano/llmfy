@@ -3,7 +3,7 @@ from llmfy.exception.exception_mapper import (
     GOOGLE_ERROR_MAP,
     OPENAI_ERROR_MAP,
 )
-from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.exception.llmfy_exception import LLMfyException, TimeoutException, TimeoutType
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
@@ -15,13 +15,20 @@ def handle_bedrock_error(e) -> LLMfyException:
     """
     from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
-    from llmfy.exception.llmfy_exception import TimeoutException
-
-    if isinstance(e, (ReadTimeoutError, ConnectTimeoutError)):
+    if isinstance(e, ReadTimeoutError):
         return TimeoutException(
             message=str(e),
             raw_error=e,
             provider="bedrock",
+            timeout_type=TimeoutType.READ,
+        )
+
+    if isinstance(e, ConnectTimeoutError):
+        return TimeoutException(
+            message=str(e),
+            raw_error=e,
+            provider="bedrock",
+            timeout_type=TimeoutType.CONNECT,
         )
 
     if not isinstance(e, ClientError):
@@ -41,6 +48,15 @@ def handle_bedrock_error(e) -> LLMfyException:
     else:
         exception_class = LLMfyException
         status_code = http_status
+
+    if exception_class is TimeoutException:
+        return TimeoutException(
+            message=message,
+            status_code=status_code,
+            raw_error=e.response,
+            provider=ServiceProvider.BEDROCK,
+            timeout_type=TimeoutType.MODEL,
+        )
 
     return exception_class(
         message=message,
@@ -87,6 +103,25 @@ def handle_openai_error(e) -> LLMfyException:
     else:
         exception_class = LLMfyException
 
+    if exception_class is TimeoutException:
+        import httpx
+
+        timeout_type_map = {
+            httpx.ConnectTimeout: TimeoutType.CONNECT,
+            httpx.ReadTimeout: TimeoutType.READ,
+            httpx.WriteTimeout: TimeoutType.WRITE,
+            httpx.PoolTimeout: TimeoutType.POOL,
+        }
+        cause = getattr(e, "__cause__", None)
+        timeout_type = timeout_type_map.get(type(cause))
+        return TimeoutException(
+            message=str(e),
+            status_code=status_code,
+            raw_error=raw_error,
+            provider=ServiceProvider.OPENAI,
+            timeout_type=timeout_type,
+        )
+
     return exception_class(
         message=str(e),
         status_code=status_code,
@@ -101,7 +136,23 @@ def handle_google_error(e) -> LLMfyException:
 
     Docs: https://github.com/googleapis/python-genai#error-handling
     """
+    import httpx
+
     from google.genai import errors
+
+    if isinstance(e, httpx.TimeoutException):
+        timeout_type_map = {
+            httpx.ConnectTimeout: TimeoutType.CONNECT,
+            httpx.ReadTimeout: TimeoutType.READ,
+            httpx.WriteTimeout: TimeoutType.WRITE,
+            httpx.PoolTimeout: TimeoutType.POOL,
+        }
+        return TimeoutException(
+            message=str(e),
+            raw_error=e,
+            provider="google",
+            timeout_type=timeout_type_map.get(type(e)),
+        )
 
     if isinstance(e, errors.APIError):
         status_code = e.code

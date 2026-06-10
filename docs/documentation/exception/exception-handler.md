@@ -26,7 +26,7 @@ from llmfy import LLMfyException
 | `LLMfyException` | Base class for all LLMfy errors |
 | `RateLimitException` | Rate limit exceeded (HTTP 429) |
 | `QuotaExceededException` | Usage/quota limit exceeded |
-| `TimeoutException` | Request timed out (HTTP 408) |
+| `TimeoutException` | Request timed out (HTTP 408) — see [Timeout Types](#timeout-types) |
 | `InvalidRequestException` | Invalid request parameters (HTTP 400/422) |
 | `AuthenticationException` | Authentication failed (HTTP 401/403) |
 | `PermissionDeniedException` | Permission denied (HTTP 403) |
@@ -77,6 +77,57 @@ except ServiceUnavailableException as e:
     print(f"Service unavailable (HTTP {e.status_code}) — retry later.")
 except LLMfyException as e:
     print(f"Unexpected error: {e.message}")
+```
+
+## Timeout Types
+
+`TimeoutException` carries an additional `timeout_type` attribute (`TimeoutType` enum) that identifies the exact cause of the timeout. This lets you apply different retry strategies depending on where the failure occurred.
+
+```python
+from llmfy import TimeoutException, TimeoutType
+```
+
+| `TimeoutType` | Value | Description |
+|---------------|-------|-------------|
+| `TimeoutType.CONNECT` | `"connect"` | Could not establish a connection to the endpoint |
+| `TimeoutType.READ` | `"read"` | Connected but timed out waiting for response bytes |
+| `TimeoutType.WRITE` | `"write"` | Timed out sending the request body |
+| `TimeoutType.POOL` | `"pool"` | Timed out waiting for a connection slot from the pool |
+| `TimeoutType.MODEL` | `"model"` | Model-side processing timeout (Bedrock `ModelTimeoutException`) |
+| `None` | — | Type could not be determined |
+
+### Per-provider timeout coverage
+
+| Provider | Trigger | `timeout_type` |
+|----------|---------|----------------|
+| **Bedrock** | `botocore.ReadTimeoutError` | `CONNECT` |
+| **Bedrock** | `botocore.ConnectTimeoutError` | `READ` |
+| **Bedrock** | `ClientError: ModelTimeoutException` | `MODEL` |
+| **OpenAI** | `APITimeoutError` (inspects `__cause__`) | `CONNECT` / `READ` / `WRITE` / `POOL` / `None` |
+| **Google** | `httpx.ConnectTimeout` | `CONNECT` |
+| **Google** | `httpx.ReadTimeout` | `READ` |
+| **Google** | `httpx.WriteTimeout` | `WRITE` |
+| **Google** | `httpx.PoolTimeout` | `POOL` |
+
+### Example
+
+```python linenums="1"
+from llmfy import TimeoutException, TimeoutType
+
+try:
+    response = agent.invoke("Hello")
+    print(response.result.content)
+except TimeoutException as e:
+    if e.timeout_type == TimeoutType.CONNECT:
+        print("Endpoint unreachable — check network or retry later.")
+    elif e.timeout_type == TimeoutType.MODEL:
+        print("Model overloaded — reduce payload size or wait longer before retrying.")
+    elif e.timeout_type in (TimeoutType.READ, TimeoutType.WRITE):
+        print("Transport timeout — retry with exponential backoff.")
+    elif e.timeout_type == TimeoutType.POOL:
+        print("Connection pool exhausted — reduce concurrency or increase pool size.")
+    else:
+        print(f"Request timed out: {e.message}")
 ```
 
 ## Provider Error Mapping

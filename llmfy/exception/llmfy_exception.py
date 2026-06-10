@@ -26,7 +26,16 @@ except LLMfyException as e:
 ```
 """
 
+from enum import Enum
 from typing import Any, Optional
+
+
+class TimeoutType(Enum):
+    CONNECT = "connect"  # could not establish a connection to the endpoint
+    READ = "read"        # connected but timed out waiting for response bytes
+    WRITE = "write"      # timed out sending the request
+    POOL = "pool"        # timed out waiting for a connection slot from the pool
+    MODEL = "model"      # model-side processing timeout (Bedrock ModelTimeoutException)
 
 
 class LLMfyException(Exception):
@@ -89,7 +98,16 @@ class QuotaExceededException(LLMfyException):
 class TimeoutException(LLMfyException):
     """Request timed out"""
 
-    pass
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        raw_error: Optional[Any] = None,
+        provider: Optional[str] = None,
+        timeout_type: Optional[TimeoutType] = None,
+    ):
+        super().__init__(message, status_code, raw_error, provider)
+        self.timeout_type = timeout_type
 
 
 class InvalidRequestException(LLMfyException):
