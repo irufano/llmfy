@@ -29,6 +29,7 @@ nav:
           - documentation/features/framework.md
           - documentation/features/providers.md
           - documentation/features/generate.md
+          - documentation/features/thinking-config.md
           - documentation/features/content.md
           - documentation/features/tool-calling.md
           - documentation/features/embedding.md

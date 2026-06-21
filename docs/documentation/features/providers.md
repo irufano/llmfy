@@ -41,8 +41,13 @@ config = OpenAIConfig(
     top_p=1.0,             # Nucleus sampling probability
     frequency_penalty=0.0, # Penalise repeated tokens
     presence_penalty=0.0,  # Penalise tokens already in the prompt
+    # Thinking / reasoning (o-series models)
+    enable_thinking=False,    # Set True for o1/o3/o4-mini reasoning models
+    reasoning_effort=None,    # 'low', 'medium', 'high' — defaults to 'medium'
 )
 ```
+
+See [Thinking Config](thinking-config.md) for usage with reasoning models.
 
 ### Usage
 
@@ -92,8 +97,16 @@ config = BedrockConfig(
     top_p=1.0,            # Nucleus sampling probability
     top_k=None,           # Top-k sampling
     stopSequences=None,   # List of stop sequences
+    # Thinking (Claude and Nova 2 Lite models)
+    enable_thinking=False,        # Set True to enable thinking
+    thinking_budget_tokens=None,  # Claude extended thinking: token budget (min 1024)
+    thinking_type=None,           # 'enabled' | 'adaptive' — Claude mode selector
+    thinking_effort=None,         # Claude adaptive: 'low', 'medium', 'high', 'max'
+    reasoning_effort=None,        # Nova 2 Lite: 'low', 'medium', 'high'
 )
 ```
+
+See [Thinking Config](thinking-config.md) for per-model details and constraints.
 
 ### Usage
 
@@ -136,21 +149,28 @@ Common model IDs: `amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`, `anthropic.cl
 from llmfy import GoogleAIConfig
 
 config = GoogleAIConfig(
-    temperature=0.7,          # Sampling temperature
-    max_tokens=None,          # Max output tokens (maps to max_output_tokens)
-    top_p=None,               # Nucleus sampling probability
-    top_k=None,               # Top-k sampling
-    stop_sequences=None,      # List of stop sequences
-    candidate_count=None,     # Number of response candidates
-    seed=None,                # Random seed for reproducibility
-    presence_penalty=None,    # Penalise tokens already in the prompt
-    frequency_penalty=None,   # Penalise repeated tokens
-    response_mime_type=None,  # e.g. "application/json" for structured output
-    response_schema=None,     # Schema for structured output
-    safety_settings=None,     # List of SafetySetting instances
-    thinking_config=None,     # ThinkingConfig instance for reasoning models
+    temperature=0.7,              # Sampling temperature
+    max_tokens=None,              # Max output tokens (maps to max_output_tokens)
+    top_p=None,                   # Nucleus sampling probability
+    top_k=None,                   # Top-k sampling
+    stop_sequences=None,          # List of stop sequences
+    candidate_count=None,         # Number of response candidates
+    seed=None,                    # Random seed for reproducibility
+    presence_penalty=None,        # Penalise tokens already in the prompt
+    frequency_penalty=None,       # Penalise repeated tokens
+    response_mime_type=None,      # e.g. "application/json" for structured output
+    response_schema=None,         # Schema for structured output
+    safety_settings=None,         # List of SafetySetting instances
+    # Thinking (Gemini 2.5+ and Gemini 3 series)
+    enable_thinking=False,            # Set True to enable thinking
+    thinking_level=None,              # 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'
+    thinking_budget_tokens=None,      # Token budget (-1=dynamic, 0=disable)
+    thinking_include_thoughts=None,   # Include thinking steps in response
+    thinking_config=None,             # Raw ThinkingConfig override (backward compat)
 )
 ```
+
+See [Thinking Config](thinking-config.md) for per-model details.
 
 ### Usage
 

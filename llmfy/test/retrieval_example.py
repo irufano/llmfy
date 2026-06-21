@@ -39,7 +39,7 @@ def retrieval_example():
     #     config=config,
     # )
 
-    config = GoogleAIConfig(temperature=0.7)
+    config = GoogleAIConfig(temperature=0.7, enable_thinking=True)
     llm = GoogleAIModel(
         model="gemini-2.5-flash-lite",
         config=config,

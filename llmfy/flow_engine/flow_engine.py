@@ -420,6 +420,12 @@ class FlowEngine:
         """
         Validate the workflow structure before execution.
 
+        1: START must have at least one outgoing edge
+        2: At least one path must lead to END
+        3: All referenced nodes must be defined
+        4: Conditional edges - validate that condition function returns valid targets
+        5: Detect nodes with multiple non-conditional edges
+
         Raises:
             LLMfyException: If the workflow has structural issues
         """

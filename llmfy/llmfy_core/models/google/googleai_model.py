@@ -84,7 +84,17 @@ class GoogleAIModel(BaseAIModel):
         if self.config.safety_settings is not None:
             config_kwargs["safety_settings"] = self.config.safety_settings
         if self.config.thinking_config is not None:
+            # Raw override takes priority (backward compat)
             config_kwargs["thinking_config"] = self.config.thinking_config
+        elif self.config.enable_thinking:
+            thinking_kwargs: Dict[str, Any] = {}
+            if self.config.thinking_budget_tokens is not None:
+                thinking_kwargs["thinking_budget"] = self.config.thinking_budget_tokens
+            if self.config.thinking_level is not None:
+                thinking_kwargs["thinking_level"] = self.config.thinking_level
+            if self.config.thinking_include_thoughts is not None:
+                thinking_kwargs["include_thoughts"] = self.config.thinking_include_thoughts
+            config_kwargs["thinking_config"] = types.ThinkingConfig(**thinking_kwargs)
         if system_instruction:
             config_kwargs["system_instruction"] = system_instruction
         if tools:

@@ -121,6 +121,9 @@ class OpenAIModel(BaseAIModel):
                 **kwargs,
             }
 
+            if self.config.enable_thinking:
+                params["reasoning_effort"] = self.config.reasoning_effort or "medium"
+
             if tools:
                 params["tools"] = [
                     {"type": "function", "function": tool} for tool in tools
@@ -191,6 +194,9 @@ class OpenAIModel(BaseAIModel):
                 "max_tokens": self.config.max_tokens,
                 **kwargs,
             }
+
+            if self.config.enable_thinking:
+                params["reasoning_effort"] = self.config.reasoning_effort or "medium"
 
             if tools:
                 params["tools"] = [
