@@ -123,6 +123,8 @@ class LLMfyUsage:
         self.input_tokens: int = 0
         self.total_tokens: int = 0
         self.total_cost: float = 0.0
+        self.cache_read_tokens: int = 0
+        self.cache_write_tokens: int = 0
         self.raw_usages: List[Dict[str, int]] = []
         self.openai_pricing: Dict[str, ModelPricing] = (
             self._load_openai_pricing(pricing_source=openai_pricing or OPENAI_PRICING)
@@ -154,11 +156,23 @@ class LLMfyUsage:
                 "total_cost": self.total_cost,
                 "total_cost_formatted": self.__format_trimmed_float(self.total_cost),
             },
+            "cache": {
+                "cache_read_tokens": self.cache_read_tokens,
+                "cache_write_tokens": self.cache_write_tokens,
+            },
             "details": self.details,
         }
 
     def __repr__(self) -> str:
         # rounded_up = math.ceil(self.total_cost * 1000000) / 1000000
+        cache_section = ""
+        if self.cache_read_tokens or self.cache_write_tokens:
+            cache_section = (
+                f"Cache:\n"
+                f"\tCache Read Tokens: {self.cache_read_tokens}\n"
+                f"\tCache Write Tokens: {self.cache_write_tokens}\n"
+            )
+
         return (
             f"\n------------------\n"
             f"USAGE: \n\n"
@@ -168,8 +182,9 @@ class LLMfyUsage:
             f"Total Requests: {self.total_request}\n"
             # f"Total Cost (USD): ${rounded_up:.6f}"
             f"Total Cost (USD): ${self.total_cost}\n"
-            f"Total Cost (USD formatted): ${self.__format_trimmed_float(self.total_cost)}\n\n"
-            f"Request Details:\n"
+            f"Total Cost (USD formatted): ${self.__format_trimmed_float(self.total_cost)}\n"
+            + (cache_section if cache_section else "")
+            + "\nRequest Details:\n"
             + "\n".join(
                 f"{i + 1}. {detail['model']} "
                 f"\n\tprovider: {detail['provider']} "
@@ -181,7 +196,10 @@ class LLMfyUsage:
                 f"\n\toutput_price: {detail['output_price']} "
                 f"\n\tprice_per_tokens: {detail['price_per_tokens']} "
                 f"\n\ttotal_cost (USD): {detail['total_cost']} "
-                f"\n\ttotal_cost (USD formatted): {self.__format_trimmed_float(detail.get('total_cost', 0))}\n"
+                f"\n\ttotal_cost (USD formatted): {self.__format_trimmed_float(detail.get('total_cost', 0))}"
+                + (f"\n\tcache_read_tokens: {detail.get('cache_read_tokens')}" if detail.get('cache_read_tokens') else "")
+                + (f"\n\tcache_write_tokens: {detail.get('cache_write_tokens')}" if detail.get('cache_write_tokens') else "")
+                + "\n"
                 for i, detail in enumerate(self.details)
             )
             + "\n------------------\n"
@@ -391,6 +409,16 @@ class LLMfyUsage:
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
 
+        # Extract cache read tokens (OpenAI automatic caching — subset of prompt_tokens)
+        prompt_tokens_details = usage_dict.get("prompt_tokens_details")
+        if hasattr(prompt_tokens_details, "__dict__"):
+            prompt_tokens_details = vars(prompt_tokens_details)
+        cache_read_tokens = (
+            (prompt_tokens_details or {}).get("cached_tokens", 0)
+            if isinstance(prompt_tokens_details, dict)
+            else getattr(prompt_tokens_details, "cached_tokens", 0) or 0
+        )
+
         # usage per-request
         input_tokens = usage_dict.get("prompt_tokens", 0)
         output_tokens = usage_dict.get("completion_tokens", 0)
@@ -401,6 +429,7 @@ class LLMfyUsage:
         self.input_tokens += input_tokens
         self.output_tokens += output_tokens
         self.total_tokens += total_tokens
+        self.cache_read_tokens += cache_read_tokens
 
         # Calculate price
         price_info = None
@@ -408,10 +437,19 @@ class LLMfyUsage:
 
         if model in self.openai_pricing:
             price_info = self.openai_pricing[model]
-            # pricing per-request
-            i_price = (input_tokens / ONE_MILLION) * price_info.token_input
+
+            # prompt_tokens includes cached tokens. Split into cached and non-cached
+            # portions and apply the correct rate to each.
+            #
+            # Non-cached tokens : billed at the standard input price
+            # Cached tokens     : billed at 50% of the standard input price
+            #
+            # Reference: https://platform.openai.com/docs/guides/prompt-caching
+            non_cached_input = input_tokens - cache_read_tokens
+            i_price = (non_cached_input / ONE_MILLION) * price_info.token_input
+            cache_r_price = (cache_read_tokens / ONE_MILLION) * price_info.token_input * 0.50
             o_price = (output_tokens / ONE_MILLION) * price_info.token_output
-            total_cost_per_request = i_price + o_price
+            total_cost_per_request = i_price + cache_r_price + o_price
 
             # pricing accumulation
             self.total_cost += total_cost_per_request
@@ -433,6 +471,7 @@ class LLMfyUsage:
                 "output_price": price_info.token_output if price_info else None,
                 "price_per_tokens": ONE_MILLION,
                 "total_cost": total_cost_per_request,
+                "cache_read_tokens": cache_read_tokens,
             }
         )
         pass
@@ -524,11 +563,19 @@ class LLMfyUsage:
         output_tokens = usage_dict.get("outputTokens", 0)
         total_tokens = input_tokens + output_tokens
 
+        # Extract cache tokens — present only when enable_prompt_caching=True on Claude models.
+        # cache_read_tokens: tokens served from cache (already included in inputTokens — no double-count).
+        # cache_write_tokens: tokens written to cache this request (~125% input rate, separate charge).
+        cache_read_tokens = usage_dict.get("cacheReadInputTokens", 0) or 0
+        cache_write_tokens = usage_dict.get("cacheWriteInputTokens", 0) or 0
+
         # usage accumulation
         self.total_request += 1
         self.input_tokens += input_tokens
         self.output_tokens += output_tokens
         self.total_tokens += total_tokens
+        self.cache_read_tokens += cache_read_tokens
+        self.cache_write_tokens += cache_write_tokens
 
         # Calculate price
         price_info = None
@@ -537,10 +584,20 @@ class LLMfyUsage:
         if MODEL in self.bedrock_pricing:
             price_info = self.bedrock_pricing[MODEL][AWS_REGION]
 
-            # pricing per-request
+            # inputTokens = regular (non-cached) tokens at the standard rate.
+            # cacheReadInputTokens and cacheWriteInputTokens are separate billable
+            # items with different rates and must be added on top.
+            #
+            # inputTokens       : billed at the standard input price        (1.00×)
+            # cacheReadInputTokens : billed at 10% of the standard input price (~0.10×)
+            # cacheWriteInputTokens: billed at 125% of the standard input price (1.25×)
+            #
+            # Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
             i_price = (input_tokens / ONE_K) * price_info.token_input
+            cache_r_price = (cache_read_tokens / ONE_K) * price_info.token_input * 0.10
+            cache_w_price = (cache_write_tokens / ONE_K) * price_info.token_input * 1.25
             o_price = (output_tokens / ONE_K) * price_info.token_output
-            total_cost_per_request = i_price + o_price
+            total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
 
             # pricing accumulation
             self.total_cost += total_cost_per_request
@@ -562,6 +619,8 @@ class LLMfyUsage:
                 "output_price": price_info.token_output if price_info else None,
                 "price_per_tokens": ONE_K,
                 "total_cost": total_cost_per_request,
+                "cache_read_tokens": cache_read_tokens,
+                "cache_write_tokens": cache_write_tokens,
             }
         )
         pass
@@ -650,11 +709,16 @@ class LLMfyUsage:
         output_tokens = usage_dict.get("candidates_token_count", 0)
         total_tokens = input_tokens + output_tokens
 
+        # Extract cache read tokens (subset of prompt_token_count — no double-counting).
+        # Present when explicit caching (cached_content) is active.
+        cache_read_tokens = usage_dict.get("cached_content_token_count", 0) or 0
+
         # usage accumulation
         self.total_request += 1
         self.input_tokens += input_tokens
         self.output_tokens += output_tokens
         self.total_tokens += total_tokens
+        self.cache_read_tokens += cache_read_tokens
 
         # Per-type input token counts (from usage_metadata when available)
         text_tokens = usage_dict.get("text_token_count", 0)
@@ -683,7 +747,15 @@ class LLMfyUsage:
                 active_input_price = price_info["input"]
                 token_output_price = price_info["output"]
 
-            # Compute input cost: per-type breakdown or flat
+            # prompt_token_count includes cached tokens. Cached tokens are billed at
+            # 25% of the normal input price; non-cached tokens at the full rate.
+            # Compute full i_price first, then subtract the 75% savings on cached tokens.
+            #
+            # cached_content_token_count is the subset of prompt_token_count served
+            # from an explicit cachedContent object (GoogleAIConfig.cached_content).
+            # Implicit caching (Gemini 2.5+ automatic) does not populate this field.
+            #
+            # Reference: https://ai.google.dev/gemini-api/docs/caching
             if isinstance(active_input_price, dict) and has_type_breakdown:
 
                 def _type_price(key: str) -> float:
@@ -696,16 +768,22 @@ class LLMfyUsage:
                     + (audio_tokens / ONE_MILLION) * _type_price("audio")
                 )
                 token_input_price = active_input_price  # dict — store as-is for details
+                # Cached content is typically text; use the default rate for the discount
+                cache_input_rate = active_input_price.get("default", 0)
             elif isinstance(active_input_price, dict):
                 # No type breakdown available — fall back to default price
                 token_input_price = active_input_price["default"]
                 i_price = (input_tokens / ONE_MILLION) * token_input_price
+                cache_input_rate = token_input_price
             else:
                 token_input_price = active_input_price
                 i_price = (input_tokens / ONE_MILLION) * token_input_price
+                cache_input_rate = token_input_price
 
+            # Apply 75% savings on cache-read tokens (cached = 25%, so save 75%)
+            cache_savings = (cache_read_tokens / ONE_MILLION) * cache_input_rate * 0.75
             o_price = (output_tokens / ONE_MILLION) * token_output_price
-            total_cost_per_request = i_price + o_price
+            total_cost_per_request = i_price - cache_savings + o_price
 
             # pricing accumulation
             self.total_cost += total_cost_per_request
@@ -727,6 +805,7 @@ class LLMfyUsage:
                 "output_price": token_output_price,
                 "price_per_tokens": ONE_MILLION,
                 "total_cost": total_cost_per_request,
+                "cache_read_tokens": cache_read_tokens,
             }
         )
         pass
@@ -805,5 +884,7 @@ class LLMfyUsage:
         self.output_tokens = 0
         self.total_tokens = 0
         self.total_cost = 0.0
+        self.cache_read_tokens = 0
+        self.cache_write_tokens = 0
         self.raw_usages = []
         self.details = []

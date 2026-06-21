@@ -29,9 +29,10 @@ nav:
       - Providers: documentation/features/providers.md
       - LLM:
           - Generation: documentation/features/generate.md
-          - Thinking Config: documentation/features/thinking-config.md
           - Content Types: documentation/features/content.md
           - Tool Calling: documentation/features/tool-calling.md
+          - Thinking Config: documentation/features/thinking-config.md
+          - Prompt Caching: documentation/features/prompt-caching.md
       - Embeddings:
           - Embeddings: documentation/features/embedding.md
           - Chunking: documentation/features/chunk-text.md
@@ -55,6 +56,10 @@ nav:
           - Tool Calling: examples/example-tool-calling.md
           - Streaming: examples/example-stream.md
           - Usage Tracking: examples/example-usage-tracker.md
+      - Prompt Caching:
+          - AWS Bedrock: examples/example-prompt-caching-bedrock.md
+          - OpenAI: examples/example-prompt-caching-openai.md
+          - Google AI: examples/example-prompt-caching-google.md
       - Multimodal Input:
           - Document: examples/example-input-document.md
           - Image: examples/example-input-image.md

@@ -8,11 +8,11 @@ import os
 from typing import Any, Dict, List
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.bedrock.bedrock_config import (
     BedrockConfig,
 )
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -69,7 +69,11 @@ class BedrockModel(BaseAIModel):
 
     def __call_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
+        from botocore.exceptions import (
+            ClientError,
+            ConnectTimeoutError,
+            ReadTimeoutError,
+        )
 
         from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.llms.bedrock.bedrock_usage import track_bedrock_usage
@@ -86,7 +90,11 @@ class BedrockModel(BaseAIModel):
 
     def __call_stream_bedrock(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
-        from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
+        from botocore.exceptions import (
+            ClientError,
+            ConnectTimeoutError,
+            ReadTimeoutError,
+        )
 
         from llmfy.exception.exception_handler import handle_bedrock_error
         from llmfy.llmfy_core.llms.bedrock.bedrock_usage import (
@@ -154,7 +162,9 @@ class BedrockModel(BaseAIModel):
                     # Claude adaptive thinking (Sonnet/Opus 4.6, Fable 5, Mythos 5, Opus 4.7)
                     additionals["thinking"] = {"type": "adaptive"}
                     if self.config.thinking_effort is not None:
-                        additionals["output_config"] = {"effort": self.config.thinking_effort}
+                        additionals["output_config"] = {
+                            "effort": self.config.thinking_effort
+                        }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
                     _thinking: Dict[str, Any] = {"type": "enabled"}
@@ -174,6 +184,49 @@ class BedrockModel(BaseAIModel):
                 "additionalModelRequestFields": additional_config,
                 **({"system": _system} if _system is not None else {}),
             }
+
+            # Prompt caching: inject cachePoint markers for supported Claude models.
+            # cachePoints are evaluated cumulatively: tools → system → messages.
+            # A cachePoint after the system caches the system prompt (~90% savings).
+            # A cachePoint at the end of the last message caches the full conversation
+            # prefix so the next turn can serve it from cache.
+            if self.config.enable_prompt_caching:
+                _cache_point: Dict[str, Any] = {"type": "default"}
+                if self.config.prompt_caching_ttl is not None:
+                    _cache_point["ttl"] = self.config.prompt_caching_ttl
+                _cache_point_entry = {"cachePoint": _cache_point}
+
+                if _system is not None:
+                    # Bedrock cache is a byte-identical prefix match, 
+                    # if system prompt changes, which invalidates the cache every time
+                    # "You are an expert in Python"     → cache WRITE A (cached for 5 min)
+                    # "You are an expert in JavaScript" → cache WRITE B (different prefix, separate cache)
+                    # "You are an expert in Go"         → cache WRITE C (different prefix, separate cache)
+                    # "You are an expert in Python"     → cache READ D (hit! same as Call 1, still within 5 min)
+                    params["system"] = list(_system) + [_cache_point_entry]
+                if _messages:
+                    # Bedrock writes only the DELTA (new tokens since the last cachePoint),
+                    # not the full prefix. Read pool grows each turn; write cost stays constant.
+                    #
+                    # Turn 1:  [user_q1 + cachePoint]
+                    #        → WRITE delta: system + user_q1          (all new, no prior cache)
+                    #
+                    # Turn 2:  [user_q1, assistant_r1, user_q2 + cachePoint]
+                    #        → READ  system + user_q1                 ← from Turn 1's cachePoint
+                    #        → WRITE delta: assistant_r1 + user_q2    ← only new tokens since Turn 1
+                    #
+                    # Turn 3:  [user_q1, assistant_r1, user_q2, assistant_r2, user_q3 + cachePoint]
+                    #        → READ  system + user_q1 + assistant_r1 + user_q2  ← from Turn 2's cachePoint
+                    #        → WRITE delta: assistant_r2 + user_q3    ← only new tokens since Turn 2
+                    #
+                    # Write cost is CONSTANT from Turn 2 onwards (delta per turn only).
+                    # Read pool GROWS each turn — savings increase with conversation length.
+                    _messages = list(_messages)
+                    last_msg = _messages[-1]
+                    last_content = list(last_msg.get("content", []))
+                    last_content.append(_cache_point_entry)
+                    _messages[-1] = {**last_msg, "content": last_content}
+                    params["messages"] = _messages
 
             if tools:
                 """
@@ -301,7 +354,9 @@ class BedrockModel(BaseAIModel):
                     # Claude adaptive thinking (Sonnet/Opus 4.6, Fable 5, Mythos 5, Opus 4.7)
                     additionals["thinking"] = {"type": "adaptive"}
                     if self.config.thinking_effort is not None:
-                        additionals["output_config"] = {"effort": self.config.thinking_effort}
+                        additionals["output_config"] = {
+                            "effort": self.config.thinking_effort
+                        }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
                     _thinking: Dict[str, Any] = {"type": "enabled"}
@@ -321,6 +376,49 @@ class BedrockModel(BaseAIModel):
                 "additionalModelRequestFields": additional_config,
                 **({"system": _system} if _system is not None else {}),
             }
+
+            # Prompt caching: inject cachePoint markers for supported Claude models.
+            # cachePoints are evaluated cumulatively: tools → system → messages.
+            # A cachePoint after the system caches the system prompt (~90% savings).
+            # A cachePoint at the end of the last message caches the full conversation
+            # prefix so the next turn can serve it from cache.
+            if self.config.enable_prompt_caching:
+                _cache_point: Dict[str, Any] = {"type": "default"}
+                if self.config.prompt_caching_ttl is not None:
+                    _cache_point["ttl"] = self.config.prompt_caching_ttl
+                _cache_point_entry = {"cachePoint": _cache_point}
+
+                if _system is not None:
+                    # Bedrock cache is a byte-identical prefix match, 
+                    # if system prompt changes, which invalidates the cache every time.
+                    # "You are an expert in Python"     → cache WRITE A (cached for 5 min)
+                    # "You are an expert in JavaScript" → cache WRITE B (different prefix, separate cache)
+                    # "You are an expert in Go"         → cache WRITE C (different prefix, separate cache)
+                    # "You are an expert in Python"     → cache READ D (hit! same as Call 1, still within 5 min)
+                    params["system"] = list(_system) + [_cache_point_entry]
+                if _messages:
+                    # Bedrock writes only the DELTA (new tokens since the last cachePoint),
+                    # not the full prefix. Read pool grows each turn; write cost stays constant.
+                    #
+                    # Turn 1:  [user_q1 + cachePoint]
+                    #        → WRITE delta: system + user_q1          (all new, no prior cache)
+                    #
+                    # Turn 2:  [user_q1, assistant_r1, user_q2 + cachePoint]
+                    #        → READ  system + user_q1                 ← from Turn 1's cachePoint
+                    #        → WRITE delta: assistant_r1 + user_q2    ← only new tokens since Turn 1
+                    #
+                    # Turn 3:  [user_q1, assistant_r1, user_q2, assistant_r2, user_q3 + cachePoint]
+                    #        → READ  system + user_q1 + assistant_r1 + user_q2  ← from Turn 2's cachePoint
+                    #        → WRITE delta: assistant_r2 + user_q3    ← only new tokens since Turn 2
+                    #
+                    # Write cost is CONSTANT from Turn 2 onwards (delta per turn only).
+                    # Read pool GROWS each turn — savings increase with conversation length.
+                    _messages = list(_messages)
+                    last_msg = _messages[-1]
+                    last_content = list(last_msg.get("content", []))
+                    last_content.append(_cache_point_entry)
+                    _messages[-1] = {**last_msg, "content": last_content}
+                    params["messages"] = _messages
 
             if tools:
                 params["toolConfig"] = {"tools": [{"toolSpec": tool} for tool in tools]}

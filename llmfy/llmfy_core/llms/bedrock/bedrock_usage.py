@@ -7,7 +7,19 @@ from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
 
 def track_bedrock_usage(func):
-    """Decorator to wrap `__call_bedrock` calls on `BedrockModel`."""
+    """Decorator to wrap `__call_bedrock` calls on `BedrockModel`.
+
+    Extracts the `usage` dict from the Converse API response and forwards it
+    to the usage tracker. The dict contains:
+      - inputTokens:             total input tokens (includes cache-read tokens)
+      - outputTokens:            total output tokens
+      - cacheReadInputTokens:    tokens served from cache (~10% input price)
+                                 present only when enable_prompt_caching=True
+      - cacheWriteInputTokens:   tokens written to cache (~125% input price)
+                                 present only when enable_prompt_caching=True
+
+    Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -31,7 +43,15 @@ def track_bedrock_usage(func):
 
 
 def track_bedrock_stream_usage(func):
-    """Decorator to wrap `__call_stream_bedrock` calls on `BedrockModel`."""
+    """Decorator to wrap `__call_stream_bedrock` calls on `BedrockModel`.
+
+    Tees the event stream to extract the `metadata.usage` dict without
+    consuming it. The usage dict contains the same fields as the non-stream
+    response: inputTokens, outputTokens, and — when enable_prompt_caching=True
+    on supported Claude models — cacheReadInputTokens and cacheWriteInputTokens.
+
+    Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

@@ -7,7 +7,23 @@ from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
 
 def track_openai_usage(func):
-    """Decorator to wrap `__call_openai` calls on `OpenAIModel`."""
+    """Decorator to wrap `__call_openai` calls on `OpenAIModel`.
+
+    Passes the raw CompletionUsage object from the API response directly to the
+    usage tracker. The object contains:
+      - prompt_tokens:           total input tokens (includes cached tokens)
+      - completion_tokens:       output tokens
+      - prompt_tokens_details.cached_tokens:
+                                 tokens served from OpenAI's automatic cache
+                                 (present when prefix > 1,024 tokens and a cache
+                                 hit occurs; extracted as cache_read_tokens in
+                                 llmfy_usage.py)
+
+    OpenAI caches automatically — no markers needed. Caching has no additional
+    fee; savings are reflected in the effective per-token cost on cache hits.
+
+    Reference: https://platform.openai.com/docs/guides/prompt-caching
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -31,7 +47,15 @@ def track_openai_usage(func):
 
 
 def track_openai_stream_usage(func):
-    """Decorator to wrap `__call_stream_openai` calls on `OpenAIModel`."""
+    """Decorator to wrap `__call_stream_openai` calls on `OpenAIModel`.
+
+    Tees the stream (enabled by stream_options={"include_usage": True}) to
+    extract the final chunk's CompletionUsage without consuming the stream.
+    Carries the same prompt_tokens_details.cached_tokens field as the non-stream
+    response when a prompt cache hit occurs.
+
+    Reference: https://platform.openai.com/docs/guides/prompt-caching
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
