@@ -9,8 +9,8 @@ from llmfy import (
     Role,
     llmfy_usage_tracker,
 )
-from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
-from llmfy.llmfy_core.models.openai.openai_model import OpenAIModel
+from llmfy.llmfy_core.llms.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.llms.openai.openai_model import OpenAIModel
 
 load_dotenv()
 

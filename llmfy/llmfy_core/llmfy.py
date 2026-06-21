@@ -7,7 +7,7 @@ from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.message_temp import MessageTemp
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.responses.generation_response import GenerationResponse
 from llmfy.llmfy_core.tools.tool import Tool

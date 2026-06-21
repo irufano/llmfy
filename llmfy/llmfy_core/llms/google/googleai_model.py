@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.models.google.googleai_config import GoogleAIConfig
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.google.googleai_config import GoogleAIConfig
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -108,7 +108,7 @@ class GoogleAIModel(BaseAIModel):
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
-        from llmfy.llmfy_core.models.google.googleai_usage import track_googleai_usage
+        from llmfy.llmfy_core.llms.google.googleai_usage import track_googleai_usage
 
         @track_googleai_usage
         def _call_googleai_impl(params: dict[str, Any]):
@@ -130,7 +130,7 @@ class GoogleAIModel(BaseAIModel):
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
-        from llmfy.llmfy_core.models.google.googleai_usage import (
+        from llmfy.llmfy_core.llms.google.googleai_usage import (
             track_googleai_stream_usage,
         )
 

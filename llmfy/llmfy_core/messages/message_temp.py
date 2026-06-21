@@ -5,10 +5,10 @@ from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
-from llmfy.llmfy_core.models.google.googleai_formatter import GoogleAIFormatter
-from llmfy.llmfy_core.models.model_formatter import ModelFormatter
-from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
+from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.llms.google.googleai_formatter import GoogleAIFormatter
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
+from llmfy.llmfy_core.llms.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 

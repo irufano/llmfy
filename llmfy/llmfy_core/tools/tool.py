@@ -1,10 +1,10 @@
 from typing import Any, Callable, Dict
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.models.bedrock.bedrock_formatter import BedrockFormatter
-from llmfy.llmfy_core.models.google.googleai_formatter import GoogleAIFormatter
-from llmfy.llmfy_core.models.model_formatter import ModelFormatter
-from llmfy.llmfy_core.models.openai.openai_formatter import OpenAIFormatter
+from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.llms.google.googleai_formatter import GoogleAIFormatter
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
+from llmfy.llmfy_core.llms.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.tools.function_parser import FunctionParser
 from llmfy.llmfy_core.tools.function_type_mapping import FUNCTION_TYPE_MAPPING

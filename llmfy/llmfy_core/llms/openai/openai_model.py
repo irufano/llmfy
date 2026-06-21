@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.models.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.openai.openai_config import OpenAIConfig
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -55,7 +55,7 @@ class OpenAIModel(BaseAIModel):
         import openai
 
         from llmfy.exception.exception_handler import handle_openai_error
-        from llmfy.llmfy_core.models.openai.openai_usage import track_openai_usage
+        from llmfy.llmfy_core.llms.openai.openai_usage import track_openai_usage
 
         @track_openai_usage
         def _call_openai_impl(params: dict[str, Any]):
@@ -73,7 +73,7 @@ class OpenAIModel(BaseAIModel):
         import openai
 
         from llmfy.exception.exception_handler import handle_openai_error
-        from llmfy.llmfy_core.models.openai.openai_usage import (
+        from llmfy.llmfy_core.llms.openai.openai_usage import (
             track_openai_stream_usage,
         )
 

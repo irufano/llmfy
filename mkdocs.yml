@@ -19,110 +19,124 @@ plugins:
             members_order: source
 
 nav:
-  - LLMfy: index.md
-  - Documentation:
-      - Installation:
-          - documentation/installation/how-to-install.md
-          - documentation/installation/configuration.md
-      - Core Features:
-          - documentation/features/basic.md
-          - documentation/features/framework.md
-          - documentation/features/providers.md
-          - documentation/features/generate.md
-          - documentation/features/thinking-config.md
-          - documentation/features/content.md
-          - documentation/features/tool-calling.md
-          - documentation/features/embedding.md
-          - documentation/features/chunk-text.md
-          - documentation/features/usage.md
-          - documentation/features/faiss-vector-store.md
-      - Vector Store:
-          - documentation/vector-store/faiss-vector-store.md
-      - Exception:
-          - documentation/exception/exception-handler.md
+  - Home: index.md
+  - Getting Started:
+      - Installation: documentation/installation/how-to-install.md
+      - Configuration: documentation/installation/configuration.md
+  - Guide:
+      - Overview: documentation/features/basic.md
+      - Framework: documentation/features/framework.md
+      - Providers: documentation/features/providers.md
+      - LLM:
+          - Generation: documentation/features/generate.md
+          - Thinking Config: documentation/features/thinking-config.md
+          - Content Types: documentation/features/content.md
+          - Tool Calling: documentation/features/tool-calling.md
+      - Embeddings:
+          - Embeddings: documentation/features/embedding.md
+          - Chunking: documentation/features/chunk-text.md
+          - Vector Store: documentation/vector-store/faiss-vector-store.md
+      - Usage Tracking: documentation/features/usage.md
+      - Exception Handling: documentation/exception/exception-handler.md
   - Flow Engine:
-      - documentation/flow-engine/overview.md
-      - documentation/flow-engine/state.md
-      - documentation/flow-engine/nodes-edges.md
-      - documentation/flow-engine/create-agent.md
-      - documentation/flow-engine/streaming.md
-      - documentation/flow-engine/checkpointer.md
+      - Overview: documentation/flow-engine/overview.md
+      - State: documentation/flow-engine/state.md
+      - Nodes & Edges: documentation/flow-engine/nodes-edges.md
+      - Create Agent: documentation/flow-engine/create-agent.md
+      - Streaming: documentation/flow-engine/streaming.md
+      - Checkpointer: documentation/flow-engine/checkpointer.md
   - Guardrails:
-      - documentation/guardrails/overview.md
-      - Tutorials:
-          - documentation/guardrails/pii-detection.md
-          - documentation/guardrails/custom-types.md
+      - Overview: documentation/guardrails/overview.md
+      - PII Detection: documentation/guardrails/pii-detection.md
+      - Custom Types: documentation/guardrails/custom-types.md
   - Examples:
-      - examples/example-retrieval.md
-      - examples/example-tool-calling.md
-      - examples/example-stream.md
-      - examples/example-usage-tracker.md
-      - examples/example-input-document.md
-      - examples/example-input-image.md
-      - examples/example-input-video.md
-      - examples/example-embedding.md
-      - examples/example-chunking.md
-      - examples/example-faiss-vectore-store.md
-      - examples/example-flowengine-agent-basic.md
-      - examples/example-pii.md
+      - LLM & Generation:
+          - Retrieval: examples/example-retrieval.md
+          - Tool Calling: examples/example-tool-calling.md
+          - Streaming: examples/example-stream.md
+          - Usage Tracking: examples/example-usage-tracker.md
+      - Multimodal Input:
+          - Document: examples/example-input-document.md
+          - Image: examples/example-input-image.md
+          - Video: examples/example-input-video.md
+      - Embeddings & Vector Store:
+          - Embedding: examples/example-embedding.md
+          - Chunking: examples/example-chunking.md
+          - FAISS Vector Store: examples/example-faiss-vectore-store.md
+      - Flow Engine:
+          - Basic Agent: examples/example-flowengine-agent-basic.md
+      - Guardrails:
+          - PII Detection: examples/example-pii.md
   - API Reference:
       - llmfy_core:
-          - reference/llmfy_core.llmfy.md
-          - reference/llmfy_core.usage.usage_tracker.md
-          - reference/llmfy_core.tools.tool.md
-          - reference/llmfy_core.tools.tool_registry.md
-          - reference/llmfy_core.responses.generation_response.md
-          - reference/llmfy_core.responses.ai_response.md
-          - reference/llmfy_core.messages.content.md
-          - reference/llmfy_core.messages.content_type.md
-          - reference/llmfy_core.messages.message.md
-          - reference/llmfy_core.messages.role.md
-          - reference/llmfy_core.messages.tool_call.md
-          - reference/llmfy_core.models.base_ai_model.md
-          - reference/llmfy_core.models.bedrock.bedrock_config.md
-          - reference/llmfy_core.models.bedrock.bedrock_model.md
-          - reference/llmfy_core.models.bedrock.bedrock_usage.md
-          - reference/llmfy_core.models.bedrock.bedrock_pricing_list.md
-          - reference/llmfy_core.models.openai.openai_config.md
-          - reference/llmfy_core.models.openai.openai_model.md
-          - reference/llmfy_core.models.openai.openai_usage.md
-          - reference/llmfy_core.models.openai.openai_pricing_list.md
-          - reference/llmfy_core.embeddings.base_embedding_model.md
-          - reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
-          - reference/llmfy_core.embeddings.openai.openai_embedding.md
-          - reference/llmfy_core.models.google.googleai_config.md
-          - reference/llmfy_core.models.google.googleai_model.md
-          - reference/llmfy_core.models.google.googleai_usage.md
-          - reference/llmfy_core.models.google.googleai_pricing_list.md
+          - LLMfy: reference/llmfy_core.llmfy.md
+          - Messages:
+              - Message: reference/llmfy_core.messages.message.md
+              - Role: reference/llmfy_core.messages.role.md
+              - Content: reference/llmfy_core.messages.content.md
+              - Content Type: reference/llmfy_core.messages.content_type.md
+              - Tool Call: reference/llmfy_core.messages.tool_call.md
+          - Responses:
+              - Generation Response: reference/llmfy_core.responses.generation_response.md
+              - AI Response: reference/llmfy_core.responses.ai_response.md
+          - LLMs:
+              - Base Model: reference/llmfy_core.llms.base_ai_model.md
+              - Bedrock:
+                  - Config: reference/llmfy_core.llms.bedrock.bedrock_config.md
+                  - Model: reference/llmfy_core.llms.bedrock.bedrock_model.md
+                  - Usage: reference/llmfy_core.llms.bedrock.bedrock_usage.md
+                  - Pricing: reference/llmfy_core.llms.bedrock.bedrock_pricing_list.md
+              - OpenAI:
+                  - Config: reference/llmfy_core.llms.openai.openai_config.md
+                  - Model: reference/llmfy_core.llms.openai.openai_model.md
+                  - Usage: reference/llmfy_core.llms.openai.openai_usage.md
+                  - Pricing: reference/llmfy_core.llms.openai.openai_pricing_list.md
+              - Google:
+                  - Config: reference/llmfy_core.llms.google.googleai_config.md
+                  - Model: reference/llmfy_core.llms.google.googleai_model.md
+                  - Usage: reference/llmfy_core.llms.google.googleai_usage.md
+                  - Pricing: reference/llmfy_core.llms.google.googleai_pricing_list.md
+          - Embeddings:
+              - Base Embedding Model: reference/llmfy_core.embeddings.base_embedding_model.md
+              - Bedrock: reference/llmfy_core.embeddings.bedrock.bedrock_embedding.md
+              - OpenAI: reference/llmfy_core.embeddings.openai.openai_embedding.md
+          - Tools:
+              - Tool: reference/llmfy_core.tools.tool.md
+              - Tool Registry: reference/llmfy_core.tools.tool_registry.md
+          - Usage:
+              - Usage Tracker: reference/llmfy_core.usage.usage_tracker.md
+          - Exception:
+              - LLMfy Exception: reference/llmfy_core.exception.llmfy_exception..md
       - llmfy_utils:
-          - reference/llmfy_utils.chunk.chunk.md
-          - reference/llmfy_utils.text_preprocessing.text_preprocessing.md
+          - Chunk: reference/llmfy_utils.chunk.chunk.md
+          - Text Preprocessing: reference/llmfy_utils.text_preprocessing.text_preprocessing.md
       - flow_engine:
-          - reference/flow_engine.md
-          - reference/flow_engine.checkpointer.base_checkpointer.md
-          - reference/flow_engine.checkpointer.in_memory_checkpointer.md
-          - reference/flow_engine.checkpointer.redis_checkpointer.md
-          - reference/flow_engine.checkpointer.sql_checkpointer.md
-          - reference/flow_engine.edge.edge.md
-          - reference/flow_engine.node.node.md
-          - reference/flow_engine.helper.messages_trimmer.messages_trimmer.md
-          - reference/flow_engine.helper.tools_node.tools_node.md
-          - reference/flow_engine.stream.flow_engine_stream_response.md
-          - reference/flow_engine.stream.node_stream_response.md
-          - reference/flow_engine.stream.tool_node_stream_response.md
-          - reference/flow_engine.visualizer.visualizer.md
+          - Flow Engine: reference/flow_engine.md
+          - Node: reference/flow_engine.node.node.md
+          - Edge: reference/flow_engine.edge.edge.md
+          - Checkpointer:
+              - Base: reference/flow_engine.checkpointer.base_checkpointer.md
+              - In Memory: reference/flow_engine.checkpointer.in_memory_checkpointer.md
+              - Redis: reference/flow_engine.checkpointer.redis_checkpointer.md
+              - SQL: reference/flow_engine.checkpointer.sql_checkpointer.md
+          - Helpers:
+              - Messages Trimmer: reference/flow_engine.helper.messages_trimmer.messages_trimmer.md
+              - Tools Node: reference/flow_engine.helper.tools_node.tools_node.md
+          - Streaming:
+              - Flow Engine Stream: reference/flow_engine.stream.flow_engine_stream_response.md
+              - Node Stream: reference/flow_engine.stream.node_stream_response.md
+              - Tool Node Stream: reference/flow_engine.stream.tool_node_stream_response.md
+          - Visualizer: reference/flow_engine.visualizer.visualizer.md
       - vector_store:
-          - reference/vector_store.document.md
-          - reference/vector_store.faiss_index.faiss_index.md
-          - reference/vector_store.faiss_index.faiss_vector_store.md
+          - Document: reference/vector_store.document.md
+          - FAISS Index: reference/vector_store.faiss_index.faiss_index.md
+          - FAISS Vector Store: reference/vector_store.faiss_index.faiss_vector_store.md
       - guardrails:
-          - reference/guardrails.pii.pii_detector.md
-          - reference/guardrails.pii.pii_type.md
-          - reference/guardrails.pii.pii_strategy.md
-          - reference/guardrails.pii.pii_mask_style.md
-          - reference/guardrails.pii.pii_result.md
-      - Exception:
-          - reference/llmfy_core.exception.llmfy_exception..md
+          - PII Detector: reference/guardrails.pii.pii_detector.md
+          - PII Type: reference/guardrails.pii.pii_type.md
+          - PII Strategy: reference/guardrails.pii.pii_strategy.md
+          - PII Mask Style: reference/guardrails.pii.pii_mask_style.md
+          - PII Result: reference/guardrails.pii.pii_result.md
 
 theme:
   name: material

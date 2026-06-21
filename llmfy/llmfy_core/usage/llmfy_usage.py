@@ -4,10 +4,10 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.models.bedrock.bedrock_pricing_list import BEDROCK_PRICING
-from llmfy.llmfy_core.models.google.googleai_pricing_list import GOOGLEAI_PRICING
-from llmfy.llmfy_core.models.model_pricing import ModelPricing
-from llmfy.llmfy_core.models.openai.openai_pricing_list import OPENAI_PRICING
+from llmfy.llmfy_core.llms.bedrock.bedrock_pricing_list import BEDROCK_PRICING
+from llmfy.llmfy_core.llms.google.googleai_pricing_list import GOOGLEAI_PRICING
+from llmfy.llmfy_core.llms.model_pricing import ModelPricing
+from llmfy.llmfy_core.llms.openai.openai_pricing_list import OPENAI_PRICING
 from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.service_type import ServiceType
 

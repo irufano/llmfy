@@ -4,7 +4,7 @@ from .embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy import LLMfy
 from .messages import Content, ContentType, Message, MessageTemp, Role, ToolCall
-from .models import (
+from .llms import (
     BEDROCK_PRICING,
     GOOGLEAI_PRICING,
     OPENAI_PRICING,

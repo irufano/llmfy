@@ -9,8 +9,8 @@ from typing import Any, Dict, List
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.models.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.models.bedrock.bedrock_config import (
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.bedrock.bedrock_config import (
     BedrockConfig,
 )
 from llmfy.llmfy_core.responses.ai_response import AIResponse
@@ -72,7 +72,7 @@ class BedrockModel(BaseAIModel):
         from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
         from llmfy.exception.exception_handler import handle_bedrock_error
-        from llmfy.llmfy_core.models.bedrock.bedrock_usage import track_bedrock_usage
+        from llmfy.llmfy_core.llms.bedrock.bedrock_usage import track_bedrock_usage
 
         @track_bedrock_usage
         def _call_bedrock_impl(params: dict[str, Any]):
@@ -89,7 +89,7 @@ class BedrockModel(BaseAIModel):
         from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
         from llmfy.exception.exception_handler import handle_bedrock_error
-        from llmfy.llmfy_core.models.bedrock.bedrock_usage import (
+        from llmfy.llmfy_core.llms.bedrock.bedrock_usage import (
             track_bedrock_stream_usage,
         )
 

@@ -1,6 +1,6 @@
 # BedrockModel
 
-::: llmfy.llmfy_core.models.bedrock.bedrock_model
+::: llmfy.llmfy_core.llms.bedrock.bedrock_model
     options:
       show_source: true
       heading_level: 2

@@ -65,7 +65,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
         )
 
     def __call_bedrock_embedding(self, model: str, body: str):
-        from llmfy.llmfy_core.models.bedrock.bedrock_usage import (
+        from llmfy.llmfy_core.llms.bedrock.bedrock_usage import (
             track_bedrock_embedding_usage,
         )
         

@@ -6,7 +6,7 @@ from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.models.model_formatter import ModelFormatter
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 
 
 class OpenAIFormatter(ModelFormatter):

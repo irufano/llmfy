@@ -46,7 +46,7 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
         self.model = model
 
     def __call_googleai_embedding(self, model: str, text: str):
-        from llmfy.llmfy_core.models.google.googleai_usage import (
+        from llmfy.llmfy_core.llms.google.googleai_usage import (
             track_googleai_embedding_usage,
         )
 
