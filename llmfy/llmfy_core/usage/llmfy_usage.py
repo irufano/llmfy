@@ -35,15 +35,18 @@ class LLMfyUsage:
 				{
 					"gpt-4o": {
 						"input": 2.50,
-						"output": 10.00
+						"output": 10.00,
+						"token_unit": 1_000_000
 					},
 					"gpt-4o-mini": {
 						"input": 0.15,
-						"output": 0.60
+						"output": 0.60,
+						"token_unit": 1_000_000
 					},
 					"gpt-3.5-turbo": {
 						"input": 0.05,
-						"output": 1.50
+						"output": 1.50,
+						"token_unit": 1_000_000
 					}
 				}
 				```
@@ -54,12 +57,13 @@ class LLMfyUsage:
             if not self.__is_valid_googleai_pricing_structure(googleai_pricing):
                 error = """
 				Please provide the right pricing structure for googleai, example:
-                
+
 				```
 				{
 					"gemini-2.0-flash": {
 						"input": 0.10,
-						"output": 0.40
+						"output": 0.40,
+						"token_unit": 1_000_000
 					},
                     "gemini-3-flash-preview": {
                         "input": {
@@ -70,6 +74,7 @@ class LLMfyUsage:
                             "audio": 1.00,
                         },
                         "output": 3.00,
+                        "token_unit": 1_000_000
                     },
 					"gemini-2.5-pro": {
                         "input": 1.25,
@@ -77,6 +82,7 @@ class LLMfyUsage:
                         "input_high": 2.50,
                         "output_high": 15.00,
                         "threshold": 200000,
+                        "token_unit": 1_000_000
                     },
 				}
 				```
@@ -92,25 +98,29 @@ class LLMfyUsage:
                     "anthropic.claude-3-5-sonnet-20240620-v1:0": {
                         "us-east-1": {
                             "region": "US East (N. Virginia)",
-                            "input": 0.003,
-                            "output": 0.015,
+                            "input": 3.00,
+                            "output": 15.00,
+                            "token_unit": 1_000_000,
                         },
                         "us-west-2": {
                             "region": "US West (Oregon)",
-                            "input": 0.003,
-                            "output": 0.015,
+                            "input": 3.00,
+                            "output": 15.00,
+                            "token_unit": 1_000_000,
                         },
                     },
                     "anthropic.claude-3-5-sonnet-20241022-v2:0": {
                         "us-east-1": {
                             "region": "US East (N. Virginia)",
-                            "input": 0.003,
-                            "output": 0.015,
+                            "input": 3.00,
+                            "output": 15.00,
+                            "token_unit": 1_000_000,
                         },
                         "us-west-2": {
                             "region": "US West (Oregon)",
-                            "input": 0.003,
-                            "output": 0.015,
+                            "input": 3.00,
+                            "output": 15.00,
+                            "token_unit": 1_000_000,
                         },
                     }
                 }
@@ -194,7 +204,7 @@ class LLMfyUsage:
                 f"\n\ttotal_tokens: {detail['total_tokens']} "
                 f"\n\tinput_price: {detail['input_price']} "
                 f"\n\toutput_price: {detail['output_price']} "
-                f"\n\tprice_per_tokens: {detail['price_per_tokens']} "
+                f"\n\ttoken_unit: {detail['token_unit']} "
                 f"\n\ttotal_cost (USD): {detail['total_cost']} "
                 f"\n\ttotal_cost (USD formatted): {self.__format_trimmed_float(detail.get('total_cost', 0))}"
                 + (f"\n\tcache_read_tokens: {detail.get('cache_read_tokens')}" if detail.get('cache_read_tokens') else "")
@@ -312,7 +322,11 @@ class LLMfyUsage:
         """
         pricing_data = pricing_source
         return {
-            model: ModelPricing(token_input=data["input"], token_output=data["output"])
+            model: ModelPricing(
+                token_input=data["input"],
+                token_output=data["output"],
+                token_unit=data.get("token_unit", 1_000_000),
+            )
             for model, data in pricing_data.items()
         }
 
@@ -334,6 +348,7 @@ class LLMfyUsage:
                 region: ModelPricing(
                     token_input=pricing["input"],
                     token_output=pricing["output"],
+                    token_unit=pricing.get("token_unit", 1_000),
                 )
                 for region, pricing in regions.items()
             }
@@ -404,8 +419,6 @@ class LLMfyUsage:
             model (str): Model name
             usage (Dict[str, int]): Dictionary containing token counts
         """
-        ONE_MILLION = 1000000
-
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
 
@@ -446,9 +459,9 @@ class LLMfyUsage:
             #
             # Reference: https://platform.openai.com/docs/guides/prompt-caching
             non_cached_input = input_tokens - cache_read_tokens
-            i_price = (non_cached_input / ONE_MILLION) * price_info.token_input
-            cache_r_price = (cache_read_tokens / ONE_MILLION) * price_info.token_input * 0.50
-            o_price = (output_tokens / ONE_MILLION) * price_info.token_output
+            i_price = (non_cached_input / price_info.token_unit) * price_info.token_input
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * price_info.token_input * 0.50
+            o_price = (output_tokens / price_info.token_unit) * price_info.token_output
             total_cost_per_request = i_price + cache_r_price + o_price
 
             # pricing accumulation
@@ -469,7 +482,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": price_info.token_input if price_info else None,
                 "output_price": price_info.token_output if price_info else None,
-                "price_per_tokens": ONE_MILLION,
+                "token_unit": price_info.token_unit if price_info else None,
                 "total_cost": total_cost_per_request,
                 "cache_read_tokens": cache_read_tokens,
             }
@@ -487,8 +500,6 @@ class LLMfyUsage:
 
         def has_cross_region_inference_id(s):
             return bool(re.match(r"^.{2}\.", s))
-
-        ONE_MILLION = 1000000
 
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
@@ -511,8 +522,8 @@ class LLMfyUsage:
         if model in self.openai_pricing:
             price_info = self.openai_pricing[model]
             # pricing per-request
-            i_price = (input_tokens / ONE_MILLION) * price_info.token_input
-            o_price = (output_tokens / ONE_MILLION) * price_info.token_output
+            i_price = (input_tokens / price_info.token_unit) * price_info.token_input
+            o_price = (output_tokens / price_info.token_unit) * price_info.token_output
             total_cost_per_request = i_price + o_price
 
             # pricing accumulation
@@ -533,7 +544,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": price_info.token_input if price_info else None,
                 "output_price": price_info.token_output if price_info else None,
-                "price_per_tokens": ONE_MILLION,
+                "token_unit": price_info.token_unit if price_info else None,
                 "total_cost": total_cost_per_request,
             }
         )
@@ -548,12 +559,8 @@ class LLMfyUsage:
             usage: Dictionary containing token counts
         """
 
-        def has_cross_region_inference_id(s):
-            return bool(re.match(r"^.{2}\.", s))
-
-        ONE_K = 1000
         AWS_REGION = os.getenv("AWS_BEDROCK_REGION") or ""
-        MODEL = model[3:] if has_cross_region_inference_id(model) else model
+        MODEL = model
 
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
@@ -593,10 +600,10 @@ class LLMfyUsage:
             # cacheWriteInputTokens: billed at 125% of the standard input price (1.25×)
             #
             # Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
-            i_price = (input_tokens / ONE_K) * price_info.token_input
-            cache_r_price = (cache_read_tokens / ONE_K) * price_info.token_input * 0.10
-            cache_w_price = (cache_write_tokens / ONE_K) * price_info.token_input * 1.25
-            o_price = (output_tokens / ONE_K) * price_info.token_output
+            i_price = (input_tokens / price_info.token_unit) * price_info.token_input
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * price_info.token_input * 0.10
+            cache_w_price = (cache_write_tokens / price_info.token_unit) * price_info.token_input * 1.25
+            o_price = (output_tokens / price_info.token_unit) * price_info.token_output
             total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
 
             # pricing accumulation
@@ -617,7 +624,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": price_info.token_input if price_info else None,
                 "output_price": price_info.token_output if price_info else None,
-                "price_per_tokens": ONE_K,
+                "token_unit": price_info.token_unit if price_info else None,
                 "total_cost": total_cost_per_request,
                 "cache_read_tokens": cache_read_tokens,
                 "cache_write_tokens": cache_write_tokens,
@@ -634,12 +641,8 @@ class LLMfyUsage:
             usage: usage of input token (for embedding use input token only).
         """
 
-        def has_cross_region_inference_id(s):
-            return bool(re.match(r"^.{2}\.", s))
-
-        ONE_K = 1000
         AWS_REGION = os.getenv("AWS_BEDROCK_REGION") or ""
-        MODEL = model[3:] if has_cross_region_inference_id(model) else model
+        MODEL = model
 
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
@@ -663,7 +666,7 @@ class LLMfyUsage:
             price_info = self.bedrock_pricing[MODEL][AWS_REGION]
 
             # pricing per-request
-            i_price = (input_tokens / ONE_K) * price_info.token_input
+            i_price = (input_tokens / price_info.token_unit) * price_info.token_input
             o_price = 0  # in embedding no output tokens usage
             total_cost_per_request = i_price + o_price
 
@@ -685,7 +688,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": price_info.token_input if price_info else None,
                 "output_price": price_info.token_output if price_info else None,
-                "price_per_tokens": ONE_K,
+                "token_unit": price_info.token_unit if price_info else None,
                 "total_cost": total_cost_per_request,
             }
         )
@@ -699,8 +702,6 @@ class LLMfyUsage:
             model (str): Model name
             usage (Dict[str, int]): Dictionary containing token counts
         """
-        ONE_MILLION = 1000000
-
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
 
@@ -737,6 +738,7 @@ class LLMfyUsage:
 
         if model in self.googleai_pricing:
             price_info = self.googleai_pricing[model]
+            token_unit = price_info.get("token_unit", 1_000_000)
             threshold = price_info.get("threshold")
 
             # Select tier based on total input tokens vs threshold
@@ -762,10 +764,10 @@ class LLMfyUsage:
                     return active_input_price.get(key, active_input_price["default"])
 
                 i_price = (
-                    (text_tokens / ONE_MILLION) * _type_price("text")
-                    + (image_tokens / ONE_MILLION) * _type_price("image")
-                    + (video_tokens / ONE_MILLION) * _type_price("video")
-                    + (audio_tokens / ONE_MILLION) * _type_price("audio")
+                    (text_tokens / token_unit) * _type_price("text")
+                    + (image_tokens / token_unit) * _type_price("image")
+                    + (video_tokens / token_unit) * _type_price("video")
+                    + (audio_tokens / token_unit) * _type_price("audio")
                 )
                 token_input_price = active_input_price  # dict — store as-is for details
                 # Cached content is typically text; use the default rate for the discount
@@ -773,16 +775,16 @@ class LLMfyUsage:
             elif isinstance(active_input_price, dict):
                 # No type breakdown available — fall back to default price
                 token_input_price = active_input_price["default"]
-                i_price = (input_tokens / ONE_MILLION) * token_input_price
+                i_price = (input_tokens / token_unit) * token_input_price
                 cache_input_rate = token_input_price
             else:
                 token_input_price = active_input_price
-                i_price = (input_tokens / ONE_MILLION) * token_input_price
+                i_price = (input_tokens / token_unit) * token_input_price
                 cache_input_rate = token_input_price
 
             # Apply 75% savings on cache-read tokens (cached = 25%, so save 75%)
-            cache_savings = (cache_read_tokens / ONE_MILLION) * cache_input_rate * 0.75
-            o_price = (output_tokens / ONE_MILLION) * token_output_price
+            cache_savings = (cache_read_tokens / token_unit) * cache_input_rate * 0.75
+            o_price = (output_tokens / token_unit) * token_output_price
             total_cost_per_request = i_price - cache_savings + o_price
 
             # pricing accumulation
@@ -803,7 +805,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": token_input_price,
                 "output_price": token_output_price,
-                "price_per_tokens": ONE_MILLION,
+                "token_unit": price_info.get("token_unit", 1_000_000) if price_info else None,
                 "total_cost": total_cost_per_request,
                 "cache_read_tokens": cache_read_tokens,
             }
@@ -818,8 +820,6 @@ class LLMfyUsage:
             model: Model name
             usage: usage of input token (for embedding use input token only).
         """
-        ONE_MILLION = 1000000
-
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
 
@@ -841,6 +841,7 @@ class LLMfyUsage:
 
         if model in self.googleai_pricing:
             price_info = self.googleai_pricing[model]
+            token_unit = price_info.get("token_unit", 1_000_000)
             active_input_price = price_info["input"]
 
             if isinstance(active_input_price, dict):
@@ -848,7 +849,7 @@ class LLMfyUsage:
             else:
                 token_input_price = active_input_price
 
-            i_price = (input_tokens / ONE_MILLION) * token_input_price
+            i_price = (input_tokens / token_unit) * token_input_price
             total_cost_per_request = i_price
 
             # pricing accumulation
@@ -869,7 +870,7 @@ class LLMfyUsage:
                 "total_tokens": total_tokens,
                 "input_price": token_input_price,
                 "output_price": None,
-                "price_per_tokens": ONE_MILLION,
+                "token_unit": price_info.get("token_unit", 1_000_000) if price_info else None,
                 "total_cost": total_cost_per_request,
             }
         )

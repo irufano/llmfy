@@ -1,6 +1,6 @@
 """
 Google AI (Gemini) pricing per 1M tokens (USD).
-Reference: https://ai.google.dev/pricing
+Reference: [https://ai.google.dev/pricing](https://ai.google.dev/pricing)
 
 --- Pricing Structures ---
 
@@ -9,6 +9,7 @@ Flat pricing:
     "model-id": {
         "input": <float>,      # all input types same price
         "output": <float>,
+        "token_unit": <int>,
     }
 ```
 
@@ -23,6 +24,7 @@ Per-type input pricing:
             "audio":   <float>,
         },
         "output": <float>,
+        "token_unit": <int>,
     }
 ```
 
@@ -34,6 +36,7 @@ Tiered pricing (flat input, threshold on total input tokens):
         "output":       <float>,
         "output_high":  <float>,
         "threshold":    <int>,
+        "token_unit":   <int>,
     }
 ```
 
@@ -57,14 +60,23 @@ Tiered + per-type pricing:
         "output":       <float>,
         "output_high":  <float>,
         "threshold":    <int>,
+        "token_unit":   <int>,
     }
 ```
 """
 
 GOOGLEAI_PRICING = {
     # Gemini 2.0 family
-    "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
-    "gemini-2.0-flash-lite": {"input": 0.075, "output": 0.30},
+    "gemini-2.0-flash": {
+        "input": 0.10,
+        "output": 0.40,
+        "token_unit": 1_000_000,
+    },
+    "gemini-2.0-flash-lite": {
+        "input": 0.075,
+        "output": 0.30,
+        "token_unit": 1_000_000,
+    },
     # Gemini 2.5 family
     "gemini-2.5-pro": {
         "input": 1.25,
@@ -72,10 +84,23 @@ GOOGLEAI_PRICING = {
         "input_high": 2.50,
         "output_high": 15.00,
         "threshold": 200000,
+        "token_unit": 1_000_000,
     },
-    "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
-    "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40},
-    "gemini-2.5-flash-lite-preview-09-2025": {"input": 0.10, "output": 0.40},
+    "gemini-2.5-flash": {
+        "input": 0.30,
+        "output": 2.50,
+        "token_unit": 1_000_000,
+    },
+    "gemini-2.5-flash-lite": {
+        "input": 0.10,
+        "output": 0.40,
+        "token_unit": 1_000_000,
+    },
+    "gemini-2.5-flash-lite-preview-09-2025": {
+        "input": 0.10,
+        "output": 0.40,
+        "token_unit": 1_000_000,
+    },
     # Gemini 3.0 family
     "gemini-3-flash-preview": {
         "input": {
@@ -86,6 +111,7 @@ GOOGLEAI_PRICING = {
             "audio": 1.00,
         },
         "output": 3.00,
+        "token_unit": 1_000_000,
     },
     # Gemini 3.1 family
     "gemini-3.1-flash-lite-preview": {
@@ -97,6 +123,7 @@ GOOGLEAI_PRICING = {
             "audio": 0.50,
         },
         "output": 1.50,
+        "token_unit": 1_000_000,
     },
     "gemini-3.1-pro-preview": {
         "input": 2.00,
@@ -104,8 +131,17 @@ GOOGLEAI_PRICING = {
         "input_high": 4.00,
         "output_high": 18.00,
         "threshold": 200000,
+        "token_unit": 1_000_000,
     },
     # Gemini Embedding
-    "gemini-embedding-001": {"input": 0.15, "output": 0},
-    "gemini-embedding-2-preview": {"input": 0.20, "output": 0}
+    "gemini-embedding-001": {
+        "input": 0.15,
+        "output": 0,
+        "token_unit": 1_000_000,
+    },
+    "gemini-embedding-2-preview": {
+        "input": 0.20,
+        "output": 0,
+        "token_unit": 1_000_000,
+    },
 }
