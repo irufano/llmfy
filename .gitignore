@@ -24,6 +24,20 @@ build/
 *.swp
 *.swo
 
+# AI agent context files
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+QWEN.md
+WARP.md
+.clinerules
+.cursorrules
+.windsurfrules
+.roo/
+.amazonq/
+CONVENTIONS.md
+.github/copilot-instructions.md
+
 # Logs and databases
 *.log
 *.sqlite3
