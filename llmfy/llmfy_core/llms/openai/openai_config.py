@@ -3,6 +3,50 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class OpenAIThinkingConfig(BaseModel):
+    """Grouped reasoning settings for OpenAIModel.
+
+    Applies to o-series reasoning models and the GPT-5.x family:
+      - o1, o1-mini, o3, o3-mini, o4-mini (and any future o-series models)
+      - gpt-5, gpt-5.1, gpt-5.2, gpt-5.4, gpt-5.5, gpt-5.5-pro (and later
+        GPT-5.x releases)
+
+    o-series models always reason internally — `enabled` only controls whether
+    `reasoning_effort` is sent explicitly; it does not turn reasoning off.
+    GPT-5.x models are hybrid — reasoning can be minimized via effort='minimal'
+    but the field must still be set through this same reasoning_effort
+    mechanism.
+    """
+
+    enabled: bool = False
+    """Master switch. False: reasoning_effort is never sent, the API falls back
+    to its own default for the model. True: reasoning_effort is sent (see effort
+    below).
+
+    Supported models:
+      - o1
+      - o1-mini
+      - o3
+      - o3-mini
+      - o4-mini
+      (and any future o-series reasoning models)
+      - gpt-5, gpt-5.1, gpt-5.2, gpt-5.4, gpt-5.5, gpt-5.5-pro
+      (and later GPT-5.x releases)
+    """
+
+    effort: Optional[str] = None
+    """'low', 'medium', or 'high' — supported on o-series and GPT-5.x alike.
+    'minimal' is additionally available on GPT-5.x only (not o-series).
+    Sent as reasoning_effort via the Chat Completions API. Defaults to 'medium'
+    when enabled=True and left unset.
+
+    Supported models:
+      - o1, o1-mini, o3, o3-mini, o4-mini — 'low'/'medium'/'high'
+      - gpt-5, gpt-5.1, gpt-5.2, gpt-5.4, gpt-5.5, gpt-5.5-pro —
+        'minimal'/'low'/'medium'/'high'
+    """
+
+
 class OpenAIConfig(BaseModel):
     """Configuration for OpenAIModel."""
 
@@ -12,19 +56,10 @@ class OpenAIConfig(BaseModel):
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
 
-    # Thinking / reasoning
-    enable_thinking: bool = False
-    """Enable reasoning mode via the Chat Completions API. Supported models:
-      - o1
-      - o1-mini
-      - o3
-      - o3-mini
-      - o4-mini
-      (and any future o-series reasoning models)
-    """
-    reasoning_effort: Optional[str] = None
-    """'low', 'medium', or 'high'. Used with o1/o3/o4-mini reasoning models via
-    the Chat Completions API. Defaults to 'medium' when enable_thinking=True and not set."""
+    # Thinking / reasoning — grouped so all reasoning-related fields live in one place
+    thinking: OpenAIThinkingConfig = OpenAIThinkingConfig()
+    """Grouped reasoning settings. See OpenAIThinkingConfig for supported models
+    and field details."""
 
     # Prompt caching
     enable_prompt_caching: bool = False

@@ -9,6 +9,7 @@ from llmfy import (
     # OpenAIModel,
     GoogleAIConfig,
     GoogleAIModel,
+    GoogleAIThinkingConfig,
     LLMfy,
     LLMfyException,
     Message,
@@ -39,7 +40,9 @@ def retrieval_example():
     #     config=config,
     # )
 
-    config = GoogleAIConfig(temperature=0.7, enable_thinking=True)
+    config = GoogleAIConfig(
+        temperature=0.7, thinking=GoogleAIThinkingConfig(enabled=True)
+    )
     llm = GoogleAIModel(
         model="gemini-2.5-flash-lite",
         config=config,

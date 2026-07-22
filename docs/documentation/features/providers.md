@@ -33,7 +33,7 @@ LLMfy supports three LLM providers. The table below summarises their capabilitie
 ### Configuration
 
 ```python
-from llmfy import OpenAIConfig
+from llmfy import OpenAIConfig, OpenAIThinkingConfig
 
 config = OpenAIConfig(
     temperature=0.7,       # Sampling temperature (0.0-2.0)
@@ -41,9 +41,11 @@ config = OpenAIConfig(
     top_p=1.0,             # Nucleus sampling probability
     frequency_penalty=0.0, # Penalise repeated tokens
     presence_penalty=0.0,  # Penalise tokens already in the prompt
-    # Thinking / reasoning (o-series models)
-    enable_thinking=False,    # Set True for o1/o3/o4-mini reasoning models
-    reasoning_effort=None,    # 'low', 'medium', 'high' — defaults to 'medium'
+    # Thinking / reasoning (o-series models) — grouped in one settings object
+    thinking=OpenAIThinkingConfig(
+        enabled=False,   # Set True for o1/o3/o4-mini reasoning models
+        effort=None,     # 'low', 'medium', 'high' — defaults to 'medium'
+    ),
 )
 ```
 
@@ -89,7 +91,7 @@ Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
 ### Configuration
 
 ```python
-from llmfy import BedrockConfig
+from llmfy import BedrockConfig, BedrockThinkingConfig
 
 config = BedrockConfig(
     temperature=0.7,      # Sampling temperature
@@ -97,12 +99,14 @@ config = BedrockConfig(
     top_p=1.0,            # Nucleus sampling probability
     top_k=None,           # Top-k sampling
     stopSequences=None,   # List of stop sequences
-    # Thinking (Claude and Nova 2 Lite models)
-    enable_thinking=False,        # Set True to enable thinking
-    thinking_budget_tokens=None,  # Claude extended thinking: token budget (min 1024)
-    thinking_type=None,           # 'enabled' | 'adaptive' — Claude mode selector
-    thinking_effort=None,         # Claude adaptive: 'low', 'medium', 'high', 'max'
-    reasoning_effort=None,        # Nova 2 Lite: 'low', 'medium', 'high'
+    # Thinking (Claude and Nova 2 Lite models) — grouped in one settings object
+    thinking=BedrockThinkingConfig(
+        enabled=False,          # Set True to enable thinking
+        budget_tokens=None,     # Claude extended thinking: token budget (min 1024)
+        type=None,              # 'enabled' | 'adaptive' — Claude mode selector
+        effort=None,            # Claude adaptive: 'low', 'medium', 'high', 'max'
+        reasoning_effort=None,  # Nova 2 Lite: 'low', 'medium', 'high'
+    ),
 )
 ```
 
@@ -146,7 +150,7 @@ Common model IDs: `amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`, `anthropic.cl
 ### Configuration
 
 ```python
-from llmfy import GoogleAIConfig
+from llmfy import GoogleAIConfig, GoogleAIThinkingConfig
 
 config = GoogleAIConfig(
     temperature=0.7,              # Sampling temperature
@@ -161,12 +165,14 @@ config = GoogleAIConfig(
     response_mime_type=None,      # e.g. "application/json" for structured output
     response_schema=None,         # Schema for structured output
     safety_settings=None,         # List of SafetySetting instances
-    # Thinking (Gemini 2.5+ and Gemini 3 series)
-    enable_thinking=False,            # Set True to enable thinking
-    thinking_level=None,              # 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'
-    thinking_budget_tokens=None,      # Token budget (-1=dynamic, 0=disable)
-    thinking_include_thoughts=None,   # Include thinking steps in response
-    thinking_config=None,             # Raw ThinkingConfig override (backward compat)
+    # Thinking (Gemini 2.5+ and Gemini 3 series) — grouped in one settings object
+    thinking=GoogleAIThinkingConfig(
+        enabled=False,            # Set True to enable thinking
+        level=None,               # 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'
+        budget_tokens=None,       # Token budget (-1=dynamic, 0=disable)
+        include_thoughts=None,    # Include thinking steps in response
+        raw=None,                 # Raw ThinkingConfig override (backward compat)
+    ),
 )
 ```
 

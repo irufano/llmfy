@@ -151,25 +151,25 @@ class BedrockModel(BaseAIModel):
                 **kwargs,
             }
 
-            if self.config.enable_thinking:
-                if self.config.reasoning_effort is not None:
+            if self.config.thinking.enabled:
+                if self.config.thinking.reasoning_effort is not None:
                     # Amazon Nova 2 Lite format
                     additionals["reasoningConfig"] = {
                         "type": "enabled",
-                        "maxReasoningEffort": self.config.reasoning_effort,
+                        "maxReasoningEffort": self.config.thinking.reasoning_effort,
                     }
-                elif self.config.thinking_type == "adaptive":
+                elif self.config.thinking.type == "adaptive":
                     # Claude adaptive thinking (Sonnet/Opus 4.6, Fable 5, Mythos 5, Opus 4.7)
                     additionals["thinking"] = {"type": "adaptive"}
-                    if self.config.thinking_effort is not None:
+                    if self.config.thinking.effort is not None:
                         additionals["output_config"] = {
-                            "effort": self.config.thinking_effort
+                            "effort": self.config.thinking.effort
                         }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
                     _thinking: Dict[str, Any] = {"type": "enabled"}
-                    if self.config.thinking_budget_tokens is not None:
-                        _thinking["budget_tokens"] = self.config.thinking_budget_tokens
+                    if self.config.thinking.budget_tokens is not None:
+                        _thinking["budget_tokens"] = self.config.thinking.budget_tokens
                     additionals["thinking"] = _thinking
 
             # Remove None values
@@ -343,25 +343,25 @@ class BedrockModel(BaseAIModel):
                 **kwargs,
             }
 
-            if self.config.enable_thinking:
-                if self.config.reasoning_effort is not None:
+            if self.config.thinking.enabled:
+                if self.config.thinking.reasoning_effort is not None:
                     # Amazon Nova 2 Lite format
                     additionals["reasoningConfig"] = {
                         "type": "enabled",
-                        "maxReasoningEffort": self.config.reasoning_effort,
+                        "maxReasoningEffort": self.config.thinking.reasoning_effort,
                     }
-                elif self.config.thinking_type == "adaptive":
+                elif self.config.thinking.type == "adaptive":
                     # Claude adaptive thinking (Sonnet/Opus 4.6, Fable 5, Mythos 5, Opus 4.7)
                     additionals["thinking"] = {"type": "adaptive"}
-                    if self.config.thinking_effort is not None:
+                    if self.config.thinking.effort is not None:
                         additionals["output_config"] = {
-                            "effort": self.config.thinking_effort
+                            "effort": self.config.thinking.effort
                         }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
                     _thinking: Dict[str, Any] = {"type": "enabled"}
-                    if self.config.thinking_budget_tokens is not None:
-                        _thinking["budget_tokens"] = self.config.thinking_budget_tokens
+                    if self.config.thinking.budget_tokens is not None:
+                        _thinking["budget_tokens"] = self.config.thinking.budget_tokens
                     additionals["thinking"] = _thinking
 
             # Remove None values

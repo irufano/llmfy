@@ -121,8 +121,8 @@ class OpenAIModel(BaseAIModel):
                 **kwargs,
             }
 
-            if self.config.enable_thinking:
-                params["reasoning_effort"] = self.config.reasoning_effort or "medium"
+            if self.config.thinking.enabled:
+                params["reasoning_effort"] = self.config.thinking.effort or "medium"
 
             if tools:
                 params["tools"] = [
@@ -195,8 +195,8 @@ class OpenAIModel(BaseAIModel):
                 **kwargs,
             }
 
-            if self.config.enable_thinking:
-                params["reasoning_effort"] = self.config.reasoning_effort or "medium"
+            if self.config.thinking.enabled:
+                params["reasoning_effort"] = self.config.thinking.effort or "medium"
 
             if tools:
                 params["tools"] = [

@@ -12,6 +12,52 @@ Completeness:
   `llmfy_usage_tracker(openai_pricing=prices)`.
 """
 OPENAI_PRICING = {
+    # ── GPT-5.x series ────────────────────────────────────────────────────────
+    "gpt-5.6-sol": {
+        "input": 5.00,
+        "output": 30.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.6-terra": {
+        "input": 2.50,
+        "output": 15.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.6-luna": {
+        "input": 1.00,
+        "output": 6.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.5": {
+        "input": 5.00,
+        "output": 30.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.5-pro": {
+        "input": 30.00,
+        "output": 180.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.4": {
+        "input": 2.50,
+        "output": 15.00,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.4-mini": {
+        "input": 0.75,
+        "output": 4.50,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.4-nano": {
+        "input": 0.20,
+        "output": 1.25,
+        "token_unit": 1_000_000,
+    },
+    "gpt-5.4-pro": {
+        "input": 30.00,
+        "output": 180.00,
+        "token_unit": 1_000_000,
+    },
     # ── GPT-4.1 ───────────────────────────────────────────────────────────────
     "gpt-4.1": {
         "input": 2.00,

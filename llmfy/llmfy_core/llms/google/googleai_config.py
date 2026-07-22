@@ -3,6 +3,71 @@ from typing import Any, List, Optional
 from pydantic import BaseModel
 
 
+class GoogleAIThinkingConfig(BaseModel):
+    """Grouped thinking settings for GoogleAIModel.
+
+    Supported models:
+
+    Gemini 2.5 series (use budget_tokens for token-based control):
+      - gemini-2.5-pro       (cannot fully disable — has a non-zero minimum
+                               thinking budget even when this config is unset)
+      - gemini-2.5-flash
+      - gemini-2.5-flash-lite
+
+    Gemini 3 series (use level for named effort control):
+      - gemini-3-flash
+      - gemini-3.1-pro
+      - gemini-3.1-flash-lite
+      - gemini-3.5-flash
+
+    And latest.
+    """
+
+    enabled: bool = False
+    """Master switch. False: no ThinkingConfig is sent — the model falls back to
+    its own default. True: a ThinkingConfig is built from budget_tokens / level /
+    include_thoughts below. Ignored when raw is set."""
+
+    budget_tokens: Optional[int] = None
+    """Token budget for thinking. -1 = dynamic (model decides), 0 = disable
+    explicit budget. Maps to thinking_budget in ThinkingConfig. Alternative to
+    level — use one or the other.
+
+    Supported models (Gemini 2.5 series — preferred control here):
+      - gemini-2.5-pro       (0 not supported — non-zero minimum budget, cannot
+                               fully disable)
+      - gemini-2.5-flash     (0 = fully disable thinking)
+      - gemini-2.5-flash-lite (0 = fully disable thinking)
+    """
+
+    level: Optional[str] = None
+    """Named effort level: 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'. Alternative to
+    budget_tokens — use one or the other.
+
+    Supported models (Gemini 3 series — preferred control here):
+      - gemini-3-flash
+      - gemini-3.1-pro
+      - gemini-3.1-flash-lite
+      - gemini-3.5-flash
+    """
+
+    include_thoughts: Optional[bool] = None
+    """Whether to include thinking steps in the response content parts.
+
+    Supported models: all Gemini 2.5+ and Gemini 3 series models listed above.
+    """
+
+    raw: Optional[Any] = None
+    """Escape hatch (backward compat): a pre-built google.genai.types.ThinkingConfig
+    instance. When set, takes priority over enabled / budget_tokens / level /
+    include_thoughts above.
+
+    Supported models: any model accepted by google.genai's ThinkingConfig —
+    use this to pass provider-specific fields not yet covered by the unified
+    fields above.
+    """
+
+
 class GoogleAIConfig(BaseModel):
     """Configuration for GoogleAIModel.
 
@@ -38,36 +103,10 @@ class GoogleAIConfig(BaseModel):
     safety_settings: Optional[List[Any]] = None
     """List of google.genai.types.SafetySetting instances."""
 
-    # Thinking — unified fields
-    enable_thinking: bool = False
-    """Enable extended thinking. Supported models:
-
-    Gemini 2.5 series (use thinking_budget_tokens for token-based control):
-      - gemini-2.5-pro
-      - gemini-2.5-flash
-      - gemini-2.5-flash-lite
-
-    Gemini 3 series (use thinking_level for named effort control):
-      - gemini-3-flash
-      - gemini-3.1-pro
-      - gemini-3.1-flash-lite
-      - gemini-3.5-flash
-
-    And latest
-    """
-    thinking_budget_tokens: Optional[int] = None
-    """Token budget for thinking. -1 = dynamic (model decides), 0 = disable explicit budget.
-    Maps to thinking_budget in ThinkingConfig."""
-    thinking_level: Optional[str] = None
-    """Named effort level: 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'.
-    Alternative to thinking_budget_tokens — use one or the other."""
-    thinking_include_thoughts: Optional[bool] = None
-    """Whether to include thinking steps in the response content parts."""
-
-    # Raw thinking override (backward compat — takes priority over unified fields above)
-    thinking_config: Optional[Any] = None
-    """google.genai.types.ThinkingConfig instance. When set, takes priority over
-    enable_thinking / thinking_budget_tokens / thinking_level / thinking_include_thoughts."""
+    # Thinking — grouped so all thinking-related fields live in one place
+    thinking: GoogleAIThinkingConfig = GoogleAIThinkingConfig()
+    """Grouped thinking settings. See GoogleAIThinkingConfig for supported models
+    and field details."""
 
     # Prompt caching
     enable_prompt_caching: bool = False
