@@ -190,10 +190,10 @@ class BedrockModel(BaseAIModel):
             # A cachePoint after the system caches the system prompt (~90% savings).
             # A cachePoint at the end of the last message caches the full conversation
             # prefix so the next turn can serve it from cache.
-            if self.config.enable_prompt_caching:
+            if self.config.prompt_caching.enabled:
                 _cache_point: Dict[str, Any] = {"type": "default"}
-                if self.config.prompt_caching_ttl is not None:
-                    _cache_point["ttl"] = self.config.prompt_caching_ttl
+                if self.config.prompt_caching.ttl is not None:
+                    _cache_point["ttl"] = self.config.prompt_caching.ttl
                 _cache_point_entry = {"cachePoint": _cache_point}
 
                 if _system is not None:
@@ -382,10 +382,10 @@ class BedrockModel(BaseAIModel):
             # A cachePoint after the system caches the system prompt (~90% savings).
             # A cachePoint at the end of the last message caches the full conversation
             # prefix so the next turn can serve it from cache.
-            if self.config.enable_prompt_caching:
+            if self.config.prompt_caching.enabled:
                 _cache_point: Dict[str, Any] = {"type": "default"}
-                if self.config.prompt_caching_ttl is not None:
-                    _cache_point["ttl"] = self.config.prompt_caching_ttl
+                if self.config.prompt_caching.ttl is not None:
+                    _cache_point["ttl"] = self.config.prompt_caching.ttl
                 _cache_point_entry = {"cachePoint": _cache_point}
 
                 if _system is not None:

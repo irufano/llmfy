@@ -570,8 +570,8 @@ class LLMfyUsage:
         output_tokens = usage_dict.get("outputTokens", 0)
         total_tokens = input_tokens + output_tokens
 
-        # Extract cache tokens — present only when enable_prompt_caching=True on Claude models.
-        # cache_read_tokens: tokens served from cache (already included in inputTokens — no double-count).
+        # Extract cache tokens — present only when prompt_caching.enabled=True on Claude models.
+        # cache_read_tokens: tokens served from cache.
         # cache_write_tokens: tokens written to cache this request (~125% input rate, separate charge).
         cache_read_tokens = usage_dict.get("cacheReadInputTokens", 0) or 0
         cache_write_tokens = usage_dict.get("cacheWriteInputTokens", 0) or 0
@@ -754,7 +754,7 @@ class LLMfyUsage:
             # Compute full i_price first, then subtract the 75% savings on cached tokens.
             #
             # cached_content_token_count is the subset of prompt_token_count served
-            # from an explicit cachedContent object (GoogleAIConfig.cached_content).
+            # from an explicit cachedContent object (GoogleAIConfig.prompt_caching.cached_content).
             # Implicit caching (Gemini 2.5+ automatic) does not populate this field.
             #
             # Reference: https://ai.google.dev/gemini-api/docs/caching

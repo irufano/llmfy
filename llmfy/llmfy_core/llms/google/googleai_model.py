@@ -84,8 +84,8 @@ class GoogleAIModel(BaseAIModel):
         if self.config.safety_settings is not None:
             config_kwargs["safety_settings"] = self.config.safety_settings
         # Pass pre-created cache reference when provided (explicit caching)
-        if self.config.cached_content is not None:
-            config_kwargs["cached_content"] = self.config.cached_content
+        if self.config.prompt_caching.cached_content is not None:
+            config_kwargs["cached_content"] = self.config.prompt_caching.cached_content
         if self.config.thinking.raw is not None:
             # Raw override takes priority (backward compat)
             config_kwargs["thinking_config"] = self.config.thinking.raw

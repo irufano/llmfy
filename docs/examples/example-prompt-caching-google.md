@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from llmfy import (
     GoogleAIConfig,
     GoogleAIModel,
+    GoogleAIPromptCachingConfig,
     LLMfy,
     LLMfyException,
     llmfy_usage_tracker,
@@ -18,7 +19,8 @@ load_dotenv()
 # ─── Shared large context ────────────────────────────────────────────────────
 # Google AI context caching requires two steps:
 #   1. Create a cache externally with client.caches.create() — done below.
-#   2. Pass the returned cache name via GoogleAIConfig(cached_content=...).
+#   2. Pass the returned cache name via
+#      GoogleAIConfig(prompt_caching=GoogleAIPromptCachingConfig(cached_content=...)).
 #
 # Minimum 2,048 tokens required for gemini-2.5-flash/pro.
 # The cached content must use the EXACT same model as the generation request.
@@ -57,16 +59,15 @@ Prompt caching on Google AI:
   1. Explicit caching (cachedContent):
      - Create a cache object with client.caches.create() containing the large
        stable content (system instruction, documents, etc.).
-     - Pass the returned cache resource name via GoogleAIConfig(cached_content=...).
+     - Pass the returned cache resource name via
+       GoogleAIConfig(prompt_caching=GoogleAIPromptCachingConfig(cached_content=...)).
      - Guaranteed cache hits; billed at ~25% of normal input price (~75% savings).
      - Cache storage is charged per token-hour.
      - Default TTL is 1 hour; no minimum or maximum bounds.
-     - Requires billing enabled (not available on free tier).
 
   2. Implicit caching (automatic on Gemini 2.5+):
      - No setup required; enabled by default on all Gemini 2.5 and newer models.
      - Cache hits are not guaranteed but apply a billing benefit when they occur.
-     - cache_read_tokens is not surfaced in the API response for implicit hits.
 
   Supported models for explicit caching:
     models/gemini-2.5-pro    (min 2,048 tokens)
@@ -90,7 +91,6 @@ def create_cache() -> str:
 
     This is a one-time setup step. In production, run this once and store
     the returned cache name for reuse across many requests within the TTL.
-    Requires billing enabled on Google AI (not available on free tier).
     """
     try:
         from google import genai
@@ -146,8 +146,10 @@ def prompt_caching_google_example():
         # Explicit cache: pass the resource name; do NOT set system_message.
         config = GoogleAIConfig(
             temperature=0.7,
-            enable_prompt_caching=True,
-            cached_content=cached_content_name,
+            prompt_caching=GoogleAIPromptCachingConfig(
+                enabled=True,
+                cached_content=cached_content_name,
+            ),
         )
         llm = GoogleAIModel(model=MODEL, config=config)
         # Do NOT pass system_message — the system instruction is inside the cache.
@@ -158,7 +160,8 @@ def prompt_caching_google_example():
         # Gemini 2.5+ will cache it automatically when the same prefix repeats.
         config = GoogleAIConfig(
             temperature=0.7,
-            enable_prompt_caching=True,  # intent flag — implicit caching is automatic
+            # intent flag — implicit caching is automatic
+            prompt_caching=GoogleAIPromptCachingConfig(enabled=True),
         )
         llm = GoogleAIModel(model=MODEL, config=config)
         agent = LLMfy(llm, system_message=LARGE_CONTEXT)

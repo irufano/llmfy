@@ -86,34 +86,16 @@ class BedrockThinkingConfig(BaseModel):
     """
 
 
-class BedrockConfig(BaseModel):
-    """Configuration for BedrockModel."""
+class BedrockPromptCachingConfig(BaseModel):
+    """Grouped prompt caching settings for BedrockModel.
 
-    temperature: Optional[float] = 0.7
-    """Must be set to None when thinking.enabled=True (Claude extended thinking) or
-    when thinking.reasoning_effort='high' (Nova 2 Lite). The API returns an error
-    otherwise."""
-    max_tokens: Optional[int] = None
-    top_p: Optional[float] = 1.0
-    """Must be set to None when thinking.enabled=True (Claude extended thinking)."""
-    top_k: Optional[int] = None
-    stopSequences: Optional[List[str]] = None
-
-    # Thinking / reasoning — grouped so all thinking-related fields live in one place
-    thinking: BedrockThinkingConfig = BedrockThinkingConfig()
-    """Grouped thinking/reasoning settings. See BedrockThinkingConfig for which
-    fields apply to which model family (Claude extended, Claude adaptive, or
-    Amazon Nova 2 Lite reasoning)."""
-
-    # Prompt caching
-    enable_prompt_caching: bool = False
-    """Enable prompt caching via the Converse API cachePoint mechanism.
+    Enables prompt caching via the Converse API cachePoint mechanism.
 
     References:
       - https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
       - https://docs.aws.amazon.com/bedrock/latest/userguide/model-cards.html
 
-    When True, cachePoint markers are injected into the request:
+    When enabled=True, cachePoint markers are injected into the request:
       - After the system content (when a system prompt is present)
       - At the end of the last message content
 
@@ -144,7 +126,7 @@ class BedrockConfig(BaseModel):
 
     Amazon Nova (automatic — cachePoint NOT required):
       Nova models cache text prompts automatically without any cachePoint marker.
-      enable_prompt_caching=True has no effect on Nova models.
+      enabled=True has no effect on Nova models.
       - amazon.nova-lite-v1:0
       - amazon.nova-pro-v1:0
 
@@ -167,16 +149,51 @@ class BedrockConfig(BaseModel):
     cache_read_tokens and cache_write_tokens.
     """
 
-    prompt_caching_ttl: Optional[str] = None
+    enabled: bool = False
+    """Master switch. False: no cachePoint markers are injected — request is
+    sent as-is. True: cachePoint markers are added after the system content
+    and at the end of the last message content.
+
+    Supported models: see class docstring — Anthropic Claude (explicit
+    cachePoint) and Amazon Nova (automatic, this flag has no effect)."""
+
+    ttl: Optional[str] = None
     """Cache time-to-live for the cachePoint markers. Accepted values:
       - None (default): uses AWS default of 5 minutes
       - "5m":  5-minute cache (all caching-compatible models)
-      - "1h":  1-hour cache (Claude 4.5, 4.6, 4.8, Fable 5 — see enable_prompt_caching
-               for the per-model TTL support table)
+      - "1h":  1-hour cache (Claude 4.5, 4.6, 4.8, Fable 5 — see class
+               docstring for the per-model TTL support table)
 
     When multiple cachePoints with different TTLs exist in the same request,
     longer-TTL entries ("1h") must appear before shorter-TTL entries ("5m").
 
     The TTL is included in the injected cachePoint:
       {"cachePoint": {"type": "default", "ttl": "1h"}}
-    """
+
+    Supported models: Claude 4.5, 4.6, 4.8, and Fable 5 support "1h"; all
+    caching-compatible Claude models support "5m" (see class docstring)."""
+
+
+class BedrockConfig(BaseModel):
+    """Configuration for BedrockModel."""
+
+    temperature: Optional[float] = 0.7
+    """Must be set to None when thinking.enabled=True (Claude extended thinking) or
+    when thinking.reasoning_effort='high' (Nova 2 Lite). The API returns an error
+    otherwise."""
+    max_tokens: Optional[int] = None
+    top_p: Optional[float] = 1.0
+    """Must be set to None when thinking.enabled=True (Claude extended thinking)."""
+    top_k: Optional[int] = None
+    stopSequences: Optional[List[str]] = None
+
+    # Thinking / reasoning — grouped so all thinking-related fields live in one place
+    thinking: BedrockThinkingConfig = BedrockThinkingConfig()
+    """Grouped thinking/reasoning settings. See BedrockThinkingConfig for which
+    fields apply to which model family (Claude extended, Claude adaptive, or
+    Amazon Nova 2 Lite reasoning)."""
+
+    # Prompt caching — grouped so all caching-related fields live in one place
+    prompt_caching: BedrockPromptCachingConfig = BedrockPromptCachingConfig()
+    """Grouped prompt caching settings. See BedrockPromptCachingConfig for
+    supported models, TTL rules, and pricing."""

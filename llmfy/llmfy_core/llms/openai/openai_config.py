@@ -47,29 +47,15 @@ class OpenAIThinkingConfig(BaseModel):
     """
 
 
-class OpenAIConfig(BaseModel):
-    """Configuration for OpenAIModel."""
-
-    temperature: float = 0.7
-    max_tokens: Optional[int] = None
-    top_p: float = 1.0
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
-
-    # Thinking / reasoning — grouped so all reasoning-related fields live in one place
-    thinking: OpenAIThinkingConfig = OpenAIThinkingConfig()
-    """Grouped reasoning settings. See OpenAIThinkingConfig for supported models
-    and field details."""
-
-    # Prompt caching
-    enable_prompt_caching: bool = False
-    """Intent flag documenting that prompt caching is desired.
+class OpenAIPromptCachingConfig(BaseModel):
+    """Grouped prompt caching settings for OpenAIModel.
 
     Reference: https://platform.openai.com/docs/guides/prompt-caching
 
     OpenAI applies caching automatically for all API requests — no explicit
-    markers or request changes are needed. This flag does not alter the request;
-    it signals intent and ensures cache usage stats appear in usage details.
+    markers or request changes are needed. `enabled` does not alter the
+    request; it signals intent and ensures cache usage stats appear in usage
+    details.
 
     How it works:
       - The longest common prompt prefix is cached server-side automatically.
@@ -101,3 +87,31 @@ class OpenAIConfig(BaseModel):
     Cached tokens are reported in usage details as cache_read_tokens whenever
     the API returns prompt_tokens_details.cached_tokens.
     """
+
+    enabled: bool = False
+    """Intent flag documenting that prompt caching is desired. Does not alter
+    the request — OpenAI caches automatically regardless of this flag. Set it
+    to True so cache usage stats are surfaced in usage details.
+
+    Supported models: see class docstring."""
+
+
+class OpenAIConfig(BaseModel):
+    """Configuration for OpenAIModel."""
+
+    temperature: float = 0.7
+    max_tokens: Optional[int] = None
+    top_p: float = 1.0
+    frequency_penalty: float = 0.0
+    presence_penalty: float = 0.0
+
+    # Thinking / reasoning — grouped so all reasoning-related fields live in one place
+    thinking: OpenAIThinkingConfig = OpenAIThinkingConfig()
+    """Grouped reasoning settings. See OpenAIThinkingConfig for supported models
+    and field details."""
+
+    # Prompt caching — grouped so all caching-related fields live in one place
+    prompt_caching: OpenAIPromptCachingConfig = OpenAIPromptCachingConfig()
+    """Grouped prompt caching settings. See OpenAIPromptCachingConfig for
+    supported models and details — caching itself is automatic on OpenAI's
+    side; this is an intent flag for usage-stat visibility."""

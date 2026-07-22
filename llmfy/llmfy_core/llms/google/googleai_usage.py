@@ -16,7 +16,7 @@ def _extract_usage(usage_metadata) -> dict:
     Prompt caching fields:
       - cached_content_token_count: tokens served from an explicit cachedContent
         object (~25% of normal input price). Only populated for explicit caching
-        (GoogleAIConfig.cached_content is set). Implicit caching (Gemini 2.5+
+        (GoogleAIConfig.prompt_caching.cached_content is set). Implicit caching (Gemini 2.5+
         automatic) does not surface this field in the API response.
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
@@ -39,7 +39,7 @@ def track_googleai_usage(func):
 
     Extracts usage_metadata from the GenerateContentResponse and forwards it
     to the usage tracker via _extract_usage(). When explicit prompt caching is
-    active (GoogleAIConfig.cached_content is set), cached_content_token_count
+    active (GoogleAIConfig.prompt_caching.cached_content is set), cached_content_token_count
     is populated and reported as cache_read_tokens in the usage details.
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
@@ -71,7 +71,7 @@ def track_googleai_stream_usage(func):
     Tees the response stream to extract usage_metadata from the final chunk
     without consuming the stream. Forwards the same fields as the non-stream
     decorator, including cached_content_token_count when explicit caching is
-    active (GoogleAIConfig.cached_content is set).
+    active (GoogleAIConfig.prompt_caching.cached_content is set).
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
     """

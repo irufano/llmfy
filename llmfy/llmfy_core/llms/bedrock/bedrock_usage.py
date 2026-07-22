@@ -14,9 +14,9 @@ def track_bedrock_usage(func):
       - inputTokens:             total input tokens (includes cache-read tokens)
       - outputTokens:            total output tokens
       - cacheReadInputTokens:    tokens served from cache (~10% input price)
-                                 present only when enable_prompt_caching=True
+                                 present only when prompt_caching.enabled=True
       - cacheWriteInputTokens:   tokens written to cache (~125% input price)
-                                 present only when enable_prompt_caching=True
+                                 present only when prompt_caching.enabled=True
 
     Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
     """
@@ -47,7 +47,7 @@ def track_bedrock_stream_usage(func):
 
     Tees the event stream to extract the `metadata.usage` dict without
     consuming it. The usage dict contains the same fields as the non-stream
-    response: inputTokens, outputTokens, and — when enable_prompt_caching=True
+    response: inputTokens, outputTokens, and — when prompt_caching.enabled=True
     on supported Claude models — cacheReadInputTokens and cacheWriteInputTokens.
 
     Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html

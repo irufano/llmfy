@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from llmfy import (
     BedrockConfig,
     BedrockModel,
+    BedrockPromptCachingConfig,
     LLMfy,
     LLMfyException,
     llmfy_usage_tracker,
@@ -45,12 +46,12 @@ Environment variables required for Bedrock:
   AWS_BEDROCK_REGION
 
 Prompt caching on Bedrock:
-  Set enable_prompt_caching=True on BedrockConfig to inject cachePoint markers
-  automatically. The system prompt and conversation prefix are cached so that
-  repeated calls with the same context pay ~10 percent of the normal input price
-  for the cached portion.
-  Use prompt_caching_ttl="1h" on Claude 4.5, 4.6, 4.8, and Fable 5 for a longer
-  cache lifetime suited to batch processing workflows.
+  Set prompt_caching=BedrockPromptCachingConfig(enabled=True) on BedrockConfig
+  to inject cachePoint markers automatically. The system prompt and conversation
+  prefix are cached so that repeated calls with the same context pay ~10 percent
+  of the normal input price for the cached portion.
+  Use ttl="1h" on Claude 4.5, 4.6, 4.8, and Fable 5 for a longer cache lifetime
+  suited to batch processing workflows.
 
   Supported models for caching:
     anthropic.claude-3-5-sonnet-20241022-v2:0  (min 1 024 tokens, 5m TTL)
@@ -74,8 +75,10 @@ def prompt_caching_bedrock_example():
 
     config = BedrockConfig(
         temperature=0.7,
-        enable_prompt_caching=True,
-        # prompt_caching_ttl="1h",  # uncomment for 1-hour cache (Claude 4.5+ only)
+        prompt_caching=BedrockPromptCachingConfig(
+            enabled=True,
+            # ttl="1h",  # uncomment for 1-hour cache (Claude 4.5+ only)
+        ),
     )
 
     llm = BedrockModel(

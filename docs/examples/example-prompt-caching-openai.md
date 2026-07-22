@@ -8,6 +8,7 @@ from llmfy import (
     LLMfyException,
     OpenAIConfig,
     OpenAIModel,
+    OpenAIPromptCachingConfig,
     llmfy_usage_tracker,
 )
 
@@ -52,8 +53,9 @@ Prompt caching on OpenAI:
   or code changes are needed. The longest common prompt prefix is cached
   server-side. Requests that reuse the same prefix within the TTL window
   (5–10 minutes inactivity, max 1 hour) pay no additional fees and benefit
-  from reduced latency. Setting enable_prompt_caching=True on OpenAIConfig
-  is an intent flag that ensures cached token counts appear in usage details.
+  from reduced latency. Setting prompt_caching=OpenAIPromptCachingConfig(enabled=True)
+  on OpenAIConfig is an intent flag that ensures cached token counts appear in
+  usage details.
 
   Cache TTL:
     Standard models (gpt-4o, gpt-4.1, o-series): 5–10 min inactivity, max 1h
@@ -77,7 +79,7 @@ def prompt_caching_openai_example():
     """Demonstrate prompt caching with gpt-4o on OpenAI.
 
     OpenAI caching is fully automatic — no markers needed.
-    enable_prompt_caching=True is an intent flag that ensures cache_read_tokens
+    prompt_caching.enabled=True is an intent flag that ensures cache_read_tokens
     appear in usage details when the prefix is served from cache.
 
     First call:  prefix written to OpenAI's server-side cache.
@@ -86,7 +88,8 @@ def prompt_caching_openai_example():
 
     config = OpenAIConfig(
         temperature=0.7,
-        enable_prompt_caching=True,  # intent flag — caching is always automatic
+        # intent flag — caching is always automatic
+        prompt_caching=OpenAIPromptCachingConfig(enabled=True),
     )
 
     llm = OpenAIModel(

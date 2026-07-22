@@ -1,18 +1,18 @@
 # Prompt Caching
 
-LLMfy provides a unified `enable_prompt_caching` flag across all three providers to reduce costs when the same large context (system prompt, documents, conversation history) is reused across requests.
+LLMfy provides a grouped `prompt_caching` settings object across all three providers to reduce costs when the same large context (system prompt, documents, conversation history) is reused across requests.
 
-| Provider | Mechanism | Min tokens | Default TTL | Savings |
-|----------|-----------|------------|-------------|---------|
-| **AWS Bedrock** | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
-| **OpenAI** | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% on cached tokens |
-| **Google AI** | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
+| Provider | Config class | Mechanism | Min tokens | Default TTL | Savings |
+|----------|-------------|-----------|------------|-------------|---------|
+| **AWS Bedrock** | `BedrockPromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
+| **OpenAI** | `OpenAIPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% on cached tokens |
+| **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
 
 ---
 
 ## AWS Bedrock
 
-When `enable_prompt_caching=True`, llmfy automatically injects `cachePoint` markers into:
+When `prompt_caching.enabled=True`, llmfy automatically injects `cachePoint` markers into:
 
 - The end of the **system** array (caches the system prompt)
 - The end of the **last message** content (caches the full conversation prefix for the next turn)
@@ -35,7 +35,7 @@ When `enable_prompt_caching=True`, llmfy automatically injects `cachePoint` mark
 Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.g. `us.anthropic.claude-3-5-sonnet-20241022-v2:0`.
 
 !!! info "Amazon Nova — automatic caching"
-    Amazon Nova (`amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`) cache text prompts automatically without any `cachePoint` marker. `enable_prompt_caching=True` has no effect on Nova models.
+    Amazon Nova (`amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`) cache text prompts automatically without any `cachePoint` marker. `prompt_caching.enabled=True` has no effect on Nova models.
 
 !!! warning "Not supported"
     Meta Llama, DeepSeek, Mistral, and other non-Claude models on Bedrock do not support `cachePoint`. Prompt caching is exclusive to Anthropic Claude on Bedrock.
@@ -51,20 +51,20 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 !!! note "Batch API"
     Prompt caching is only available with on-demand inference. It is **not** compatible with the Bedrock Batch API.
 
-### Config fields
+### `BedrockPromptCachingConfig` fields
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
-| `enable_prompt_caching` | `bool` | — | Set to `True` to inject `cachePoint` markers. |
-| `prompt_caching_ttl` | `str \| None` | `"5m"`, `"1h"` | Cache TTL. Defaults to `"5m"`. `"1h"` is only supported on Claude 4.5, 4.6, 4.8, and Fable 5. |
+| `enabled` | `bool` | — | Set to `True` to inject `cachePoint` markers. |
+| `ttl` | `str \| None` | `"5m"`, `"1h"` | Cache TTL. Defaults to `"5m"`. `"1h"` is only supported on Claude 4.5, 4.6, 4.8, and Fable 5. |
 
 === "Default TTL (5 minutes)"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, LLMfy
+    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
 
     config = BedrockConfig(
-        enable_prompt_caching=True,
+        prompt_caching=BedrockPromptCachingConfig(enabled=True),
     )
 
     llm = BedrockModel(
@@ -89,11 +89,13 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 === "Extended TTL (1 hour)"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, LLMfy
+    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
 
     config = BedrockConfig(
-        enable_prompt_caching=True,
-        prompt_caching_ttl="1h",  # only Claude 4.5, 4.6, 4.8, Fable 5
+        prompt_caching=BedrockPromptCachingConfig(
+            enabled=True,
+            ttl="1h",  # only Claude 4.5, 4.6, 4.8, Fable 5
+        ),
     )
 
     llm = BedrockModel(
@@ -115,9 +117,9 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 When `llmfy_usage_tracker()` is active, cache token counts appear in the `details` list:
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, LLMfy, llmfy_usage_tracker
+from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = BedrockConfig(enable_prompt_caching=True)
+config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
 llm = BedrockModel(model="anthropic.claude-sonnet-4-6", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 
@@ -133,7 +135,7 @@ print(usage)
 
 ## OpenAI
 
-OpenAI applies caching automatically — no code changes or markers are required. The `enable_prompt_caching` flag is **informational only**; it signals intent and ensures `cache_read_tokens` are tracked in usage details.
+OpenAI applies caching automatically — no code changes or markers are required. `prompt_caching.enabled` is **informational only**; it signals intent and ensures `cache_read_tokens` are tracked in usage details.
 
 ### How it works
 
@@ -164,17 +166,17 @@ OpenAI applies caching automatically — no code changes or markers are required
 !!! note "Minimum tokens"
     Caching only activates for prompts containing **at least 1,024 tokens**. Shorter prompts are never cached.
 
-### Config fields
+### `OpenAIPromptCachingConfig` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `enable_prompt_caching` | `bool` | Intent flag. Does not alter the request. Enables cache token reporting in usage details. |
+| `enabled` | `bool` | Intent flag. Does not alter the request. Enables cache token reporting in usage details. |
 
 ```python linenums="1"
-from llmfy import OpenAIModel, OpenAIConfig, LLMfy, llmfy_usage_tracker
+from llmfy import OpenAIModel, OpenAIConfig, OpenAIPromptCachingConfig, LLMfy, llmfy_usage_tracker
 
 config = OpenAIConfig(
-    enable_prompt_caching=True,
+    prompt_caching=OpenAIPromptCachingConfig(enabled=True),
 )
 
 llm = OpenAIModel(model="gpt-4o", config=config)
@@ -195,7 +197,7 @@ print(usage)
 
 Google AI supports two caching modes:
 
-1. **Explicit caching** — you create a cache object externally and reference it via `cached_content`. Cache hits are **guaranteed** and billed at the reduced rate.
+1. **Explicit caching** — you create a cache object externally and reference it via `prompt_caching.cached_content`. Cache hits are **guaranteed** and billed at the reduced rate.
 2. **Implicit caching** — enabled by default on all Gemini 2.5+ models with no setup. Cache hits are **not guaranteed** but apply a billing benefit when they occur.
 
 ### Supported models (explicit caching)
@@ -226,11 +228,11 @@ Google AI supports two caching modes:
 - **Default**: 1 hour
 - **Minimum / Maximum**: No enforced bounds — set any value (e.g. `"300s"`, `"3600s"`)
 
-### Config fields
+### `GoogleAIPromptCachingConfig` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `enable_prompt_caching` | `bool` | Intent flag. Does not alter the request on its own. |
+| `enabled` | `bool` | Intent flag. Does not alter the request on its own. |
 | `cached_content` | `str \| None` | Resource name of a pre-created cache object, e.g. `'cachedContents/abc123'`. When set, the cache is passed to `GenerateContentConfig` automatically. |
 
 ### Step 1 — Create the cache
@@ -258,11 +260,13 @@ print(cache.name)  # e.g. 'cachedContents/abc123efg456'
 ### Step 2 — Use the cache in requests
 
 ```python linenums="1"
-from llmfy import GoogleAIModel, GoogleAIConfig, LLMfy, llmfy_usage_tracker
+from llmfy import GoogleAIModel, GoogleAIConfig, GoogleAIPromptCachingConfig, LLMfy, llmfy_usage_tracker
 
 config = GoogleAIConfig(
-    enable_prompt_caching=True,
-    cached_content="cachedContents/abc123efg456",  # name from Step 1
+    prompt_caching=GoogleAIPromptCachingConfig(
+        enabled=True,
+        cached_content="cachedContents/abc123efg456",  # name from Step 1
+    ),
 )
 
 llm = GoogleAIModel(model="gemini-2.5-flash", config=config)
@@ -327,9 +331,9 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
 === "✅ Recommended"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, LLMfy
+    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
 
-    config = BedrockConfig(enable_prompt_caching=True)
+    config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
     llm = BedrockModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
 
     # Large stable knowledge base in the system prompt — always cached
@@ -345,9 +349,9 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
 === "❌ Avoid"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, LLMfy
+    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
 
-    config = BedrockConfig(enable_prompt_caching=True)
+    config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
     llm = BedrockModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
 
     # Dynamic variable in the system prompt — different value = different cache prefix
@@ -363,7 +367,7 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
     ```
 
 !!! tip "Best practice"
-    Use `enable_prompt_caching=True` when the system prompt is **large (hundreds to thousands of tokens) and constant** across many calls. Large stable content like reference documents, knowledge bases, or detailed instructions benefit the most.
+    Use `prompt_caching=BedrockPromptCachingConfig(enabled=True)` (or the equivalent for OpenAI/Google) when the system prompt is **large (hundreds to thousands of tokens) and constant** across many calls. Large stable content like reference documents, knowledge bases, or detailed instructions benefit the most.
 
 ---
 
@@ -377,9 +381,9 @@ Cache token counts are exposed in `usage.to_dict()["details"]` and shown in `rep
 | `cache_write_tokens` | Bedrock only | Tokens written to cache this request (~125% input rate) |
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, LLMfy, llmfy_usage_tracker
+from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = BedrockConfig(enable_prompt_caching=True)
+config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
 llm = BedrockModel(model="anthropic.claude-sonnet-4-6", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 
