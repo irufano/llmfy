@@ -94,6 +94,27 @@ Example pricing structure:
 }
 ```
 
+!!! info "Optional `cache_read` / `cache_write` fields"
+    Add `cache_read` and/or `cache_write` to a model entry to set its **explicit** per-token cache price (same unit as `input`/`output`, not a ratio). This matters because the cache-read discount is not the same across generations — 50% of input for `gpt-4o`/`gpt-4.1`/o-series vs. 10% for the GPT-5.6 family, which also bills cache writes at 125% of input (reported in `cache_write_tokens`). If a model entry omits these fields, llmfy falls back to the 50%-read / no-write-fee default, so existing custom pricing dicts keep working unchanged.
+
+    ```json linenums="1"
+    {
+        "gpt-5.6-sol": {
+            "input": 5.00,
+            "output": 30.00,
+            "cache_read": 0.50,
+            "cache_write": 6.25,
+            "token_unit": 1000000
+        },
+        "gpt-4o": {
+            "input": 2.50,
+            "output": 10.00,
+            "cache_read": 1.25,
+            "token_unit": 1000000
+        }
+    }
+    ```
+
 ### Bedrock
 Bedrock Pricing dictionary source.
 
@@ -141,6 +162,24 @@ Example pricing structure:
     }
 }
 ```
+
+!!! info "Optional `cache_read` / `cache_write` fields"
+    Add `cache_read` and/or `cache_write` inside a region entry to set its **explicit** per-token cache price (same unit as `input`/`output`, not a ratio). If omitted, llmfy falls back to the default ratio — 10% of input for cache reads, 125% of input for cache writes — which is constant across current Claude models on Bedrock. Only set these explicitly if a model/tier deviates from that default (e.g. the extended 1-hour cache TTL, which uses a 2x write premium instead of 1.25x).
+
+    ```json linenums="1"
+    {
+        "anthropic.claude-sonnet-4-6": {
+            "us-east-1": {
+                "region": "US East (N. Virginia)",
+                "input": 3.30,
+                "output": 16.50,
+                "cache_read": 0.33,
+                "cache_write": 6.60,
+                "token_unit": 1000000
+            }
+        }
+    }
+    ```
 
 ### Google AI
 
@@ -213,6 +252,20 @@ Google AI supports four pricing structures (all prices are per 1M tokens in USD)
     }
 }
 ```
+
+!!! info "Optional `cache_read` field"
+    Add `cache_read` to a model entry to set its **explicit** per-token cache price (same unit as `input`/`output`, not a ratio). If omitted, llmfy falls back to the default 25%-of-input rate (a 75% discount on cached tokens), which is constant across current Gemini models. There is no `cache_write` for Google AI — explicit-cache creation is billed separately as a `CachedContent` storage resource, not as part of a `generateContent` request.
+
+    ```json linenums="1"
+    {
+        "gemini-2.5-flash": {
+            "input": 0.30,
+            "output": 2.50,
+            "cache_read": 0.075,
+            "token_unit": 1_000_000
+        }
+    }
+    ```
 
 ### Example
 

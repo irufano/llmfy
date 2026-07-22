@@ -66,6 +66,13 @@ Prompt caching on OpenAI:
     gpt-4.1, gpt-4.1-mini, gpt-4.1-nano  (extended 24h TTL)
     o1, o1-mini, o3, o3-mini, o3-pro, o4-mini
     gpt-5, gpt-5.1, gpt-5.2, gpt-5.4, gpt-5.5, gpt-5.5-pro
+    gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna  (extended 24h TTL, cache writes billed)
+
+  Cache pricing note:
+    Cache-read discount differs by generation — 50% of the input price on
+    gpt-4o/gpt-4.1/o-series, 10% on the GPT-5.6 family. Only GPT-5.6+ models
+    bill cache writes (125% of input price, reported in cache_write_tokens);
+    older models have no write fee.
 
   Best practice:
     Place large stable content (system prompt, reference documents) at the

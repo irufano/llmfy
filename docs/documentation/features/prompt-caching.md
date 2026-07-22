@@ -5,7 +5,7 @@ LLMfy provides a grouped `prompt_caching` settings object across all three provi
 | Provider | Config class | Mechanism | Min tokens | Default TTL | Savings |
 |----------|-------------|-----------|------------|-------------|---------|
 | **AWS Bedrock** | `BedrockPromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
-| **OpenAI** | `OpenAIPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% on cached tokens |
+| **OpenAI** | `OpenAIPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
 | **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
 
 ---
@@ -152,6 +152,7 @@ OpenAI applies caching automatically — no code changes or markers are required
 | GPT-4.1 | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` |
 | o-series | `o1`, `o1-mini`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` |
 | GPT-5 (24h TTL) | `gpt-5`, `gpt-5.1`, `gpt-5.2`, `gpt-5.4`, `gpt-5.5`, `gpt-5.5-pro` |
+| GPT-5.6 (24h TTL, cache writes billed) | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` |
 
 !!! warning "Not supported"
     `gpt-3.5-turbo`, `gpt-4` (non-turbo), and older generation models do not support automatic prompt caching.
@@ -165,6 +166,18 @@ OpenAI applies caching automatically — no code changes or markers are required
 
 !!! note "Minimum tokens"
     Caching only activates for prompts containing **at least 1,024 tokens**. Shorter prompts are never cached.
+
+### Pricing
+
+The cache-read discount is **not** the same across all model generations — check the rate for your specific model in `OPENAI_PRICING` before relying on the numbers below.
+
+| Item | Cost |
+|------|------|
+| Cache reads — `gpt-4o`, `gpt-4.1`, o-series | 50% of normal input price |
+| Cache reads — GPT-5.6 family and later | 10% of normal input price (~90% savings) |
+| Cache writes — GPT-5.6 family and later | 125% of normal input price (reported in `cache_write_tokens`) |
+| Cache writes — pre-GPT-5.6 models | No additional fee |
+| Uncached tokens | Billed at the standard rate |
 
 ### `OpenAIPromptCachingConfig` fields
 
@@ -378,7 +391,7 @@ Cache token counts are exposed in `usage.to_dict()["details"]` and shown in `rep
 | Field | Providers | Meaning |
 |-------|-----------|---------|
 | `cache_read_tokens` | Bedrock, OpenAI, Google | Tokens served from cache this request |
-| `cache_write_tokens` | Bedrock only | Tokens written to cache this request (~125% input rate) |
+| `cache_write_tokens` | Bedrock, OpenAI (GPT-5.6+ only) | Tokens written to cache this request (Bedrock: ~125% input rate; OpenAI GPT-5.6+: 125% input rate; 0 on older OpenAI models, which have no write fee) |
 
 ```python linenums="1"
 from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker

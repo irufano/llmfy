@@ -326,6 +326,8 @@ class LLMfyUsage:
                 token_input=data["input"],
                 token_output=data["output"],
                 token_unit=data.get("token_unit", 1_000_000),
+                cache_read=data.get("cache_read"),
+                cache_write=data.get("cache_write"),
             )
             for model, data in pricing_data.items()
         }
@@ -349,6 +351,8 @@ class LLMfyUsage:
                     token_input=pricing["input"],
                     token_output=pricing["output"],
                     token_unit=pricing.get("token_unit", 1_000),
+                    cache_read=pricing.get("cache_read"),
+                    cache_write=pricing.get("cache_write"),
                 )
                 for region, pricing in regions.items()
             }
@@ -422,15 +426,18 @@ class LLMfyUsage:
         self.raw_usages.append(usage)
         usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
 
-        # Extract cache read tokens (OpenAI automatic caching — subset of prompt_tokens)
+        # Extract cache read/write tokens (subsets of prompt_tokens — no double-counting).
+        # cached_tokens: read from cache (all models that support caching).
+        # cache_write_tokens: written to cache this request (GPT-5.6+ only; billed extra).
         prompt_tokens_details = usage_dict.get("prompt_tokens_details")
         if hasattr(prompt_tokens_details, "__dict__"):
             prompt_tokens_details = vars(prompt_tokens_details)
-        cache_read_tokens = (
-            (prompt_tokens_details or {}).get("cached_tokens", 0)
-            if isinstance(prompt_tokens_details, dict)
-            else getattr(prompt_tokens_details, "cached_tokens", 0) or 0
-        )
+        if isinstance(prompt_tokens_details, dict):
+            cache_read_tokens = (prompt_tokens_details or {}).get("cached_tokens", 0) or 0
+            cache_write_tokens = (prompt_tokens_details or {}).get("cache_write_tokens", 0) or 0
+        else:
+            cache_read_tokens = getattr(prompt_tokens_details, "cached_tokens", 0) or 0
+            cache_write_tokens = getattr(prompt_tokens_details, "cache_write_tokens", 0) or 0
 
         # usage per-request
         input_tokens = usage_dict.get("prompt_tokens", 0)
@@ -443,6 +450,7 @@ class LLMfyUsage:
         self.output_tokens += output_tokens
         self.total_tokens += total_tokens
         self.cache_read_tokens += cache_read_tokens
+        self.cache_write_tokens += cache_write_tokens
 
         # Calculate price
         price_info = None
@@ -451,18 +459,31 @@ class LLMfyUsage:
         if model in self.openai_pricing:
             price_info = self.openai_pricing[model]
 
-            # prompt_tokens includes cached tokens. Split into cached and non-cached
-            # portions and apply the correct rate to each.
+            # prompt_tokens includes cached tokens. Split into cached, cache-write and
+            # regular portions and apply the correct rate to each.
             #
-            # Non-cached tokens : billed at the standard input price
-            # Cached tokens     : billed at 50% of the standard input price
+            # Regular tokens     : billed at the standard input price
+            # Cache-read tokens  : billed at price_info.cache_read (per-model rate — the
+            #                      discount ratio differs across model generations, e.g.
+            #                      50% for gpt-4o/o-series vs 10% for gpt-5.6+, so it is
+            #                      not a fixed multiplier). Falls back to 50% if unset.
+            # Cache-write tokens : billed at price_info.cache_write (only GPT-5.6+ charges
+            #                      this, at 1.25x). Falls back to 0 (no fee) if unset.
             #
-            # Reference: https://platform.openai.com/docs/guides/prompt-caching
-            non_cached_input = input_tokens - cache_read_tokens
+            # Reference: https://developers.openai.com/api/docs/guides/prompt-caching
+            non_cached_input = input_tokens - cache_read_tokens - cache_write_tokens
+            cache_read_rate = (
+                price_info.cache_read
+                if price_info.cache_read is not None
+                else price_info.token_input * 0.50
+            )
+            cache_write_rate = price_info.cache_write if price_info.cache_write is not None else 0
+
             i_price = (non_cached_input / price_info.token_unit) * price_info.token_input
-            cache_r_price = (cache_read_tokens / price_info.token_unit) * price_info.token_input * 0.50
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * cache_read_rate
+            cache_w_price = (cache_write_tokens / price_info.token_unit) * cache_write_rate
             o_price = (output_tokens / price_info.token_unit) * price_info.token_output
-            total_cost_per_request = i_price + cache_r_price + o_price
+            total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
 
             # pricing accumulation
             self.total_cost += total_cost_per_request
@@ -485,6 +506,7 @@ class LLMfyUsage:
                 "token_unit": price_info.token_unit if price_info else None,
                 "total_cost": total_cost_per_request,
                 "cache_read_tokens": cache_read_tokens,
+                "cache_write_tokens": cache_write_tokens,
             }
         )
         pass
@@ -595,14 +617,25 @@ class LLMfyUsage:
             # cacheReadInputTokens and cacheWriteInputTokens are separate billable
             # items with different rates and must be added on top.
             #
-            # inputTokens       : billed at the standard input price        (1.00×)
-            # cacheReadInputTokens : billed at 10% of the standard input price (~0.10×)
-            # cacheWriteInputTokens: billed at 125% of the standard input price (1.25×)
+            # inputTokens          : billed at the standard input price          (1.00×)
+            # cacheReadInputTokens : billed at price_info.cache_read, default 10% of input  (~0.10×)
+            # cacheWriteInputTokens: billed at price_info.cache_write, default 125% of input (1.25×)
             #
-            # Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
+            # The ratio is constant across current Claude models on Bedrock, so pricing
+            # entries normally omit cache_read/cache_write and rely on these defaults —
+            # they only need to be set explicitly if a model/tier deviates (e.g. extended
+            # 1-hour cache TTL, which uses a 2x write premium instead of 1.25x).
+            #
+            # Reference: https://aws.amazon.com/bedrock/pricing/
+            cache_read_rate = (
+                price_info.cache_read if price_info.cache_read is not None else price_info.token_input * 0.10
+            )
+            cache_write_rate = (
+                price_info.cache_write if price_info.cache_write is not None else price_info.token_input * 1.25
+            )
             i_price = (input_tokens / price_info.token_unit) * price_info.token_input
-            cache_r_price = (cache_read_tokens / price_info.token_unit) * price_info.token_input * 0.10
-            cache_w_price = (cache_write_tokens / price_info.token_unit) * price_info.token_input * 1.25
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * cache_read_rate
+            cache_w_price = (cache_write_tokens / price_info.token_unit) * cache_write_rate
             o_price = (output_tokens / price_info.token_unit) * price_info.token_output
             total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
 
@@ -782,8 +815,15 @@ class LLMfyUsage:
                 i_price = (input_tokens / token_unit) * token_input_price
                 cache_input_rate = token_input_price
 
-            # Apply 75% savings on cache-read tokens (cached = 25%, so save 75%)
-            cache_savings = (cache_read_tokens / token_unit) * cache_input_rate * 0.75
+            # cache_read: explicit per-model rate if set (price_info["cache_read"]), else
+            # fall back to the standard 75% discount (cached tokens billed at 25%). The
+            # ratio is constant across current Gemini models, so pricing entries normally
+            # omit this key and rely on the default.
+            if price_info.get("cache_read") is not None:
+                cache_r_price = (cache_read_tokens / token_unit) * price_info["cache_read"]
+            else:
+                cache_r_price = (cache_read_tokens / token_unit) * cache_input_rate * 0.25
+            cache_savings = (cache_read_tokens / token_unit) * cache_input_rate - cache_r_price
             o_price = (output_tokens / token_unit) * token_output_price
             total_cost_per_request = i_price - cache_savings + o_price
 
