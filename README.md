@@ -27,6 +27,7 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
       - PostgreSQL (async: [asyncpg](https://pypi.org/project/asyncpg/), sync: [psycopg2](https://pypi.org/project/psycopg2/)) — 🔸 optional.
       - MySQL (async: [aiomysql](https://pypi.org/project/aiomysql/), sync: [pymysql](https://pypi.org/project/PyMySQL/)) — 🔸 optional.
       - SQLite (async: [aiosqlite](https://pypi.org/project/aiosqlite/), sync: built-in) — 🔸 optional.
+  - Install [spacy](https://pypi.org/project/spacy/) to use `PERSON_NAME`/`ADDRESS` detection in `PIIGuard` — 🔸 optional. Also requires the `xx_ent_pii_sm` NER model (not on PyPI — see [PII Guard](#pii-guard---person_name--address-detection) below).
 
 ### Using UV
 ```sh
@@ -81,6 +82,21 @@ To use `BedrockModel`, requires install `"llmfy[boto3]"` and add below config to
 ### Google AI models
 To use `GoogleAIModel`, requires install `"llmfy[google-genai]"` and add below config to your env:
 - `GOOGLE_API_KEY`
+
+### PII Guard — PERSON_NAME / ADDRESS detection
+To use `PIIType.PERSON_NAME`/`PIIType.ADDRESS` detection in `PIIGuard`, install:
+```sh
+# Using UV
+uv add "llmfy[spacy]"
+uv add https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+
+# Using pip
+pip install "llmfy[spacy]"
+pip install https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+```
+`xx_ent_pii_sm` isn't published to PyPI, so it can't be pulled in as a normal extra — install it manually from the release wheel above.
+
+All other `PIIType`s work with no extra install. Note that `PIIGuard()` defaults to detecting *every* `PIIType`, including these two (**breaking change** from earlier versions, where `PIIGuard` was regex-only) — pass `exclude_types=[PIIType.PERSON_NAME, PIIType.ADDRESS]` if you don't want this dependency.
 
 ## Example
 ### LLMfy Example

@@ -1,6 +1,7 @@
 import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
+from llmfy.guardrails.pii.backends import SpacyNERBackend
 from llmfy.guardrails.pii.pii_result import PIIDetection, PIIDetectionResult
 from llmfy.guardrails.pii.pii_strategy import PIIStrategy
 from llmfy.guardrails.pii.pii_type import PIIType
@@ -9,7 +10,15 @@ from llmfy.guardrails.pii.pii_type import PIIType
 class PIIGuard:
     """Detects and optionally replaces Personally Identifiable Information in text.
 
-    Uses regex-based detection — no external NLP dependencies required.
+    Most PII types use compiled regex and need no external dependencies.
+    PIIType.PERSON_NAME and PIIType.ADDRESS are the exception: they're
+    detected via an optional spaCy NER model (`xx_ent_pii_sm`, see README
+    for install instructions), loaded lazily on first use — never at
+    PIIGuard() construction time. Because `types=None` (the default)
+    detects every PIIType including these two, a bare `PIIGuard()` now
+    requires that model to be installed once you actually call scan()/
+    detect() — pass `exclude_types=[PIIType.PERSON_NAME, PIIType.ADDRESS]`
+    to stay on regex-only detection with no extra dependency.
 
     PIIGuard keeps no internal state between calls. For the reversible
     PIIStrategy.TOKENIZE strategy, the caller is responsible for holding on
@@ -59,6 +68,16 @@ class PIIGuard:
     findings = guard.scan("Email: jane@test.org, IP: 10.0.0.1")
     for f in findings:
         print(f.pii_type, f.value)
+
+    # PERSON_NAME / ADDRESS — requires the optional spaCy model installed
+    guard = PIIGuard(strategy=PIIStrategy.MASK)
+    result = guard.detect("Budi Santoso tinggal di Jl. Merdeka No. 10, Jakarta.")
+    print(result.processed_text)  # "[PERSON_NAME_1] tinggal di [ADDRESS_1]."
+
+    # Stay regex-only with no NER dependency
+    guard = PIIGuard(exclude_types=[PIIType.PERSON_NAME, PIIType.ADDRESS])
+    result = guard.detect("Contact john@example.com")
+    print(result.processed_text)  # "Contact [EMAIL_1]"
     ```
     """
 
@@ -110,6 +129,23 @@ class PIIGuard:
             r"\b[A-Z]{1,2}\d{6,9}\b"
         ),
     }
+
+    # PERSON_NAME/ADDRESS have no regex entry above — they're detected via
+    # SpacyNERBackend instead, mapping its raw entity labels to PIIType.
+    _NER_LABEL_TO_TYPE: Dict[str, PIIType] = {
+        "PER": PIIType.PERSON_NAME,
+        "ADR": PIIType.ADDRESS,
+    }
+
+    # Shared across all PIIGuard instances so the spaCy pipeline loads at
+    # most once per process, on first actual use.
+    _ner_backend: ClassVar[Optional[SpacyNERBackend]] = None
+
+    @classmethod
+    def _get_ner_backend(cls) -> SpacyNERBackend:
+        if cls._ner_backend is None:
+            cls._ner_backend = SpacyNERBackend()
+        return cls._ner_backend
 
     def __init__(
         self,
@@ -242,6 +278,31 @@ class PIIGuard:
                         end=match.end(),
                         placeholder=self._placeholder(
                             type_name, match.group(), seen, counters
+                        ),
+                    )
+                )
+
+        ner_types_active = [
+            t for t in self.types if t in self._NER_LABEL_TO_TYPE.values()
+        ]
+        if ner_types_active:
+            backend = self._get_ner_backend()
+            for entity in backend.detect_entities(text):
+                pii_type = self._NER_LABEL_TO_TYPE.get(entity.label)
+                if pii_type is None or pii_type not in ner_types_active:
+                    continue
+                span = (entity.start, entity.end)
+                if span in seen_spans:
+                    continue
+                seen_spans.add(span)
+                detections.append(
+                    PIIDetection(
+                        pii_type=pii_type,
+                        value=entity.text,
+                        start=entity.start,
+                        end=entity.end,
+                        placeholder=self._placeholder(
+                            pii_type, entity.text, seen, counters
                         ),
                     )
                 )

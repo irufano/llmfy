@@ -26,6 +26,8 @@
 | [typing_extensions](https://pypi.org/project/typing-extensions/) | 🔸 Optional        | Use state in `FlowEngine`                               | `pip install "llmfy[typing_extensions]"` |
 | [redis](https://pypi.org/project/redis/)                         | 🔸 Optional        | Use `RedisCheckpointer`                                 | `pip install "llmfy[redis]"`            |
 | [SQLAlchemy](https://pypi.org/project/SQLAlchemy/)               | 🔸 Optional        | Use `SQLCheckpointer` (supports sync and async drivers) | `pip install "llmfy[SQLAlchemy]"`       |
+| [spacy](https://pypi.org/project/spacy/)                         | 🔸 Optional        | Use `PERSON_NAME`/`ADDRESS` detection in `PIIGuard`      | `pip install "llmfy[spacy]"`            |
+| [xx_ent_pii_sm](https://github.com/irufano/spacy_ner_pii)        | 🔸 Optional        | NER model for `PERSON_NAME`/`ADDRESS` detection in `PIIGuard` (not on PyPI) | See [PII Guard setup](../guardrails/pii-guard.md#ner-backed-types-person_name-address) |
 
 - SQLCheckpointer
 

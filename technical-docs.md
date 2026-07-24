@@ -37,6 +37,8 @@ llmfy/
 │   │   ├── tools/              # Tool definitions and registry
 │   │   ├── responses/          # Response types
 │   │   └── usage/              # Usage tracking
+│   ├── guardrails/              # Text-based guardrails
+│   │   └── pii/                 # PIIGuard: regex + optional spaCy NER backend
 │   ├── flow_engine/            # Workflow orchestration engine
 │   │   ├── node/               # Node implementations
 │   │   ├── edge/               # Edge definitions
@@ -117,7 +119,10 @@ Install with `pip install llmfy[extra_name]` or `pip install llmfy[all]`.
 | `typing_extensions`| typing_extensions  | Backported typing features   |
 | `redis`            | redis              | Redis checkpointer support   |
 | `SQLAlchemy`       | SQLAlchemy         | SQL checkpointer support     |
+| `spacy`            | spacy              | spaCy NER (PERSON_NAME/ADDRESS in PIIGuard) |
 | `all`              | All of the above   | Install all optional deps    |
+
+`xx_ent_pii_sm` (the spaCy NER model `PIIGuard` uses for `PERSON_NAME`/`ADDRESS`) is not published to PyPI and is therefore not a `pyproject.toml` extra — install it manually from the GitHub release wheel; see README.
 
 ### Development Dependencies
 

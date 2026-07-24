@@ -12,12 +12,20 @@ text = (
     "Contact irufano@mail.com phone: +628987654321"
 )
 
+# PIIGuard() now defaults to detecting every PIIType, including the
+# NER-backed PERSON_NAME/ADDRESS (requires the optional xx_ent_pii_sm spaCy
+# model — see README). Blocks 1-22 below demonstrate the original
+# regex-only types, so they explicitly exclude the NER types to keep this
+# script runnable without that dependency; block 23 demonstrates the
+# NER-backed types on their own.
+NER_TYPES = [PIIType.PERSON_NAME, PIIType.ADDRESS]
+
 # ─── 1. TOKENIZE (default) — reversible, numbered placeholder unique per value
 print("=" * 60)
 print("1. TOKENIZE (default) — reversible; see blocks 18-19 for restore() demos")
 print("=" * 60)
 
-guard = PIIGuard()  # strategy=TOKENIZE
+guard = PIIGuard(exclude_types=NER_TYPES)  # strategy=TOKENIZE
 result = guard.detect(text)
 
 print(f"Original : {result.original_text}")
@@ -33,7 +41,7 @@ print("\n" + "=" * 60)
 print("2. MASK — [EMAIL_1], [PHONE_NUMBER_1], ... (unique per value)")
 print("=" * 60)
 
-guard_mask = PIIGuard(strategy=PIIStrategy.MASK)
+guard_mask = PIIGuard(strategy=PIIStrategy.MASK, exclude_types=NER_TYPES)
 result2 = guard_mask.detect(text)
 
 print(f"Original : {result2.original_text}")
@@ -47,7 +55,7 @@ print("\n" + "=" * 60)
 print("3. REDACT strategy — all types, same generic placeholder")
 print("=" * 60)
 
-guard_redact = PIIGuard(strategy=PIIStrategy.REDACT)
+guard_redact = PIIGuard(strategy=PIIStrategy.REDACT, exclude_types=NER_TYPES)
 result3 = guard_redact.detect(
     "Email: jane@test.org, Phone: +1 800 555-9876, SSN: 987-65-4321"
 )
@@ -147,6 +155,7 @@ print("=" * 60)
 
 guard_custom = PIIGuard(
     strategy=PIIStrategy.PARTIAL,
+    exclude_types=NER_TYPES,
     custom_types={
         "EMPLOYEE_ID": r"EMP-\d{6}",
         "PROJECT_CODE": r"PRJ-[A-Z]{3}",
@@ -168,6 +177,7 @@ print("=" * 60)
 
 guard_custom_mask = PIIGuard(
     strategy=PIIStrategy.MASK,
+    exclude_types=NER_TYPES,
     custom_types={
         "EMPLOYEE_ID": r"EMP-\d{6}",
         "PROJECT_CODE": r"PRJ-[A-Z]{3}",
@@ -185,10 +195,11 @@ print("13. Custom types — compiled re.Pattern")
 print("=" * 60)
 
 guard_compiled = PIIGuard(
+    exclude_types=NER_TYPES,
     custom_types={
         "API_TOKEN": re.compile(r"tok_[a-z0-9]+"),
         "ORDER_ID": re.compile(r"ORD-\d{8}"),
-    }
+    },
 )
 result13 = guard_compiled.detect(
     "Token tok_abc123xyz for order ORD-20240315"
@@ -234,7 +245,8 @@ print("16. Custom type overrides built-in — same name")
 print("=" * 60)
 
 guard_override = PIIGuard(
-    custom_types={"EMAIL": r"custom-\w+@\w+\.com"}
+    exclude_types=NER_TYPES,
+    custom_types={"EMAIL": r"custom-\w+@\w+\.com"},
 )
 result16 = guard_override.detect(
     "Regular john@example.com and custom-user@corp.com"
@@ -252,7 +264,8 @@ print("17. Partial override — PHONE_NUMBER replaced, EMAIL intact")
 print("=" * 60)
 
 guard_partial_override = PIIGuard(
-    custom_types={"PHONE_NUMBER": r"\+62\d{9,12}"}
+    exclude_types=NER_TYPES,
+    custom_types={"PHONE_NUMBER": r"\+62\d{9,12}"},
 )
 result17 = guard_partial_override.detect(
     "Call +628987654321 or (555) 123-4567, email bob@test.com"
@@ -269,7 +282,7 @@ print("\n" + "=" * 60)
 print("18. TOKENIZE — detect() then restore() using the returned detections")
 print("=" * 60)
 
-guard_tokenize = PIIGuard(strategy=PIIStrategy.TOKENIZE)
+guard_tokenize = PIIGuard(strategy=PIIStrategy.TOKENIZE, exclude_types=NER_TYPES)
 result18 = guard_tokenize.detect(
     "Contact john.doe@example.com or backup alice@example.com"
 )
@@ -301,7 +314,7 @@ print("\n" + "=" * 60)
 print("20. NIK — plain 16-digit Indonesian ID number")
 print("=" * 60)
 
-guard_id = PIIGuard(strategy=PIIStrategy.MASK)
+guard_id = PIIGuard(strategy=PIIStrategy.MASK, exclude_types=NER_TYPES)
 result20 = guard_id.detect(
     "NIK saya 3171012501990001, No KK 3171012501990002"
 )
@@ -335,7 +348,9 @@ print("\n" + "=" * 60)
 print("22. exclude_types — detect everything except SSN")
 print("=" * 60)
 
-guard_excluded = PIIGuard(strategy=PIIStrategy.MASK, exclude_types=[PIIType.SSN])
+guard_excluded = PIIGuard(
+    strategy=PIIStrategy.MASK, exclude_types=[PIIType.SSN, *NER_TYPES]
+)
 result22 = guard_excluded.detect(
     "Email: jane@test.org, SSN: 123-45-6789"
 )
@@ -348,3 +363,38 @@ try:
     PIIGuard(types=[PIIType.EMAIL], exclude_types=[PIIType.SSN])
 except ValueError as e:
     print(f"types + exclude_types together raises: {e}")
+
+# ─── 23. PERSON_NAME / ADDRESS — spaCy NER (requires xx_ent_pii_sm) ──────────
+print("\n" + "=" * 60)
+print("23. PERSON_NAME / ADDRESS — spaCy NER-backed detection")
+print("=" * 60)
+
+try:
+    guard_ner = PIIGuard(types=NER_TYPES, strategy=PIIStrategy.MASK)
+    result23 = guard_ner.detect(
+        "Budi Santoso dan Irfan tinggal di Jl. Merdeka No. 10, Jakarta."
+    )
+    print(f"Original : {result23.original_text}")
+    print(f"Processed: {result23.processed_text}")
+    print(f"Detections ({len(result23.detections)}):")
+    for d in result23.detections:
+        print(f"  [{d.pii_type}] '{d.value}' → '{d.placeholder}'")
+except Exception as e:
+    print(f"Skipped — xx_ent_pii_sm not installed: {e}")
+
+# ─── 24. Opt out of the NER-backed types entirely ────────────────────────────
+print("\n" + "=" * 60)
+print("24. exclude_types — stay regex-only, no spaCy dependency required")
+print("=" * 60)
+
+guard_regex_only = PIIGuard(exclude_types=NER_TYPES)
+result24 = guard_regex_only.detect(
+    "Contact john.doe@example.com — Budi Santoso, Jl. Merdeka No. 10, Jakarta."
+)
+print(f"Original : {result24.original_text}")
+print(f"Processed: {result24.processed_text}")
+print(
+    "Note: PIIGuard() now defaults to detecting every PIIType, including the "
+    "NER-backed PERSON_NAME/ADDRESS — pass exclude_types=[PIIType.PERSON_NAME, "
+    "PIIType.ADDRESS] (as above) to keep the old regex-only, zero-dependency behavior."
+)

@@ -5,7 +5,7 @@ description: Detect, mask, and reversibly tokenize PII using PIIGuard.
 
 # PII Guard
 
-`PIIGuard` scans text with compiled regex patterns and returns a structured result. No external NLP dependencies are required, and `PIIGuard` keeps no internal state between calls — every method call is self-contained.
+`PIIGuard` scans text and returns a structured result. Most PII types use compiled regex and need no external dependencies; `PERSON_NAME` and `ADDRESS` additionally use an optional spaCy NER model, loaded lazily on first use (see [NER-backed Types](#ner-backed-types-person_name-address)). `PIIGuard` keeps no internal state between calls — every method call is self-contained.
 
 ## Setup
 
@@ -25,6 +25,8 @@ from llmfy import PIIGuard, PIIStrategy, PIIType
 | `IP_ADDRESS` | `192.168.1.1` | |
 | `DATE_OF_BIRTH` | `01/15/1990`, `2024-03-15`, `January 1, 2000` | |
 | `PASSPORT_NUMBER` | `AB1234567`, `C1234567` | 1-2 letters + 6-9 digits — also covers the Indonesian format (1 letter + 7 digits) |
+| `PERSON_NAME` | `Budi Santoso` | Requires the optional `xx_ent_pii_sm` spaCy NER model — see [NER-backed Types](#ner-backed-types-person_name-address) |
+| `ADDRESS` | `Jl. Merdeka No. 10, Jakarta` | Requires the optional `xx_ent_pii_sm` spaCy NER model — see [NER-backed Types](#ner-backed-types-person_name-address) |
 
 !!! note "NIK also matches Kartu Keluarga (KK) numbers"
     There's no separate `KK_NUMBER` type — Indonesian family card (Kartu Keluarga) numbers use the exact same plain 16-digit format as NIK, with no structural way to tell them apart by regex alone. Both are detected as `NIK`.
@@ -323,6 +325,77 @@ result = guard.detect("Employee EMP-001234, email john@corp.com")
 restored = guard.restore(result.processed_text, result.detections)
 print(restored == result.original_text)  # True
 ```
+
+## NER-backed Types (PERSON_NAME / ADDRESS)
+
+`PERSON_NAME` and `ADDRESS` can't be reliably matched by regex, so they're detected via the [`xx_ent_pii_sm`](https://github.com/irufano/spacy_ner_pii) spaCy NER model instead of `PIIGuard`'s regex patterns. Install it:
+
+=== "Using UV"
+    ```sh
+    uv add "llmfy[spacy]"
+    uv add https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+    ```
+
+=== "Using pip"
+    ```sh
+    pip install "llmfy[spacy]"
+    pip install https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+    ```
+
+The model isn't published to PyPI, so it can't be a `pyproject.toml` extra — the second command installs it directly from the GitHub release wheel.
+
+The pipeline loads lazily: it's only loaded the first time `scan()`/`detect()` actually runs with `PERSON_NAME` or `ADDRESS` active, never at `PIIGuard()` construction or import time. If the model isn't installed and one of these types is active, `PIIGuard` raises `LLMfyException` with an install hint at that first call.
+
+```python linenums="1"
+guard = PIIGuard(strategy=PIIStrategy.MASK)
+result = guard.detect("Budi Santoso tinggal di Jl. Merdeka No. 10, Jakarta.")
+
+print(result.processed_text)
+# "[PERSON_NAME_1] tinggal di [ADDRESS_1]."
+```
+
+!!! warning "Breaking change: default PIIGuard() now requires this model"
+    `types=None` (the default) detects **every** `PIIType`, including `PERSON_NAME` and `ADDRESS` — so a bare `PIIGuard()` now requires the spaCy model once you call `scan()`/`detect()`, where earlier versions were regex-only with no dependency. Pass `exclude_types=[PIIType.PERSON_NAME, PIIType.ADDRESS]` to keep the old zero-dependency behavior:
+    ```python linenums="1"
+    guard = PIIGuard(exclude_types=[PIIType.PERSON_NAME, PIIType.ADDRESS])
+    ```
+
+### Production Tips
+
+**Don't install the wheel from GitHub at deploy/runtime.** Pulling `https://github.com/.../xx_ent_pii_sm-0.1.0-py3-none-any.whl` during a production build or on server start makes every deploy depend on GitHub being reachable — if it's down, rate-limited, or the release is moved, your deploy or a cold-start fails. Instead, fetch the wheel once and vendor it:
+
+=== "Copy the wheel to the server"
+    ```sh
+    # once, from a machine with internet access
+    scp xx_ent_pii_sm-0.1.0-py3-none-any.whl user@server:/opt/models/
+
+    # on the server — no GitHub access needed
+    pip install /opt/models/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+    ```
+
+=== "Multi-stage Docker build"
+    ```dockerfile
+    FROM python:3.11 AS builder
+    RUN pip install --target=/deps \
+        "xx_ent_pii_sm @ https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl"
+
+    FROM python:3.11-slim
+    COPY --from=builder /deps /usr/local/lib/python3.11/site-packages/
+    ```
+    The final image never touches GitHub — the model ships baked into the image layer.
+
+=== "uv project dependency"
+    ```sh
+    uv add https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl
+    ```
+    Pins the wheel (with hash) in `pyproject.toml`/`uv.lock`, so `uv sync --frozen` installs a reproducible, known-good version — still fetches over the network unless the wheel is also mirrored to an internal index/artifact store.
+
+Other things worth doing before relying on this in production:
+
+- **Pin the exact version** (`v0.1.0`, not a moving "latest" link) so re-deploys and rollbacks stay reproducible.
+- **Warm up the pipeline at startup**, not on the first user request — call `PIIGuard(types=[PIIType.PERSON_NAME]).scan("")` once in your app's startup/health-check hook so the (comparatively slow) model load doesn't add latency to the first real request.
+- **Budget memory per worker process.** The pipeline is cached at class level (loaded once per process, shared across `PIIGuard` instances), but each worker/replica in a multi-process deployment (Gunicorn workers, K8s pods, serverless instances) loads its own copy — account for that in memory limits and per-instance cold-start time.
+- **Validate against real data before trusting it for compliance.** The model card reports high precision/recall, but it was trained on synthetic, templated sentences — real-world phrasing, typos, and mixed-language text may perform worse. For a PII guardrail, a missed detection (false negative) is the dangerous failure mode, so test against a representative sample of your own production text before treating `PERSON_NAME`/`ADDRESS` detection as a compliance guarantee rather than a best-effort filter.
 
 ## Constructor Reference
 

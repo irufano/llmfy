@@ -13,4 +13,4 @@ Guardrails in llmfy are independent of the chat/generation API (`LLMfy`) and the
 
 | Guardrail | Description |
 |---|---|
-| [PII Guard](pii-guard.md) | Detects and replaces Personally Identifiable Information (emails, phone numbers, national IDs, credit cards, etc.) using regex — no external NLP dependencies. Supports one-way masking (`PARTIAL`, `MASK`, `REDACT`) and reversible tokenization (`TOKENIZE` + `restore()`), plus custom, domain-specific PII patterns. |
+| [PII Guard](pii-guard.md) | Detects and replaces Personally Identifiable Information (emails, phone numbers, national IDs, credit cards, etc.) using regex for most types, plus an optional spaCy NER model for person names and addresses. Supports one-way masking (`PARTIAL`, `MASK`, `REDACT`) and reversible tokenization (`TOKENIZE` + `restore()`), plus custom, domain-specific PII patterns. |

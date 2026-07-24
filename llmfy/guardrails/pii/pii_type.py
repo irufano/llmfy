@@ -12,6 +12,8 @@ class PIIType(str, Enum):
     IP_ADDRESS = "IP_ADDRESS"
     DATE_OF_BIRTH = "DATE_OF_BIRTH"
     PASSPORT_NUMBER = "PASSPORT_NUMBER"
+    PERSON_NAME = "PERSON_NAME"
+    ADDRESS = "ADDRESS"
 
     def __str__(self) -> str:
         return self.value
