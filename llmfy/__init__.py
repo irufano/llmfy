@@ -69,8 +69,7 @@ from .llmfy_core.embeddings.openai.openai_embedding import OpenAIEmbedding
 from .guardrails import (
     PIIDetection,
     PIIDetectionResult,
-    PIIDetector,
-    PIIMaskStyle,
+    PIIGuard,
     PIIStrategy,
     PIIType,
 )
@@ -111,8 +110,7 @@ __all__ = [
     "BedrockEmbedding",
     "GoogleAIEmbedding",
     "OpenAIEmbedding",
-    "PIIDetector",
-    "PIIMaskStyle",
+    "PIIGuard",
     "PIIDetection",
     "PIIDetectionResult",
     "PIIStrategy",

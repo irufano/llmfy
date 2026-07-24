@@ -48,8 +48,7 @@ nav:
       - Checkpointer: documentation/flow-engine/checkpointer.md
   - Guardrails:
       - Overview: documentation/guardrails/overview.md
-      - PII Detection: documentation/guardrails/pii-detection.md
-      - Custom Types: documentation/guardrails/custom-types.md
+      - PII Guard: documentation/guardrails/pii-guard.md
   - Examples:
       - LLM & Generation:
           - Retrieval: examples/example-retrieval.md
@@ -71,7 +70,7 @@ nav:
       - Flow Engine:
           - Basic Agent: examples/example-flowengine-agent-basic.md
       - Guardrails:
-          - PII Detection: examples/example-pii.md
+          - PII Guard: examples/example-pii.md
   - API Reference:
       - llmfy_core:
           - LLMfy: reference/llmfy_core.llmfy.md
@@ -137,10 +136,9 @@ nav:
           - FAISS Index: reference/vector_store.faiss_index.faiss_index.md
           - FAISS Vector Store: reference/vector_store.faiss_index.faiss_vector_store.md
       - guardrails:
-          - PII Detector: reference/guardrails.pii.pii_detector.md
+          - PII Guard: reference/guardrails.pii.pii_guard.md
           - PII Type: reference/guardrails.pii.pii_type.md
           - PII Strategy: reference/guardrails.pii.pii_strategy.md
-          - PII Mask Style: reference/guardrails.pii.pii_mask_style.md
           - PII Result: reference/guardrails.pii.pii_result.md
 
 theme:

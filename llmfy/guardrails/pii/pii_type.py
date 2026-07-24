@@ -7,6 +7,7 @@ class PIIType(str, Enum):
     EMAIL = "EMAIL"
     PHONE_NUMBER = "PHONE_NUMBER"
     SSN = "SSN"
+    NIK = "NIK"
     CREDIT_CARD = "CREDIT_CARD"
     IP_ADDRESS = "IP_ADDRESS"
     DATE_OF_BIRTH = "DATE_OF_BIRTH"

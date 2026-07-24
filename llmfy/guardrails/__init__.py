@@ -1,15 +1,13 @@
 from .pii import (
     PIIDetection,
     PIIDetectionResult,
-    PIIDetector,
-    PIIMaskStyle,
+    PIIGuard,
     PIIStrategy,
     PIIType,
 )
 
 __all__ = [
-    "PIIDetector",
-    "PIIMaskStyle",
+    "PIIGuard",
     "PIIDetection",
     "PIIDetectionResult",
     "PIIStrategy",
