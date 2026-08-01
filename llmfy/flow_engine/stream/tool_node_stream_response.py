@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ToolNodeStreamType(str, Enum):
+class ToolNodeStreamType(StrEnum):
     """ToolNodeStreamType"""
     EXECUTING = "executing"
     RESULT = "result"

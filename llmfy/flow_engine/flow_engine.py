@@ -503,6 +503,7 @@ class FlowEngine:
             warnings.warn(
                 f"Some nodes are defined but not reachable: {', '.join(sorted(unreachable_nodes))}",
                 UserWarning,
+                stacklevel=2,
             )
 
     async def _save_checkpoint(self, node_name: str):

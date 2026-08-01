@@ -147,9 +147,9 @@ class LLMfy:
 
             return final_system_message
         except KeyError as e:
-            raise LLMfyException(f"Required variable {e} not found in kwargs")
+            raise LLMfyException(f"Required variable {e} not found in kwargs") from e
         except Exception as e:
-            raise LLMfyException(f"Error formatting system message: {str(e)}")
+            raise LLMfyException(f"Error formatting system message: {str(e)}") from e
 
     def invoke(self, contents: str | list[Content], **kwargs) -> GenerationResponse:
         """
@@ -204,7 +204,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def invoke_with_tools(
         self,
@@ -284,7 +284,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def invoke_stream(
         self,
@@ -385,7 +385,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def chat(self, messages: list[Message], **kwargs) -> GenerationResponse:
         """
@@ -453,7 +453,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def chat_with_tools(self, messages: list[Message], **kwargs) -> GenerationResponse:
         """
@@ -542,7 +542,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def chat_stream(
         self,
@@ -657,7 +657,7 @@ class LLMfy:
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def clear_messages_temp(self) -> None:
         self.messages_temp.clear()

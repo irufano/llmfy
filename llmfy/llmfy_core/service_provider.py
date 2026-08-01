@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ServiceProvider(str, Enum):
+class ServiceProvider(StrEnum):
 	"""ServiceProvider enum."""
 	OPENAI = "openai"
 	BEDROCK = "bedrock"

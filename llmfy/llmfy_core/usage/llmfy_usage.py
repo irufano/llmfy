@@ -489,7 +489,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified openai pricing. You can add in custom prices with `llmfy_usage_tracker(openai_pricing=prices)`"
+                "MODEL not found at specified openai pricing. You can add in custom prices with `llmfy_usage_tracker(openai_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-requestd
@@ -552,7 +553,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
+                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-request
@@ -643,7 +645,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
+                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-request
@@ -707,7 +710,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`"
+                "MODEL not found at specified bedrock pricing. You can add in custom prices with `llmfy_usage_tracker(bedrock_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-request
@@ -831,7 +835,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`"
+                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-request
@@ -896,7 +901,8 @@ class LLMfyUsage:
             self.total_cost += total_cost_per_request
         else:
             warnings.warn(
-                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`"
+                "MODEL not found at specified googleai pricing. You can add in custom prices with `llmfy_usage_tracker(googleai_pricing=prices)`",
+                stacklevel=2,
             )
 
         # add to details per-request

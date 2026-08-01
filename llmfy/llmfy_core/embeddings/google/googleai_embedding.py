@@ -87,7 +87,7 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
             return embedding
 
         except errors.APIError as e:
-            raise handle_google_error(e)
+            raise handle_google_error(e) from e
         except Exception as e:
             error_message = str(e)
             if "invalid" in error_message.lower():

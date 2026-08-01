@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Role(str, Enum):
+class Role(StrEnum):
 	"""Role enum for `Message` class."""
 	SYSTEM = "system"
 	USER = "user"

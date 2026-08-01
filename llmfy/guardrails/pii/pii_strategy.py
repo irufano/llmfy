@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PIIStrategy(str, Enum):
+class PIIStrategy(StrEnum):
     """Strategy for handling detected PII.
 
     Irreversible (one-way):

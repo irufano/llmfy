@@ -282,7 +282,7 @@ class FAISSVectorStore:
         )
 
         results = []
-        for score, idx in zip(scores[0], indices[0]):
+        for score, idx in zip(scores[0], indices[0], strict=True):
             if self.faiss_index.index_type == "lsh":
                 # LSH is Smaller = more similar.
                 condition = score <= score_threshold

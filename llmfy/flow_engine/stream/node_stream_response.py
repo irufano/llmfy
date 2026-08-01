@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class NodeStreamType(str, Enum):
+class NodeStreamType(StrEnum):
     """NodeStreamType"""
     STREAM = "stream"
     RESULT = "result"

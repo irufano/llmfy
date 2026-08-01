@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PIIType(str, Enum):
+class PIIType(StrEnum):
     """Categories of Personally Identifiable Information."""
 
     EMAIL = "EMAIL"

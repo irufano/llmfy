@@ -95,7 +95,7 @@ def create_cache() -> str:
     except ImportError:
         raise LLMfyException(
             'google-genai package is not installed. Install it using `pip install "llmfy[google-genai]"`'
-        )
+        ) from None
 
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 

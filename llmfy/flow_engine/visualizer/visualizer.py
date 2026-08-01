@@ -18,7 +18,7 @@ class WorkflowVisualizer:
         ]
         
         # Add all nodes
-        for name, node in nodes.items():
+        for name in nodes:
             # Style nodes based on their type
             if name == START:
                 mermaid.append(f"    {name}([{name}])")
