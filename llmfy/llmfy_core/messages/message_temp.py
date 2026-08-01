@@ -1,43 +1,55 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
-from llmfy.llmfy_core.llms.google.googleai_formatter import GoogleAIFormatter
-from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
-from llmfy.llmfy_core.llms.openai.openai_formatter import OpenAIFormatter
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class MessageTemp:
     """MessageTemp class. History only per request, not saved to memory."""
 
-    # Register formatter
-    _formatters: Dict[ServiceProvider, ModelFormatter] = {
-        ServiceProvider.OPENAI: OpenAIFormatter(),
-        ServiceProvider.BEDROCK: BedrockFormatter(),
-        ServiceProvider.GOOGLE: GoogleAIFormatter(),
-    }
+    # Populated lazily by `_get_formatter` on first use, not at import time:
+    # eagerly importing the provider formatters here would pull in each
+    # provider's package `__init__.py` (and its concrete Model class), which
+    # imports back from `llms.base_ai_model` and creates a circular import.
+    _formatters: dict[ServiceProvider, ModelFormatter] | None = None
 
     def __init__(self):
-        self.messages: List[Message] = []
+        self.messages: list[Message] = []
+
+    @classmethod
+    def _get_formatter(cls, provider: ServiceProvider) -> ModelFormatter | None:
+        if cls._formatters is None:
+            from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
+            from llmfy.llmfy_core.llms.google.googleai_formatter import (
+                GoogleAIFormatter,
+            )
+            from llmfy.llmfy_core.llms.openai.openai_formatter import OpenAIFormatter
+
+            cls._formatters = {
+                ServiceProvider.OPENAI: OpenAIFormatter(),
+                ServiceProvider.BEDROCK: BedrockFormatter(),
+                ServiceProvider.GOOGLE: GoogleAIFormatter(),
+            }
+        return cls._formatters.get(provider)
 
     def add_system_message(self, content: str) -> None:
         self.messages.insert(0, Message(role=Role.SYSTEM, content=content))
 
     def add_user_message(
-        self, id: str, content: Optional[str] | Optional[List[Content]]
+        self, id: str, content: str | None | list[Content] | None
     ) -> None:
         self.messages.append(Message(id=id, role=Role.USER, content=content))
 
     def add_assistant_message(
         self,
         id: str,
-        content: Optional[str] | Optional[List[Content]] = None,
-        tool_calls: Optional[List[ToolCall]] = None,
+        content: str | None | list[Content] | None = None,
+        tool_calls: list[ToolCall] | None = None,
     ) -> None:
         # Update request call id by parent
         if tool_calls:
@@ -55,9 +67,9 @@ class MessageTemp:
         name: str,
         result: str,
         provider: ServiceProvider,
-        request_call_id: Optional[str] = None,
+        request_call_id: str | None = None,
     ) -> None:
-        formatter = self._formatters.get(provider)
+        formatter = self._get_formatter(provider)
         if not formatter:
             raise LLMfyException(f"Unsupported model provider: {provider}")
 
@@ -70,13 +82,13 @@ class MessageTemp:
             result=result,
         )
 
-    def get_messages(self, provider: ServiceProvider) -> List[Dict[str, Any]]:
-        formatter = self._formatters.get(provider)
+    def get_messages(self, provider: ServiceProvider) -> list[dict[str, Any]]:
+        formatter = self._get_formatter(provider)
         if not formatter:
             raise LLMfyException(f"Unsupported model provider: {provider}")
         return [formatter.format_message(msg) for msg in self.messages]
 
-    def get_instance_messages(self) -> List[Message]:
+    def get_instance_messages(self) -> list[Message]:
         # return [msg for msg in self.messages if msg.role != Role.SYSTEM]
         return self.messages
 
