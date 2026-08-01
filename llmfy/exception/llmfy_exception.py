@@ -27,7 +27,7 @@ except LLMfyException as e:
 """
 
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class TimeoutType(Enum):
@@ -64,9 +64,9 @@ class LLMfyException(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        raw_error: Optional[Any] = None,
-        provider: Optional[str] = None,
+        status_code: int | None = None,
+        raw_error: Any | None = None,
+        provider: str | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -101,10 +101,10 @@ class TimeoutException(LLMfyException):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        raw_error: Optional[Any] = None,
-        provider: Optional[str] = None,
-        timeout_type: Optional[TimeoutType] = None,
+        status_code: int | None = None,
+        raw_error: Any | None = None,
+        provider: str | None = None,
+        timeout_type: TimeoutType | None = None,
     ):
         super().__init__(message, status_code, raw_error, provider)
         self.timeout_type = timeout_type

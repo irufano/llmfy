@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.flow_engine.checkpointer.base_checkpointer import (
@@ -24,7 +23,7 @@ class RedisCheckpointer(BaseCheckpointer):
         self,
         redis_url: str = "redis://localhost:6379/0",
         prefix: str = "llmfy_checkpoint:",
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ):
         """
         Initialize the Redis checkpointer.
@@ -43,7 +42,7 @@ class RedisCheckpointer(BaseCheckpointer):
         self.redis_url = redis_url
         self.prefix = prefix
         self.ttl = ttl
-        self._client: Optional[redis.Redis] = None
+        self._client: redis.Redis | None = None
 
     async def _get_client(self) -> redis.Redis:
         """Get or create Redis client."""
@@ -93,8 +92,8 @@ class RedisCheckpointer(BaseCheckpointer):
     async def load(
         self,
         session_id: str,
-        checkpoint_id: Optional[str] = None,
-    ) -> Optional[Checkpoint]:
+        checkpoint_id: str | None = None,
+    ) -> Checkpoint | None:
         """
         Load a checkpoint from Redis.
 
@@ -156,7 +155,7 @@ class RedisCheckpointer(BaseCheckpointer):
 
         return checkpoints
 
-    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: str | None = None) -> None:
         """
         Delete checkpoint(s) from Redis.
 

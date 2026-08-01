@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ class GoogleAIThinkingConfig(BaseModel):
     its own default. True: a ThinkingConfig is built from budget_tokens / level /
     include_thoughts below. Ignored when raw is set."""
 
-    budget_tokens: Optional[int] = None
+    budget_tokens: int | None = None
     """Token budget for thinking. -1 = dynamic (model decides), 0 = disable
     explicit budget. Maps to thinking_budget in ThinkingConfig. Alternative to
     level — use one or the other.
@@ -40,7 +40,7 @@ class GoogleAIThinkingConfig(BaseModel):
       - gemini-2.5-flash-lite (0 = fully disable thinking)
     """
 
-    level: Optional[str] = None
+    level: str | None = None
     """Named effort level: 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'. Alternative to
     budget_tokens — use one or the other.
 
@@ -51,13 +51,13 @@ class GoogleAIThinkingConfig(BaseModel):
       - gemini-3.5-flash
     """
 
-    include_thoughts: Optional[bool] = None
+    include_thoughts: bool | None = None
     """Whether to include thinking steps in the response content parts.
 
     Supported models: all Gemini 2.5+ and Gemini 3 series models listed above.
     """
 
-    raw: Optional[Any] = None
+    raw: Any | None = None
     """Escape hatch (backward compat): a pre-built google.genai.types.ThinkingConfig
     instance. When set, takes priority over enabled / budget_tokens / level /
     include_thoughts above.
@@ -117,7 +117,7 @@ class GoogleAIPromptCachingConfig(BaseModel):
 
     Supported models: see class docstring."""
 
-    cached_content: Optional[str] = None
+    cached_content: str | None = None
     """Resource name of a pre-created Google AI cached content object,
     e.g. 'cachedContents/abc123efg456'. When set, passed directly to
     GenerateContentConfig so the model serves tokens from the cache.
@@ -168,26 +168,26 @@ class GoogleAIConfig(BaseModel):
 
     # Core generation params
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
     """Maps to max_output_tokens in GenerateContentConfig."""
-    top_p: Optional[float] = None
-    top_k: Optional[int] = None
-    stop_sequences: Optional[List[str]] = None
-    candidate_count: Optional[int] = None
-    seed: Optional[int] = None
+    top_p: float | None = None
+    top_k: int | None = None
+    stop_sequences: list[str] | None = None
+    candidate_count: int | None = None
+    seed: int | None = None
 
     # Penalty params
-    presence_penalty: Optional[float] = None
-    frequency_penalty: Optional[float] = None
+    presence_penalty: float | None = None
+    frequency_penalty: float | None = None
 
     # Response format
-    response_mime_type: Optional[str] = None
+    response_mime_type: str | None = None
     """e.g. 'application/json' for structured output."""
-    response_schema: Optional[Any] = None
+    response_schema: Any | None = None
     """Schema for structured output. Used with response_mime_type='application/json'."""
 
     # Safety
-    safety_settings: Optional[List[Any]] = None
+    safety_settings: list[Any] | None = None
     """List of google.genai.types.SafetySetting instances."""
 
     # Thinking — grouped so all thinking-related fields live in one place

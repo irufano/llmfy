@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Any, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,26 +30,26 @@ class Message(BaseModel):
     role: Role
     """Message role [SYSTEM, USER, ASSISTANT, TOOL]"""
 
-    content: Optional[str] | Optional[List[Content]] = None
+    content: str | None | list[Content] | None = None
     """Use str if only using text, but if use image and text use List[Content]."""
 
-    name: Optional[str] = None
+    name: str | None = None
     """Message name"""
 
-    tool_calls: Optional[List[ToolCall]] = None  # For Message with `assistant` role
+    tool_calls: list[ToolCall] | None = None  # For Message with `assistant` role
     """[`assistant` role ONLY] Tool call list."""
 
-    tool_call_id: Optional[str] = None  # For Message with `tool` role
+    tool_call_id: str | None = None  # For Message with `tool` role
     """[`tool` role ONLY] Tool call id."""
 
-    tool_results: Optional[List[Any]] = None  # For Message with `tool` role
+    tool_results: list[Any] | None = None  # For Message with `tool` role
     """[`tool` role ONLY] Tool call results."""
 
-    request_call_id: Optional[str] = None  # For Message with `tool` role
+    request_call_id: str | None = None  # For Message with `tool` role
     """[`tool` role ONLY] Tool call id request."""
 
     timestamp: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="Message timestamp in ISO 8601. Default UTC",
     )
     """Message timestamp in ISO 8601. Default UTC"""

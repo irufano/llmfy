@@ -5,7 +5,7 @@ except ImportError:
 
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
@@ -112,8 +112,8 @@ class BedrockModel(BaseAIModel):
 
     def generate(
         self,
-        messages: List[Dict[str, Any]],
-        tools: List[Dict[str, Any]] | None = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> AIResponse:
         """
@@ -146,7 +146,7 @@ class BedrockModel(BaseAIModel):
                 key: value for key, value in inferences.items() if value is not None
             }
 
-            additionals: Dict[str, Any] = {
+            additionals: dict[str, Any] = {
                 "top_k": self.config.top_k,
                 **kwargs,
             }
@@ -167,7 +167,7 @@ class BedrockModel(BaseAIModel):
                         }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
-                    _thinking: Dict[str, Any] = {"type": "enabled"}
+                    _thinking: dict[str, Any] = {"type": "enabled"}
                     if self.config.thinking.budget_tokens is not None:
                         _thinking["budget_tokens"] = self.config.thinking.budget_tokens
                     additionals["thinking"] = _thinking
@@ -191,7 +191,7 @@ class BedrockModel(BaseAIModel):
             # A cachePoint at the end of the last message caches the full conversation
             # prefix so the next turn can serve it from cache.
             if self.config.prompt_caching.enabled:
-                _cache_point: Dict[str, Any] = {"type": "default"}
+                _cache_point: dict[str, Any] = {"type": "default"}
                 if self.config.prompt_caching.ttl is not None:
                     _cache_point["ttl"] = self.config.prompt_caching.ttl
                 _cache_point_entry = {"cachePoint": _cache_point}
@@ -296,8 +296,8 @@ class BedrockModel(BaseAIModel):
 
     def generate_stream(
         self,
-        messages: List[Dict[str, Any]],
-        tools: List[Dict[str, Any]] | None = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> Any:
         """
@@ -338,7 +338,7 @@ class BedrockModel(BaseAIModel):
                 key: value for key, value in inferences.items() if value is not None
             }
 
-            additionals: Dict[str, Any] = {
+            additionals: dict[str, Any] = {
                 "top_k": self.config.top_k,
                 **kwargs,
             }
@@ -359,7 +359,7 @@ class BedrockModel(BaseAIModel):
                         }
                 else:
                     # Claude extended thinking (3.7 Sonnet, Claude 4 Sonnet/Opus/Haiku, 4.5 series)
-                    _thinking: Dict[str, Any] = {"type": "enabled"}
+                    _thinking: dict[str, Any] = {"type": "enabled"}
                     if self.config.thinking.budget_tokens is not None:
                         _thinking["budget_tokens"] = self.config.thinking.budget_tokens
                     additionals["thinking"] = _thinking
@@ -383,7 +383,7 @@ class BedrockModel(BaseAIModel):
             # A cachePoint at the end of the last message caches the full conversation
             # prefix so the next turn can serve it from cache.
             if self.config.prompt_caching.enabled:
-                _cache_point: Dict[str, Any] = {"type": "default"}
+                _cache_point: dict[str, Any] = {"type": "default"}
                 if self.config.prompt_caching.ttl is not None:
                     _cache_point["ttl"] = self.config.prompt_caching.ttl
                 _cache_point_entry = {"cachePoint": _cache_point}

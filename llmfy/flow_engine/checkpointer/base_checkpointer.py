@@ -2,7 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,9 +20,9 @@ class CheckpointMetadata:
 class Checkpoint:
     """Represents a saved state checkpoint."""
     metadata: CheckpointMetadata
-    state: Dict[str, Any]
+    state: dict[str, Any]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert checkpoint to dictionary for storage."""
         return {
             "checkpoint_id": self.metadata.checkpoint_id,
@@ -34,7 +34,7 @@ class Checkpoint:
         }
     
     @staticmethod
-    def _serialize_state(state: Dict[str, Any]) -> str:
+    def _serialize_state(state: dict[str, Any]) -> str:
         """Serialize state to JSON string, handling custom objects."""
         def default_serializer(obj):
             if hasattr(obj, '__dict__'):
@@ -48,7 +48,7 @@ class Checkpoint:
         return json.dumps(state, default=default_serializer)
     
     @staticmethod
-    def _deserialize_state(state_str: str) -> Dict[str, Any]:
+    def _deserialize_state(state_str: str) -> dict[str, Any]:
         """Deserialize state from JSON string, reconstructing custom objects."""
         import importlib
         
@@ -87,7 +87,7 @@ class Checkpoint:
         return json.loads(state_str, object_hook=object_hook)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Checkpoint":
+    def from_dict(cls, data: dict[str, Any]) -> "Checkpoint":
         """Create checkpoint from dictionary."""
         metadata = CheckpointMetadata(
             checkpoint_id=data["checkpoint_id"],
@@ -115,7 +115,7 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def load(self, session_id: str, checkpoint_id: Optional[str] = None) -> Optional[Checkpoint]:
+    async def load(self, session_id: str, checkpoint_id: str | None = None) -> Checkpoint | None:
         """
         Load a checkpoint.
         
@@ -129,7 +129,7 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def list(self, session_id: str, limit: int = 10) -> List[Checkpoint]:
+    async def list(self, session_id: str, limit: int = 10) -> list[Checkpoint]:
         """
         List checkpoints for a thread.
         
@@ -143,7 +143,7 @@ class BaseCheckpointer(ABC):
         pass
     
     @abstractmethod
-    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: str | None = None) -> None:
         """
         Delete checkpoint(s).
         

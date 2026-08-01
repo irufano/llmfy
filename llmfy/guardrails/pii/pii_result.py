@@ -1,5 +1,4 @@
 import uuid
-from typing import List, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -22,7 +21,7 @@ class PIIDetection(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    pii_type: Union[PIIType, str]
+    pii_type: PIIType | str
     value: str
     start: int
     end: int
@@ -46,7 +45,7 @@ class PIIDetectionResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     original_text: str
     processed_text: str
-    detections: List[PIIDetection] = Field(default_factory=list)
+    detections: list[PIIDetection] = Field(default_factory=list)
     has_pii: bool = False
     strategy: PIIStrategy
 

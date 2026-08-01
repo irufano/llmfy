@@ -7,11 +7,10 @@ async tools_executor
 
 import asyncio
 import os
-from typing import List, TypedDict
+from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
-from typing_extensions import Annotated
 
 from llmfy import (
     BedrockConfig,
@@ -53,7 +52,7 @@ db_url = URL.create(
 )
 
 
-def add_message(old_messages: List[Message], new_message: List[Message]):
+def add_message(old_messages: list[Message], new_message: list[Message]):
     """Reducer function to append messages."""
     if old_messages is None:
         return new_message

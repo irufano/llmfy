@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Optional
+from typing import ClassVar
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.guardrails.pii.backends.base_ner_backend import BaseNERBackend, NEREntity
@@ -17,7 +17,7 @@ class SpacyNERBackend(BaseNERBackend):
 
     # Loaded once per process, on first actual use — never at import time
     # or at SpacyNERBackend()/PIIGuard() construction time.
-    _nlp: ClassVar[Optional[object]] = None
+    _nlp: ClassVar[object | None] = None
 
     def __init__(self) -> None:
         if xx_ent_pii_sm is None:
@@ -37,7 +37,7 @@ class SpacyNERBackend(BaseNERBackend):
             cls._nlp = xx_ent_pii_sm.load()
         return cls._nlp
 
-    def detect_entities(self, text: str) -> List[NEREntity]:
+    def detect_entities(self, text: str) -> list[NEREntity]:
         nlp = self._get_pipeline()
         doc = nlp(text)
         return [

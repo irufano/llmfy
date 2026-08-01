@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import List, Optional
+import builtins
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.flow_engine.checkpointer.base_checkpointer import (
@@ -198,8 +198,8 @@ class SQLCheckpointer(BaseCheckpointer):
     async def load(
         self,
         session_id: str,
-        checkpoint_id: Optional[str] = None,
-    ) -> Optional[Checkpoint]:
+        checkpoint_id: str | None = None,
+    ) -> Checkpoint | None:
         """Load a checkpoint from SQL database."""
         await self._ensure_initialized()
 
@@ -213,8 +213,8 @@ class SQLCheckpointer(BaseCheckpointer):
             )
 
     async def _load_async(
-        self, session_id: str, checkpoint_id: Optional[str]
-    ) -> Optional[Checkpoint]:
+        self, session_id: str, checkpoint_id: str | None
+    ) -> Checkpoint | None:
         """Helper for async load."""
         async with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
@@ -238,8 +238,8 @@ class SQLCheckpointer(BaseCheckpointer):
     def _load_sync(
         self,
         session_id: str,
-        checkpoint_id: Optional[str],
-    ) -> Optional[Checkpoint]:
+        checkpoint_id: str | None,
+    ) -> Checkpoint | None:
         """Helper for sync load."""
         with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
@@ -260,7 +260,7 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return self._model_to_checkpoint(model) if model else None
 
-    async def list(self, session_id: str, limit: int = 10) -> List[Checkpoint]:
+    async def list(self, session_id: str, limit: int = 10) -> builtins.list[Checkpoint]:
         """List checkpoints for a session."""
         await self._ensure_initialized()
 
@@ -270,7 +270,7 @@ class SQLCheckpointer(BaseCheckpointer):
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, self._list_sync, session_id, limit)
 
-    async def _list_async(self, session_id: str, limit: int) -> List[Checkpoint]:
+    async def _list_async(self, session_id: str, limit: int) -> builtins.list[Checkpoint]:
         """Helper for async list."""
         async with self.session_maker() as session:  # type: ignore
             stmt = (
@@ -284,7 +284,7 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return [self._model_to_checkpoint(model) for model in models]
 
-    def _list_sync(self, session_id: str, limit: int) -> List[Checkpoint]:
+    def _list_sync(self, session_id: str, limit: int) -> builtins.list[Checkpoint]:
         """Helper for sync list."""
         with self.session_maker() as session:  # type: ignore
             stmt = (
@@ -298,7 +298,7 @@ class SQLCheckpointer(BaseCheckpointer):
 
             return [self._model_to_checkpoint(model) for model in models]
 
-    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: str | None = None) -> None:
         """Delete checkpoint(s) from SQL database."""
         await self._ensure_initialized()
 
@@ -310,7 +310,7 @@ class SQLCheckpointer(BaseCheckpointer):
                 None, self._delete_sync, session_id, checkpoint_id
             )
 
-    async def _delete_async(self, session_id: str, checkpoint_id: Optional[str]):
+    async def _delete_async(self, session_id: str, checkpoint_id: str | None):
         """Helper for async delete."""
         async with self.session_maker() as session:  # type: ignore
             if checkpoint_id:
@@ -326,7 +326,7 @@ class SQLCheckpointer(BaseCheckpointer):
             await session.execute(stmt)
             await session.commit()
 
-    def _delete_sync(self, session_id: str, checkpoint_id: Optional[str]):
+    def _delete_sync(self, session_id: str, checkpoint_id: str | None):
         """Helper for sync delete."""
         with self.session_maker() as session:  # type: ignore
             if checkpoint_id:

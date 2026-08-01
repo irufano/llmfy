@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
@@ -16,7 +17,7 @@ class Tool:
     """
 
     # Register formatter
-    _formatters: Dict[ServiceProvider, ModelFormatter] = {
+    _formatters: dict[ServiceProvider, ModelFormatter] = {
         ServiceProvider.OPENAI: OpenAIFormatter(),
         ServiceProvider.BEDROCK: BedrockFormatter(),
         ServiceProvider.GOOGLE: GoogleAIFormatter(),
@@ -31,7 +32,7 @@ class Tool:
         return func
 
     @staticmethod
-    def _get_tool_definition(func: Callable, provider: ServiceProvider) -> Dict[str, Any]:
+    def _get_tool_definition(func: Callable, provider: ServiceProvider) -> dict[str, Any]:
         formatter = Tool._formatters.get(provider)
         if not formatter:
             raise LLMfyException(f"Unsupported model provider: {provider}")

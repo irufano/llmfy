@@ -1,9 +1,10 @@
 from copy import deepcopy
 from datetime import datetime, timedelta
 from threading import Lock, Timer
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.llmfy_utils.deprecated.deprecated import deprecated
+
 
 @deprecated(alternative='InMemoryCheckpointer, RedisCheckpointer, SQLCheckpointer')
 class MemoryManager:
@@ -21,7 +22,7 @@ class MemoryManager:
             cleanup (bool, optional): run cleanup memories after `cleanup_time`
             cleanup_time (int, optional): default clean up time 90000 seconds = 1 day + 1 hour = 86400s + 3600s
         """
-        self._memories: Dict[str, Dict[str, Any]] = {}
+        self._memories: dict[str, dict[str, Any]] = {}
         self._lock = Lock()
         self.always_extend_list = extend_list
         self._timestamps = {}  # Timestamps to track last usage of threads
@@ -29,7 +30,7 @@ class MemoryManager:
         self._using_cleanup = cleanup
         self._cleanup_time = cleanup_time
 
-    def get_memory(self, thread_id: str) -> Optional[Dict[str, Any]]:
+    def get_memory(self, thread_id: str) -> dict[str, Any] | None:
         """Get memory for a specific thread."""
         with self._lock:
             return deepcopy(self._memories.get(thread_id))
@@ -64,8 +65,8 @@ class MemoryManager:
     def update_memory(
         self,
         thread_id: str,
-        state: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        state: dict[str, Any],
+    ) -> dict[str, Any]:
         """Update memory for a specific thread."""
         with self._lock:
             # Update the last usage timestamp
@@ -98,7 +99,7 @@ class MemoryManager:
             if thread_id in self._memories:
                 del self._memories[thread_id]
 
-    def list_threads(self) -> List[str]:
+    def list_threads(self) -> list[str]:
         """List all thread IDs with active memories."""
         with self._lock:
             return list(self._memories.keys())

@@ -1,4 +1,5 @@
-from typing import Callable, List, Literal, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Literal
 
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
@@ -7,7 +8,7 @@ from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 logger = LLMfyLogger("LLMfy").get_logger()
 
 
-def count_tokens_approximately(messages: List[Message]) -> int:
+def count_tokens_approximately(messages: list[Message]) -> int:
     """
     Approximate token counter for messages.
     Rough estimate: 1 token ≈ 4 characters for English text.
@@ -62,14 +63,14 @@ def get_message_role(msg: Message) -> str:
 
 
 def trim_messages(
-    messages: List[Message],
+    messages: list[Message],
     strategy: Literal["first", "last"] = "last",
-    token_counter: Optional[Callable[[List[Message]], int]] = None,
-    max_tokens: Optional[int] = None,
-    start_on: Optional[Union[str, Tuple[str, ...]]] = None,
-    end_on: Optional[Union[str, Tuple[str, ...]]] = None,
+    token_counter: Callable[[list[Message]], int] | None = None,
+    max_tokens: int | None = None,
+    start_on: str | tuple[str, ...] | None = None,
+    end_on: str | tuple[str, ...] | None = None,
     include_system: bool = True,
-) -> List[Message]:
+) -> list[Message]:
     """
     Trim messages based on token count and role constraints, similar to LangGraph's trim_messages.
 
@@ -139,7 +140,7 @@ def trim_messages(
     return system_messages + working_messages
 
 
-def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
+def safe_trim_messages(messages: list[Message], max_tokens: int = 1000):
     """Trim messages but ALWAYS preserve active tool context"""
     if len(messages) == 1:
         return messages
@@ -223,7 +224,7 @@ def safe_trim_messages(messages: List[Message], max_tokens: int = 1000):
 
 
 
-def tool_trim_messages(messages: List[Message]):
+def tool_trim_messages(messages: list[Message]):
     """Trim messages but ALWAYS preserve active tool context.
 
     Mechanism:
@@ -369,10 +370,10 @@ def tool_trim_messages(messages: List[Message]):
         return messages[-1:]
 
 def _trim_from_end(
-    messages: List[Message],
+    messages: list[Message],
     token_counter: Callable,
     max_tokens: int,
-) -> List[Message]:
+) -> list[Message]:
     """
     Keep the most recent messages that fit within max_tokens.
     """
@@ -391,10 +392,10 @@ def _trim_from_end(
 
 
 def _trim_from_start(
-    messages: List[Message],
+    messages: list[Message],
     token_counter: Callable,
     max_tokens: int,
-) -> List[Message]:
+) -> list[Message]:
     """
     Keep the earliest messages that fit within max_tokens.
     """
@@ -413,9 +414,9 @@ def _trim_from_start(
 
 
 def _apply_start_constraint(
-    messages: List[Message],
-    start_on: Union[str, Tuple[str, ...]],
-) -> List[Message]:
+    messages: list[Message],
+    start_on: str | tuple[str, ...],
+) -> list[Message]:
     """
     Ensure messages start with one of the specified roles.
     """
@@ -444,9 +445,9 @@ def _apply_start_constraint(
 
 
 def _apply_end_constraint(
-    messages: List[Message],
-    end_on: Union[str, Tuple[str, ...]],
-) -> List[Message]:
+    messages: list[Message],
+    end_on: str | tuple[str, ...],
+) -> list[Message]:
     """
     Ensure messages end with one of the specified roles.
 

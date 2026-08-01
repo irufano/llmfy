@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.llmfy_core.messages.message import Message
 
@@ -21,18 +21,18 @@ class ModelFormatter(ABC):
 
     @abstractmethod
     def format_tool_function(
-        self, func_metadata: Dict, type_mapping: dict[Any, str]
+        self, func_metadata: dict, type_mapping: dict[Any, str]
     ) -> dict:
         pass
 
     @abstractmethod
     def format_tool_message(
         self,
-        messages: List[Message],
+        messages: list[Message],
         id: str,
         tool_call_id: str,
         name: str,
         result: str,
-        request_call_id: Optional[str] = None,
-    ) -> List[Message]:
+        request_call_id: str | None = None,
+    ) -> list[Message]:
         pass

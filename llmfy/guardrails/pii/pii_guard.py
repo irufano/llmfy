@@ -1,5 +1,5 @@
 import re
-from typing import ClassVar, Dict, List, Optional, Tuple, Union
+from typing import ClassVar
 
 from llmfy.guardrails.pii.backends import SpacyNERBackend
 from llmfy.guardrails.pii.pii_result import PIIDetection, PIIDetectionResult
@@ -82,7 +82,7 @@ class PIIGuard:
     """
 
     # Compiled once at import time for performance.
-    _PATTERNS: Dict[PIIType, re.Pattern] = {
+    _PATTERNS: dict[PIIType, re.Pattern] = {
         PIIType.EMAIL: re.compile(
             r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
         ),
@@ -132,14 +132,14 @@ class PIIGuard:
 
     # PERSON_NAME/ADDRESS have no regex entry above — they're detected via
     # SpacyNERBackend instead, mapping its raw entity labels to PIIType.
-    _NER_LABEL_TO_TYPE: Dict[str, PIIType] = {
+    _NER_LABEL_TO_TYPE: dict[str, PIIType] = {
         "PER": PIIType.PERSON_NAME,
         "ADR": PIIType.ADDRESS,
     }
 
     # Shared across all PIIGuard instances so the spaCy pipeline loads at
     # most once per process, on first actual use.
-    _ner_backend: ClassVar[Optional[SpacyNERBackend]] = None
+    _ner_backend: ClassVar[SpacyNERBackend | None] = None
 
     @classmethod
     def _get_ner_backend(cls) -> SpacyNERBackend:
@@ -150,9 +150,9 @@ class PIIGuard:
     def __init__(
         self,
         strategy: PIIStrategy = PIIStrategy.TOKENIZE,
-        types: Optional[List[PIIType]] = None,
-        exclude_types: Optional[List[PIIType]] = None,
-        custom_types: Optional[Dict[str, Union[str, re.Pattern]]] = None,
+        types: list[PIIType] | None = None,
+        exclude_types: list[PIIType] | None = None,
+        custom_types: dict[str, str | re.Pattern] | None = None,
     ) -> None:
         """Initialize the PIIGuard.
 
@@ -188,7 +188,7 @@ class PIIGuard:
             )
 
         self.strategy = strategy
-        self._custom_patterns: Dict[str, re.Pattern] = {
+        self._custom_patterns: dict[str, re.Pattern] = {
             name: (p if isinstance(p, re.Pattern) else re.compile(p))
             for name, p in (custom_types or {}).items()
         }
@@ -197,16 +197,16 @@ class PIIGuard:
         else:
             active_types = types if types is not None else list(PIIType)
         # Exclude built-in types overridden by a custom pattern of the same name
-        self.types: List[PIIType] = [
+        self.types: list[PIIType] = [
             t for t in active_types if t.value not in self._custom_patterns
         ]
 
     def _placeholder(
         self,
-        pii_type: Union[PIIType, str],
+        pii_type: PIIType | str,
         value: str,
-        seen: Dict[Tuple[str, str], str],
-        counters: Dict[str, int],
+        seen: dict[tuple[str, str], str],
+        counters: dict[str, int],
     ) -> str:
         if self.strategy == PIIStrategy.REDACT:
             return "[REDACTED]"
@@ -223,7 +223,7 @@ class PIIGuard:
         seen[key] = placeholder
         return placeholder
 
-    def scan(self, text: str) -> List[PIIDetection]:
+    def scan(self, text: str) -> list[PIIDetection]:
         """Find all PII in text without replacing anything.
 
         Detections are returned sorted by their start character index.
@@ -234,9 +234,9 @@ class PIIGuard:
         Returns:
             List of PIIDetection instances, each describing one PII occurrence.
         """
-        detections: List[PIIDetection] = []
-        seen: Dict[Tuple[str, str], str] = {}
-        counters: Dict[str, int] = {}
+        detections: list[PIIDetection] = []
+        seen: dict[tuple[str, str], str] = {}
+        counters: dict[str, int] = {}
         # Two types (built-in or custom) can match the exact same span (e.g.
         # a custom pattern that overlaps a built-in one) — keep only the
         # first match per exact (start, end) span so detect() never replaces
@@ -340,7 +340,7 @@ class PIIGuard:
             strategy=self.strategy,
         )
 
-    def restore(self, text: str, detections: List[PIIDetection]) -> str:
+    def restore(self, text: str, detections: list[PIIDetection]) -> str:
         """Substitute placeholders in `text` back to their original values.
 
         `detections` should come from a prior `detect()`/`scan()` call made

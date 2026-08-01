@@ -1,7 +1,7 @@
 import os
 import re
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.bedrock.bedrock_pricing_list import BEDROCK_PRICING
@@ -23,9 +23,9 @@ class LLMfyUsage:
 
     def __init__(
         self,
-        openai_pricing: Optional[Dict[str, Any]] = None,
-        bedrock_pricing: Optional[Dict[str, Any]] = None,
-        googleai_pricing: Optional[Dict[str, Any]] = None,
+        openai_pricing: dict[str, Any] | None = None,
+        bedrock_pricing: dict[str, Any] | None = None,
+        googleai_pricing: dict[str, Any] | None = None,
     ):
         if openai_pricing:
             if not self.__is_valid_openai_pricing_structure(openai_pricing):
@@ -135,24 +135,24 @@ class LLMfyUsage:
         self.total_cost: float = 0.0
         self.cache_read_tokens: int = 0
         self.cache_write_tokens: int = 0
-        self.raw_usages: List[Dict[str, int]] = []
-        self.openai_pricing: Dict[str, ModelPricing] = (
+        self.raw_usages: list[dict[str, int]] = []
+        self.openai_pricing: dict[str, ModelPricing] = (
             self._load_openai_pricing(pricing_source=openai_pricing or OPENAI_PRICING)
             or {}
         )
-        self.bedrock_pricing: Dict[str, Dict[str, ModelPricing]] = (
+        self.bedrock_pricing: dict[str, dict[str, ModelPricing]] = (
             self._load_bedrock_pricing(
                 pricing_source=bedrock_pricing or BEDROCK_PRICING
             )
             or {}
         )
-        self.googleai_pricing: Dict[str, Dict[str, Any]] = (
+        self.googleai_pricing: dict[str, dict[str, Any]] = (
             self._load_googleai_pricing(
                 pricing_source=googleai_pricing or GOOGLEAI_PRICING
             )
             or {}
         )
-        self.details: List[Dict[str, Any]] = []
+        self.details: list[dict[str, Any]] = []
 
     def to_dict(self):
         return {
@@ -312,8 +312,8 @@ class LLMfyUsage:
 
     def _load_openai_pricing(
         self,
-        pricing_source: Dict[str, Dict[str, Any]],
-    ) -> Dict[str, ModelPricing]:
+        pricing_source: dict[str, dict[str, Any]],
+    ) -> dict[str, ModelPricing]:
         """
         Load openai pricing from dictionary.
 
@@ -334,8 +334,8 @@ class LLMfyUsage:
 
     def _load_bedrock_pricing(
         self,
-        pricing_source: Dict[str, Dict[str, Dict[str, Any]]],
-    ) -> Dict[str, Dict[str, ModelPricing]]:
+        pricing_source: dict[str, dict[str, dict[str, Any]]],
+    ) -> dict[str, dict[str, ModelPricing]]:
         """
         Load bedrock pricing from dictionary.
 
@@ -361,8 +361,8 @@ class LLMfyUsage:
 
     def _load_googleai_pricing(
         self,
-        pricing_source: Dict[str, Dict[str, Any]],
-    ) -> Dict[str, Dict[str, Any]]:
+        pricing_source: dict[str, dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
         """
         Load Google AI pricing from dictionary.
 
@@ -377,7 +377,7 @@ class LLMfyUsage:
         provider: ServiceProvider,
         type: ServiceType,
         model: str,
-        usage: Dict[str, int],
+        usage: dict[str, int],
     ) -> None:
         """
         Update usage statistics and calculate price.
@@ -414,7 +414,7 @@ class LLMfyUsage:
     def __openai_update(
         self,
         model: str,
-        usage: Dict[str, int],
+        usage: dict[str, int],
     ) -> None:
         """
         OPENAI Update usage statistics and calculate price.
@@ -511,7 +511,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __openai_embedding_update(self, model: str, usage: Dict) -> None:
+    def __openai_embedding_update(self, model: str, usage: dict) -> None:
         """
         Update usage statistics and calculate price.
 
@@ -572,7 +572,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __bedrock_update(self, model: str, usage: Dict[str, int]) -> None:
+    def __bedrock_update(self, model: str, usage: dict[str, int]) -> None:
         """
         Update usage statistics and calculate price.
 
@@ -665,7 +665,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __bedrock_embedding_update(self, model: str, usage: Dict) -> None:
+    def __bedrock_embedding_update(self, model: str, usage: dict) -> None:
         """
         Update usage statistics and calculate price.
 
@@ -727,7 +727,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __googleai_update(self, model: str, usage: Dict[str, int]) -> None:
+    def __googleai_update(self, model: str, usage: dict[str, int]) -> None:
         """
         GOOGLEAI Update usage statistics and calculate price.
 
@@ -852,7 +852,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __googleai_embedding_update(self, model: str, usage: Dict) -> None:
+    def __googleai_embedding_update(self, model: str, usage: dict) -> None:
         """
         Update usage statistics and calculate price.
 

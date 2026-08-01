@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any
 
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -16,13 +16,13 @@ class BaseEmbeddingModel(ABC):
     def encode(
         self,
         text: str,
-    ) -> List[float]:
+    ) -> list[float]:
         pass
 
     @abstractmethod
     def encode_batch(
         self,
-        texts: List[str] | str,
+        texts: list[str] | str,
         batch_size: int = 10,
         max_retries: int = 3,
         retry_delay: float = 1.0,

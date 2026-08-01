@@ -1,5 +1,6 @@
+from collections.abc import Generator
 from copy import deepcopy
-from typing import Any, Generator, List
+from typing import Any
 
 from llmfy.flow_engine.stream.tool_node_stream_response import (
     ToolNodeStreamResponse,
@@ -10,7 +11,7 @@ from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.tools.tool_registry import ToolRegistry
 
 
-def tools_node(messages: List[Message], registry: ToolRegistry) -> List[Message]:
+def tools_node(messages: list[Message], registry: ToolRegistry) -> list[Message]:
     """Tools Node
 
     Args:
@@ -22,7 +23,7 @@ def tools_node(messages: List[Message], registry: ToolRegistry) -> List[Message]
     """
     new_messages = deepcopy(messages)
     last_message = new_messages[-1]
-    tool_results: List[Message] = []
+    tool_results: list[Message] = []
     if last_message.tool_calls:
         for tool_call in last_message.tool_calls:
             result = registry.execute_tool(
@@ -40,7 +41,7 @@ def tools_node(messages: List[Message], registry: ToolRegistry) -> List[Message]
     return tool_results
 
 
-def tools_stream_node(messages: List[Message], registry: ToolRegistry) -> Generator[ToolNodeStreamResponse, Any, None]:
+def tools_stream_node(messages: list[Message], registry: ToolRegistry) -> Generator[ToolNodeStreamResponse, Any, None]:
     """Tools Stream Node
 
     Args:

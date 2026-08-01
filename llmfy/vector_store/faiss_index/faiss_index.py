@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from llmfy.exception.llmfy_exception import LLMfyException
 
@@ -23,7 +23,7 @@ class FAISSIndex:
         M: int = 32,
         ef_search: int = 50,
         nbits: int = 8,
-        index: Optional[Any] = None,
+        index: Any | None = None,
     ):
         """
         Initialize FAISS Index.
@@ -183,8 +183,8 @@ class FAISSIndex:
         self,
         query,
         k: int = 5,
-        nprobe: Optional[int] = None,
-        ef_search: Optional[int] = None,
+        nprobe: int | None = None,
+        ef_search: int | None = None,
     ):
         """
         Search the index.

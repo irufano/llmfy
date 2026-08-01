@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -23,6 +22,6 @@ class BaseNERBackend(ABC):
     """Base class for pluggable NER-based PII detection backends."""
 
     @abstractmethod
-    def detect_entities(self, text: str) -> List[NEREntity]:
+    def detect_entities(self, text: str) -> list[NEREntity]:
         """Run NER over `text` and return raw entity spans."""
         raise NotImplementedError

@@ -4,11 +4,10 @@ Examples demonstrating how to use FlowEngine with different checkpointers.
 
 import asyncio
 import os
-from typing import TypedDict
+from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
-from typing_extensions import Annotated
 
 from llmfy import Message
 from llmfy.flow_engine.checkpointer.sql_checkpointer import SQLCheckpointer

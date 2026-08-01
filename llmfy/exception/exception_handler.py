@@ -3,7 +3,11 @@ from llmfy.exception.exception_mapper import (
     GOOGLE_ERROR_MAP,
     OPENAI_ERROR_MAP,
 )
-from llmfy.exception.llmfy_exception import LLMfyException, TimeoutException, TimeoutType
+from llmfy.exception.llmfy_exception import (
+    LLMfyException,
+    TimeoutException,
+    TimeoutType,
+)
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
@@ -137,7 +141,6 @@ def handle_google_error(e) -> LLMfyException:
     Docs: https://github.com/googleapis/python-genai#error-handling
     """
     import httpx
-
     from google.genai import errors
 
     if isinstance(e, httpx.TimeoutException):

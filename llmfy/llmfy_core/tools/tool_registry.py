@@ -1,8 +1,9 @@
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
+from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.tools.tool import Tool
-from llmfy.exception.llmfy_exception import LLMfyException
 
 
 class ToolRegistry:
@@ -25,11 +26,11 @@ class ToolRegistry:
 
     def __init__(
         self,
-        funcs: List[Callable],
+        funcs: list[Callable],
         model: BaseAIModel,
     ):
-        self._tools: Dict[str, Callable] = {}
-        self._tool_definitions: Dict[str, Dict[str, Any]] = {}
+        self._tools: dict[str, Callable] = {}
+        self._tool_definitions: dict[str, dict[str, Any]] = {}
 
         for func in funcs:
             if not hasattr(func, "_is_tool"):
@@ -40,11 +41,11 @@ class ToolRegistry:
             self._tool_definitions[func.__name__] = tool_def
             # print(f"`{func.__name__}` registered ✅")
 
-    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+    def get_tool_definitions(self) -> list[dict[str, Any]]:
         """Get all tool definitions registered with this framework."""
         return list(self._tool_definitions.values())
 
-    def execute_tool(self, name: str, arguments: Dict[str, Any]) -> Any:
+    def execute_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         """Execute a registered tool."""
         if name not in self._tools:
             raise LLMfyException(f"Tool not found: {name}")

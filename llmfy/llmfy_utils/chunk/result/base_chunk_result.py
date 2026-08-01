@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -9,4 +9,4 @@ class BaseChunkResult(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     content: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)

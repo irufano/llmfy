@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -11,6 +11,6 @@ class NodeStreamType(str, Enum):
 
 class NodeStreamResponse(BaseModel):
     """NodeStreamResponse"""
-    type: Optional[str] = Field(default=None)
-    content: Optional[Any] = Field(default=None)
-    state: Optional[Dict] = Field(default=None)
+    type: str | None = Field(default=None)
+    content: Any | None = Field(default=None)
+    state: dict | None = Field(default=None)

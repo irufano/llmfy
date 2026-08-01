@@ -4,12 +4,12 @@ except ImportError:
     genai = None
 
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.google.googleai_config import GoogleAIConfig
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -58,7 +58,7 @@ class GoogleAIModel(BaseAIModel):
         """Build GenerateContentConfig from self.config."""
         from google.genai import types
 
-        config_kwargs: Dict[str, Any] = {
+        config_kwargs: dict[str, Any] = {
             "temperature": self.config.temperature,
         }
         if self.config.max_tokens is not None:
@@ -90,7 +90,7 @@ class GoogleAIModel(BaseAIModel):
             # Raw override takes priority (backward compat)
             config_kwargs["thinking_config"] = self.config.thinking.raw
         elif self.config.thinking.enabled:
-            thinking_kwargs: Dict[str, Any] = {}
+            thinking_kwargs: dict[str, Any] = {}
             if self.config.thinking.budget_tokens is not None:
                 thinking_kwargs["thinking_budget"] = self.config.thinking.budget_tokens
             if self.config.thinking.level is not None:
@@ -107,7 +107,6 @@ class GoogleAIModel(BaseAIModel):
 
     def __call_googleai(self, params: dict[str, Any]):
         import httpx
-
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
@@ -129,7 +128,6 @@ class GoogleAIModel(BaseAIModel):
 
     def __call_stream_googleai(self, params: dict[str, Any]):
         import httpx
-
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
@@ -152,8 +150,8 @@ class GoogleAIModel(BaseAIModel):
 
     def generate(
         self,
-        messages: List[Dict[str, Any]],
-        tools: Optional[List[Dict[str, Any]]] = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> AIResponse:
         """
@@ -226,8 +224,8 @@ class GoogleAIModel(BaseAIModel):
 
     def generate_stream(
         self,
-        messages: List[Dict[str, Any]],
-        tools: Optional[List[Dict[str, Any]]] = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> Any:
         """

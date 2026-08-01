@@ -1,12 +1,12 @@
 import base64
 import inspect
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 
 
 class GoogleAIFormatter(ModelFormatter):
@@ -223,8 +223,8 @@ class GoogleAIFormatter(ModelFormatter):
         return {"role": role, "parts": parts}
 
     def format_tool_function(
-        self, func_metadata: Dict, type_mapping: dict[Any, str]
-    ) -> Dict:
+        self, func_metadata: dict, type_mapping: dict[Any, str]
+    ) -> dict:
         """Formats a function into Google AI FunctionDeclaration-compatible format.
 
         ```
@@ -295,13 +295,13 @@ class GoogleAIFormatter(ModelFormatter):
 
     def format_tool_message(
         self,
-        messages: List[Message],
+        messages: list[Message],
         id: str,
         tool_call_id: str,
         name: str,
         result: str,
-        request_call_id: Optional[str] = None,
-    ) -> List[Message]:
+        request_call_id: str | None = None,
+    ) -> list[Message]:
         """Stores a pre-formatted function_response part in tool_results.
 
         Google AI tool results must be role="user" with function_response parts.

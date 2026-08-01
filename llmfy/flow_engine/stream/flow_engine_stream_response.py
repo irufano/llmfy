@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -15,8 +15,8 @@ class FlowEngineStreamType(str, Enum):
 
 class FlowEngineStreamResponse(BaseModel):
     """FlowEngineStreamResponse"""
-    type: Optional[str] = Field(default=None)
-    node: Optional[str] = Field(default=None)
-    content: Optional[Any] = Field(default=None)
-    state: Optional[Dict] = Field(default=None)
-    error: Optional[Any] = Field(default=None)
+    type: str | None = Field(default=None)
+    node: str | None = Field(default=None)
+    content: Any | None = Field(default=None)
+    state: dict | None = Field(default=None)
+    error: Any | None = Field(default=None)

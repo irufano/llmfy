@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -8,4 +9,4 @@ class ToolCall(BaseModel):
     tool_call_id: str
     request_call_id: str
     name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]

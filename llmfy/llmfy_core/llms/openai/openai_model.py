@@ -5,12 +5,12 @@ except ImportError:
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -91,8 +91,8 @@ class OpenAIModel(BaseAIModel):
 
     def generate(
         self,
-        messages: List[Dict[str, Any]],
-        tools: Optional[List[Dict[str, Any]]] = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> AIResponse:
         """
@@ -161,8 +161,8 @@ class OpenAIModel(BaseAIModel):
 
     def generate_stream(
         self,
-        messages: List[Dict[str, Any]],
-        tools: Optional[List[Dict[str, Any]]] = None,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> Any:
         """

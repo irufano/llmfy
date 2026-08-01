@@ -1,15 +1,15 @@
 import re
-from typing import Any, List, Tuple, Union
+from typing import Any
 
 from llmfy.llmfy_utils.chunk.result.base_chunk_result import BaseChunkResult
 from llmfy.llmfy_utils.chunk.result.md_chunk_result import MarkdownChunkResult
 
 
 def chunk_text(
-    text: Union[str, Tuple[str, Any]],
+    text: str | tuple[str, Any],
     chunk_size: int = 800,
     chunk_overlap: int = 100,
-) -> List[BaseChunkResult]:
+) -> list[BaseChunkResult]:
     """
     Split text into overlapping chunks.
 
@@ -43,7 +43,7 @@ def chunk_text(
             - 'metadata': optional metadata if provided
     """
 
-    chunks: List[BaseChunkResult] = []
+    chunks: list[BaseChunkResult] = []
 
     # Extract text and metadata
     if isinstance(text, tuple):
@@ -72,9 +72,9 @@ def chunk_text(
 
 
 def chunk_markdown_by_header(
-    markdown_text: Union[str, Tuple[str, Any]],
+    markdown_text: str | tuple[str, Any],
     header_level: int | None = None,
-) -> List[MarkdownChunkResult]:
+) -> list[MarkdownChunkResult]:
     """
     Split Markdown into chunks based on header levels.
     The content of each chunk includes the header itself.
@@ -112,7 +112,7 @@ def chunk_markdown_by_header(
         else rf"^(#{{1,{header_level}}}) (.+)$"
     )
     matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
-    chunks: List[MarkdownChunkResult] = []
+    chunks: list[MarkdownChunkResult] = []
 
     for i, match in enumerate(matches):
         hashes = match.group(1)

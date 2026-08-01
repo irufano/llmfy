@@ -4,8 +4,16 @@
 # Docs: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_Errors
 # ============================================================================
 
-from llmfy.exception.llmfy_exception import AuthenticationException, InvalidRequestException, ModelErrorException, ModelNotFoundException, PermissionDeniedException, RateLimitException, ServiceUnavailableException, TimeoutException
-
+from llmfy.exception.llmfy_exception import (
+    AuthenticationException,
+    InvalidRequestException,
+    ModelErrorException,
+    ModelNotFoundException,
+    PermissionDeniedException,
+    RateLimitException,
+    ServiceUnavailableException,
+    TimeoutException,
+)
 
 BEDROCK_ERROR_MAP = {
     # ThrottlingException - HTTP 429

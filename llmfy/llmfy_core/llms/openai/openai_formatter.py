@@ -1,12 +1,12 @@
 import inspect
 import json
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 
 
 class OpenAIFormatter(ModelFormatter):
@@ -64,7 +64,7 @@ class OpenAIFormatter(ModelFormatter):
     """
 
     def format_message(self, message: Message) -> dict:
-        message_dict: Dict[str, Any] = {
+        message_dict: dict[str, Any] = {
             "role": message.role.value,
         }
 
@@ -72,7 +72,7 @@ class OpenAIFormatter(ModelFormatter):
             if isinstance(message.content, str):
                 # content is absolute text
                 message_dict["content"] = message.content
-            if isinstance(message.content, List):
+            if isinstance(message.content, list):
                 # content can be text or image
                 message_dict["content"] = []
                 for c in message.content:
@@ -145,8 +145,8 @@ class OpenAIFormatter(ModelFormatter):
         return message_dict
 
     def format_tool_function(
-        self, func_metadata: Dict, type_mapping: dict[Any, str]
-    ) -> Dict:
+        self, func_metadata: dict, type_mapping: dict[Any, str]
+    ) -> dict:
         """Formats a function into OpenAI's tool format.
 
         ```
@@ -232,13 +232,13 @@ class OpenAIFormatter(ModelFormatter):
 
     def format_tool_message(
         self,
-        messages: List[Message],
+        messages: list[Message],
         id: str,
         tool_call_id: str,
         name: str,
         result: str,
         request_call_id: str | None = None,
-    ) -> List[Message]:
+    ) -> list[Message]:
         messages.append(
             Message(
                 id=id,

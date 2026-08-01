@@ -1,3 +1,3 @@
-from .node import Node, NodeType, START, END
+from .node import END, START, Node, NodeType
 
 __all__ = ["Node", "NodeType", "START", "END"]

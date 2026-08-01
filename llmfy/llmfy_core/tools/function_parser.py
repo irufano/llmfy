@@ -1,13 +1,14 @@
 import inspect
 import re
-from typing import Callable, Dict, get_type_hints
+from collections.abc import Callable
+from typing import get_type_hints
 
 
 class FunctionParser:
     """Extracts metadata from a function."""
 
     @staticmethod
-    def get_function_metadata(func: Callable) -> Dict:
+    def get_function_metadata(func: Callable) -> dict:
         """Extracts metadata from the given function."""
         docstring = inspect.getdoc(func) or ""
         signature = inspect.signature(func)

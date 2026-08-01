@@ -1,4 +1,3 @@
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -60,10 +59,10 @@ class Content(BaseModel):
                 - google: video bytes for files < 20 MB (`video = f.read()`), http URL (`"https://video.link.mp4"`), or YouTube URL (`"https://www.youtube.com/watch?v=..."`). For bytes, `format` can be set to override the default mime type `video/mp4` (e.g. `format="webm"`).
     """
 
-    filename: Optional[str] = None
+    filename: str | None = None
     """PDF file name for content type document"""
 
-    format: Optional[str] = None
+    format: str | None = None
     """Format based on ContentType:
         - Bedrock:
             - `ContentType.IMAGE` extension must be in ["gif", "jpeg", "png", "webp"]
@@ -73,8 +72,8 @@ class Content(BaseModel):
                 Extension must be in ["mp4", "mpeg", "mov", "avi", "x-flv", "mpg", "webm", "wmv", "3gpp"]
     """
 
-    use_s3: Optional[bool] = False
+    use_s3: bool | None = False
     """[Bedrock ONLY] Use file from AWS S3"""
 
-    bucket_owner: Optional[str] = None
+    bucket_owner: str | None = None
     """[Bedrock ONLY] bucket id (e.g. "111122223333")"""

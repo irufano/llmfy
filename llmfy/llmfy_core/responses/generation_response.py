@@ -1,4 +1,4 @@
-from typing import List
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from llmfy.llmfy_core.messages.message import Message
@@ -10,4 +10,4 @@ class GenerationResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     result: AIResponse
-    messages: List[Message] = Field(default_factory=list)
+    messages: list[Message] = Field(default_factory=list)

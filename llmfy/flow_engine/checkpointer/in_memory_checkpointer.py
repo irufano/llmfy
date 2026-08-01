@@ -1,6 +1,6 @@
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from llmfy.flow_engine.checkpointer.base_checkpointer import (
     BaseCheckpointer,
@@ -14,9 +14,9 @@ class InMemoryCheckpointer(BaseCheckpointer):
     def __init__(self):
         """Initialize the memory checkpointer."""
         # Storage: session_id -> list of checkpoints
-        self._storage: Dict[str, List[Checkpoint]] = defaultdict(list)
+        self._storage: dict[str, list[Checkpoint]] = defaultdict(list)
         # Index: checkpoint_id -> (session_id, checkpoint)
-        self._index: Dict[str, tuple[str, Checkpoint]] = {}
+        self._index: dict[str, tuple[str, Checkpoint]] = {}
     
     async def save(self, checkpoint: Checkpoint) -> None:
         """
@@ -43,7 +43,7 @@ class InMemoryCheckpointer(BaseCheckpointer):
         # Add to index
         self._index[checkpoint_id] = (session_id, checkpoint_copy)
     
-    async def load(self, session_id: str, checkpoint_id: Optional[str] = None) -> Optional[Checkpoint]:
+    async def load(self, session_id: str, checkpoint_id: str | None = None) -> Checkpoint | None:
         """
         Load a checkpoint from memory.
         
@@ -84,7 +84,7 @@ class InMemoryCheckpointer(BaseCheckpointer):
         checkpoints = self._storage[session_id][:limit]
         return [deepcopy(c) for c in checkpoints]
     
-    async def delete(self, session_id: str, checkpoint_id: Optional[str] = None) -> None:
+    async def delete(self, session_id: str, checkpoint_id: str | None = None) -> None:
         """
         Delete checkpoint(s) from memory.
         
@@ -125,7 +125,7 @@ class InMemoryCheckpointer(BaseCheckpointer):
         self._storage.clear()
         self._index.clear()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get storage statistics.
         

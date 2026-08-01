@@ -3,9 +3,7 @@ Examples demonstrating how to use FlowEngine with different checkpointers.
 """
 
 import asyncio
-from typing import TypedDict
-
-from typing_extensions import Annotated
+from typing import Annotated, TypedDict
 
 from llmfy import Message
 

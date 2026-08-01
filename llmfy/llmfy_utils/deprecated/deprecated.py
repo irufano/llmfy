@@ -1,12 +1,12 @@
 import functools
 import warnings
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 
 def deprecated(
-    reason: Optional[str] = None,
-    version: Optional[str] = None,
-    alternative: Optional[str] = None,
+    reason: str | None = None,
+    version: str | None = None,
+    alternative: str | None = None,
     category: type = DeprecationWarning,
 ) -> Callable:
     """
@@ -22,7 +22,7 @@ def deprecated(
         Decorated function, class, or context manager
     """
 
-    def decorator(obj: Union[Callable, type]) -> Union[Callable, type]:
+    def decorator(obj: Callable | type) -> Callable | type:
         # Build warning message
         obj_type = "class" if isinstance(obj, type) else "function"
         obj_name = getattr(obj, "__name__", str(obj))

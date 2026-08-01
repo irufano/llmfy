@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from typing import List
 
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
@@ -81,7 +80,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
 
         return _call_bedrock_impl(model, body)
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """
         Get embedding for a single text
 
@@ -119,7 +118,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
 
     def encode_batch(
         self,
-        texts: List[str] | str,
+        texts: list[str] | str,
         batch_size: int = 10,
         max_retries: int = 3,
         retry_delay: float = 1.0,

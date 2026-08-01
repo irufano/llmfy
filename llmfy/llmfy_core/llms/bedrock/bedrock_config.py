@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -35,7 +35,7 @@ class BedrockThinkingConfig(BaseModel):
     from whichever of the fields below are set (reasoning_effort takes priority,
     then type='adaptive', then extended thinking as the fallback)."""
 
-    budget_tokens: Optional[int] = None
+    budget_tokens: int | None = None
     """Claude extended thinking only (type left unset or 'enabled'). Token budget
     for the reasoning pass. Min 1024. Requires BedrockConfig.temperature, top_p,
     and top_k to all be None — the API errors otherwise.
@@ -49,7 +49,7 @@ class BedrockThinkingConfig(BaseModel):
       - anthropic.claude-opus-4-5-20251101-v1:0
     """
 
-    type: Optional[Literal["adaptive"]] = None
+    type: Literal["adaptive"] | None = None
     """Claude thinking mode selector: 'enabled' (extended thinking, the default
     when left unset) or 'adaptive'. Fable 5, Mythos 5, and Opus 4.7 only accept
     'adaptive' — 'enabled' returns a 400 on those models.
@@ -62,7 +62,7 @@ class BedrockThinkingConfig(BaseModel):
       - anthropic.claude-mythos-5         (adaptive only)
     """
 
-    effort: Optional[str] = None
+    effort: str | None = None
     """Claude adaptive thinking only (type='adaptive'): 'low', 'medium', 'high',
     or 'max'. 'max' is Opus 4.6 only. Sent via output_config rather than inside
     the thinking block — the API returns 400 if placed inside thinking.
@@ -75,7 +75,7 @@ class BedrockThinkingConfig(BaseModel):
       - anthropic.claude-mythos-5
     """
 
-    reasoning_effort: Optional[str] = None
+    reasoning_effort: str | None = None
     """Amazon Nova 2 Lite only: 'low', 'medium', or 'high'. Uses the Nova
     reasoningConfig request format instead of Claude's thinking block — when set,
     it takes priority over type/effort above. 'high' requires BedrockConfig
@@ -157,7 +157,7 @@ class BedrockPromptCachingConfig(BaseModel):
     Supported models: see class docstring — Anthropic Claude (explicit
     cachePoint) and Amazon Nova (automatic, this flag has no effect)."""
 
-    ttl: Optional[str] = None
+    ttl: str | None = None
     """Cache time-to-live for the cachePoint markers. Accepted values:
       - None (default): uses AWS default of 5 minutes
       - "5m":  5-minute cache (all caching-compatible models)
@@ -177,15 +177,15 @@ class BedrockPromptCachingConfig(BaseModel):
 class BedrockConfig(BaseModel):
     """Configuration for BedrockModel."""
 
-    temperature: Optional[float] = 0.7
+    temperature: float | None = 0.7
     """Must be set to None when thinking.enabled=True (Claude extended thinking) or
     when thinking.reasoning_effort='high' (Nova 2 Lite). The API returns an error
     otherwise."""
-    max_tokens: Optional[int] = None
-    top_p: Optional[float] = 1.0
+    max_tokens: int | None = None
+    top_p: float | None = 1.0
     """Must be set to None when thinking.enabled=True (Claude extended thinking)."""
-    top_k: Optional[int] = None
-    stopSequences: Optional[List[str]] = None
+    top_k: int | None = None
+    stopSequences: list[str] | None = None
 
     # Thinking / reasoning — grouped so all thinking-related fields live in one place
     thinking: BedrockThinkingConfig = BedrockThinkingConfig()

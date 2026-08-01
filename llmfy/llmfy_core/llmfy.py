@@ -1,6 +1,7 @@
 import re
 import uuid
-from typing import Any, Callable, Dict, Generator, List, Optional
+from collections.abc import Callable, Generator
+from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
@@ -21,8 +22,8 @@ class LLMfy:
     def __init__(
         self,
         llm: BaseAIModel,
-        system_message: Optional[str] = None,
-        input_variables: Optional[List[str]] = None,
+        system_message: str | None = None,
+        input_variables: list[str] | None = None,
     ):
         """
         LLMfy init.
@@ -37,8 +38,8 @@ class LLMfy:
         self.messages_temp: MessageTemp = MessageTemp()
         self.system_message = system_message
         self.input_variables = input_variables or []
-        self._tools: Dict[str, Callable] = {}
-        self._tool_definitions: Dict[str, Dict[str, Any]] = {}
+        self._tools: dict[str, Callable] = {}
+        self._tool_definitions: dict[str, dict[str, Any]] = {}
 
         def _has_variable_placeholder(s):
             return bool(re.search(r"\{\{[^{}]+\}\}", s))
@@ -72,7 +73,7 @@ class LLMfy:
                     f"Expected variables: {variable_names}."
                 )
 
-    def register_tool(self, funcs: List[Callable]) -> None:
+    def register_tool(self, funcs: list[Callable]) -> None:
         """Register a tool with this framework instance."""
         for func in funcs:
             if not hasattr(func, "_is_tool"):
@@ -82,11 +83,11 @@ class LLMfy:
             self._tools[func.__name__] = func
             self._tool_definitions[func.__name__] = tool_def
 
-    def __get_tool_definitions(self) -> List[Dict[str, Any]]:
+    def __get_tool_definitions(self) -> list[dict[str, Any]]:
         """Get all tool definitions registered with this framework."""
         return list(self._tool_definitions.values())
 
-    def __execute_tool(self, name: str, arguments: Dict[str, Any]) -> Any:
+    def __execute_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         """Execute a registered tool."""
         if name not in self._tools:
             raise LLMfyException(f"Tool not found: {name}")
@@ -150,7 +151,7 @@ class LLMfy:
         except Exception as e:
             raise LLMfyException(f"Error formatting system message: {str(e)}")
 
-    def invoke(self, contents: str | List[Content], **kwargs) -> GenerationResponse:
+    def invoke(self, contents: str | list[Content], **kwargs) -> GenerationResponse:
         """
         Generate a response based on contents.
 
@@ -207,7 +208,7 @@ class LLMfy:
 
     def invoke_with_tools(
         self,
-        contents: str | List[Content],
+        contents: str | list[Content],
         **kwargs,
     ) -> GenerationResponse:
         """
@@ -287,7 +288,7 @@ class LLMfy:
 
     def invoke_stream(
         self,
-        contents: str | List[Content],
+        contents: str | list[Content],
         **kwargs,
     ) -> Generator[GenerationResponse, Any, None]:
         """
@@ -386,7 +387,7 @@ class LLMfy:
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e)
 
-    def chat(self, messages: List[Message], **kwargs) -> GenerationResponse:
+    def chat(self, messages: list[Message], **kwargs) -> GenerationResponse:
         """
         Generate a response based on a list of messages.
 
@@ -454,7 +455,7 @@ class LLMfy:
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e)
 
-    def chat_with_tools(self, messages: List[Message], **kwargs) -> GenerationResponse:
+    def chat_with_tools(self, messages: list[Message], **kwargs) -> GenerationResponse:
         """
         Generate a response based on a list of messages with tools results.
 
@@ -545,7 +546,7 @@ class LLMfy:
 
     def chat_stream(
         self,
-        messages: List[Message],
+        messages: list[Message],
         **kwargs,
     ) -> Generator[GenerationResponse, Any, None]:
         """

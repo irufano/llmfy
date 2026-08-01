@@ -1,11 +1,11 @@
 import inspect
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 from llmfy.llmfy_core.messages.content_type import ContentType
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
-from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 
 
 class BedrockFormatter(ModelFormatter):
@@ -114,7 +114,7 @@ class BedrockFormatter(ModelFormatter):
         """
         # for tool result (tool message) in bedrock role become `user`
         role = message.role.value if message.role.value != "tool" else "user"
-        message_dict: Dict[str, Any] = {
+        message_dict: dict[str, Any] = {
             "role": role,
         }
 
@@ -122,7 +122,7 @@ class BedrockFormatter(ModelFormatter):
             if isinstance(message.content, str):
                 # content is absolute text
                 message_dict["content"] = [{"text": message.content}]
-            if isinstance(message.content, List):
+            if isinstance(message.content, list):
                 # content can be text, image, document or video
                 message_dict["content"] = []
                 for c in message.content:
@@ -298,8 +298,8 @@ class BedrockFormatter(ModelFormatter):
         return message_dict
 
     def format_tool_function(
-        self, func_metadata: Dict, type_mapping: dict[Any, str]
-    ) -> Dict:
+        self, func_metadata: dict, type_mapping: dict[Any, str]
+    ) -> dict:
         """Formats a function into Bedrock's tool format.
 
         ```
@@ -390,13 +390,13 @@ class BedrockFormatter(ModelFormatter):
 
     def format_tool_message(
         self,
-        messages: List[Message],
+        messages: list[Message],
         id: str,
         tool_call_id: str,
         name: str,
         result: str,
         request_call_id: str | None = None,
-    ) -> List[Message]:
+    ) -> list[Message]:
         """
         There are 2 kind tool message provided in bedrock,
         - if all tool request in one item list, the tool message also must in one item list, see sample : `app/llmfy/messages/sample_v1_bedrock_messages.json`

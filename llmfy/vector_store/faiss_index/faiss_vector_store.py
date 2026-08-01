@@ -3,7 +3,7 @@ import json
 import math
 import os
 import pickle
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
@@ -29,7 +29,7 @@ class FAISSVectorStore:
     def __init__(
         self,
         embedding_client: BaseEmbeddingModel,
-        index_type: Optional[Literal["flat", "hnsw", "ivfflat", "ivfpq"]] = None,
+        index_type: Literal["flat", "hnsw", "ivfflat", "ivfpq"] | None = None,
     ):
         """
         Initialize FAISS Vector Store.
@@ -49,11 +49,11 @@ class FAISSVectorStore:
                 'numpy package is not installed. Install it using `pip install "llmfy[numpy]"`'
             )
 
-        self.index_type: Optional[Literal["flat", "hnsw", "ivfflat", "ivfpq"]] = (
+        self.index_type: Literal["flat", "hnsw", "ivfflat", "ivfpq"] | None = (
             index_type
         )
         self.faiss_index = None
-        self.documents: List[Document] = []
+        self.documents: list[Document] = []
         self.embedding_client = embedding_client
         self.embeddings = None
         self.dim_vectors = None
@@ -151,7 +151,7 @@ class FAISSVectorStore:
 
     def encode_documents(
         self,
-        documents: List[Document],
+        documents: list[Document],
         batch_size: int = 5,
         show_logs: bool = False,
     ):
@@ -240,9 +240,9 @@ class FAISSVectorStore:
         query: str,
         k: int = 5,
         score_threshold: float = 0.0,
-        nprobe: Optional[int] = None,
-        ef_search: Optional[int] = None,
-    ) -> List[Tuple[Document, float, int]]:
+        nprobe: int | None = None,
+        ef_search: int | None = None,
+    ) -> list[tuple[Document, float, int]]:
         """
         Search for similar documents using Bedrock embeddings
 
@@ -368,7 +368,7 @@ class FAISSVectorStore:
 
         # Load config first
         with open(os.path.join(path, "config.pkl"), "rb") as f:
-            configs: Dict = pickle.load(f)
+            configs: dict = pickle.load(f)
 
         # Set configs
         self.index_type = configs.get("index_type", "flat")

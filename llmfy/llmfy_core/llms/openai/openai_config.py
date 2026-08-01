@@ -1,4 +1,3 @@
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -34,7 +33,7 @@ class OpenAIThinkingConfig(BaseModel):
       (and later GPT-5.x releases)
     """
 
-    effort: Optional[str] = None
+    effort: str | None = None
     """'low', 'medium', or 'high' — supported on o-series and GPT-5.x alike.
     'minimal' is additionally available on GPT-5.x only (not o-series).
     Sent as reasoning_effort via the Chat Completions API. Defaults to 'medium'
@@ -100,7 +99,7 @@ class OpenAIConfig(BaseModel):
     """Configuration for OpenAIModel."""
 
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
     top_p: float = 1.0
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0

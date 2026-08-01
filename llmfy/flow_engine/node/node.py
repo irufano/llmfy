@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, List, Optional
 
 
 class NodeType(Enum):
@@ -22,7 +22,7 @@ class Node:
     """Represents a node in the workflow graph"""
     name: str
     node_type: NodeType
-    func: Optional[Callable] = None
-    sources: List[str] = field(default_factory=list)
-    targets: List[str] = field(default_factory=list)
+    func: Callable | None = None
+    sources: list[str] = field(default_factory=list)
+    targets: list[str] = field(default_factory=list)
     stream: bool = field(default=False)

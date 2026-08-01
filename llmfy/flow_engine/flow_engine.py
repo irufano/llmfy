@@ -1,21 +1,17 @@
 import inspect
 import uuid
+from collections.abc import Callable
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+# Import checkpointer
 from typing import (
+    Annotated,
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Union,
     get_args,
     get_origin,
     get_type_hints,
 )
-
-# Import checkpointer
-from typing_extensions import Annotated
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.flow_engine.checkpointer.base_checkpointer import (
@@ -52,7 +48,7 @@ class FlowEngine:
     def __init__(
         self,
         state_schema: type,
-        checkpointer: Optional[BaseCheckpointer] = None,
+        checkpointer: BaseCheckpointer | None = None,
     ):
         """
         Initialize the FlowEngine with a state schema.
@@ -63,15 +59,15 @@ class FlowEngine:
         """
         self.is_built = False
         self.state_schema = state_schema
-        self.nodes: Dict[str, Node] = {}
-        self.edges: List[Edge] = []
-        self.state: Dict[str, Any] = {}
+        self.nodes: dict[str, Node] = {}
+        self.edges: list[Edge] = []
+        self.state: dict[str, Any] = {}
         self._reducers = {}
         self._type_hints = {}  # Store type hints for deserialization
 
         # Checkpointer configuration
         self.checkpointer = checkpointer
-        self._session_id: Optional[str] = None
+        self._session_id: str | None = None
         self._step_counter: int = 0
         self._checkpoint_enabled: bool = checkpointer is not None
 
@@ -136,7 +132,7 @@ class FlowEngine:
                 f"(old_value, new_value), but has {len(params)} parameters"
             )
 
-    def _deserialize_state(self, state_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def _deserialize_state(self, state_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Deserialize state dictionary and reconstruct objects based on TypedDict schema.
 
@@ -186,7 +182,7 @@ class FlowEngine:
                 origin = get_origin(expected_type)
 
         # Handle List types
-        if origin in (list, List):
+        if origin in (list, list):
             if not isinstance(value, list):
                 return value
 
@@ -199,7 +195,7 @@ class FlowEngine:
             return value
 
         # Handle Dict types
-        if origin in (dict, Dict):
+        if origin in (dict, dict):
             if not isinstance(value, dict):
                 return value
 
@@ -363,7 +359,7 @@ class FlowEngine:
     def add_conditional_edge(
         self,
         source: str,
-        targets: List[str],
+        targets: list[str],
         condition_func: Callable,
     ):
         """
@@ -397,7 +393,7 @@ class FlowEngine:
             if to_node in self.nodes:
                 self.nodes[to_node].sources.append(source)
 
-    def _update_state(self, updates: Dict[str, Any]):
+    def _update_state(self, updates: dict[str, Any]):
         """
         Update the workflow state with new values.
 
@@ -523,7 +519,7 @@ class FlowEngine:
         metadata = CheckpointMetadata(
             checkpoint_id=checkpoint_id,
             session_id=self._session_id,  # type: ignore
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             node_name=node_name,
             step=self._step_counter,
         )
@@ -532,7 +528,7 @@ class FlowEngine:
 
         await self.checkpointer.save(checkpoint)
 
-    async def _execute_node(self, node_name: str) -> Dict[str, Any]:
+    async def _execute_node(self, node_name: str) -> dict[str, Any]:
         """
         Execute a node function with the current state.
 
@@ -563,7 +559,7 @@ class FlowEngine:
 
         return result
 
-    async def _execute_stream_node(self, node_name: str, func: Optional[Callable]):
+    async def _execute_stream_node(self, node_name: str, func: Callable | None):
         """
         Execute a stream node function with the current state.
 
@@ -597,7 +593,7 @@ class FlowEngine:
                 f"Function in node: '{node_name}' is not stream. Please yield `NodeStreamResponse`."
             )
 
-    async def _get_next_node(self, current_node: str) -> Union[str, None]:
+    async def _get_next_node(self, current_node: str) -> str | None:
         """
         Determine the next node to execute.
 
@@ -655,9 +651,9 @@ class FlowEngine:
 
     async def invoke(
         self,
-        apply_state: Optional[Dict[str, Any]] = None,
-        session_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        apply_state: dict[str, Any] | None = None,
+        session_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Execute the workflow starting from START node or continue from last checkpoint.
 
@@ -768,9 +764,9 @@ class FlowEngine:
 
     async def stream(
         self,
-        apply_state: Optional[Dict[str, Any]] = None,
-        session_id: Optional[str] = None,
-        stream_callback: Optional[Callable] = None,
+        apply_state: dict[str, Any] | None = None,
+        session_id: str | None = None,
+        stream_callback: Callable | None = None,
     ):
         """
         Execute the workflow in streaming mode, starting from START node or continue from last checkpoint.
@@ -908,7 +904,7 @@ class FlowEngine:
                 # Determine next node (now async)
                 current_node = await self._get_next_node(current_node)
 
-    async def get_state(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_state(self, session_id: str) -> dict[str, Any] | None:
         """
         Get the current state for a thread from the last checkpoint.
 
@@ -950,8 +946,8 @@ class FlowEngine:
     async def get_checkpoint(
         self,
         session_id: str,
-        checkpoint_id: Optional[str] = None,
-    ) -> Optional[Checkpoint]:
+        checkpoint_id: str | None = None,
+    ) -> Checkpoint | None:
         """
         Get a specific checkpoint or the latest checkpoint for a thread.
 
@@ -970,7 +966,7 @@ class FlowEngine:
     async def delete_checkpoints(
         self,
         session_id: str,
-        checkpoint_id: Optional[str] = None,
+        checkpoint_id: str | None = None,
     ):
         """
         Delete checkpoint(s) for a thread.
