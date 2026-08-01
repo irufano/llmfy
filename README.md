@@ -145,6 +145,21 @@ if __name__ == "__main__":
 
 ## Develop as Contributor
 
+### Commit message format
+
+Commit subjects follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>: <short summary>
+
+[optional body]
+```
+
+- `type` is one of: `feat`, `fix`, `refactor`, `chore`, `ci`, `docs`, `test`.
+- For a breaking change, prefix the subject with `[breaking-changes]`, e.g. `[breaking-changes] refactor: consolidate thinking config`.
+- Keep the summary in the imperative mood (e.g. "add", not "added"/"adds").
+- The release workflow copies each commit's subject and body verbatim into the GitHub release changelog, so write both to be read standalone (see `.github/workflows/release.yml`).
+
 ### Build package
 ```sh
 uv build
