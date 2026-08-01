@@ -119,25 +119,48 @@ jobs:
 
     - name: Generate changelog
       id: changelog
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         CURRENT_TAG=${{ needs.update-version.outputs.tag }}
         PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${CURRENT_TAG}^ 2>/dev/null || echo "")
 
         if [ -z "$PREVIOUS_TAG" ]; then
-          CHANGELOG=$(git log --pretty=format:"- %s (%an)" --no-merges)
+          RANGE=""
           COMPARE_URL="https://github.com/${{ github.repository }}/commits/${CURRENT_TAG}"
         else
-          CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%an)" --no-merges)
+          RANGE="${PREVIOUS_TAG}..${CURRENT_TAG}"
           COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
         fi
+
+        CHANGELOG=""
+        while IFS= read -r sha; do
+          [ -z "$sha" ] && continue
+          subject=$(git log -1 --format="%s" "$sha")
+          author=$(git log -1 --format="%an" "$sha")
+          body=$(git log -1 --format="%b" "$sha")
+          author_login=$(gh api "repos/${{ github.repository }}/commits/${sha}" --jq '.author.login // empty' 2>/dev/null || echo "")
+          if [ -n "$author_login" ]; then
+            author_display="[${author}](https://github.com/${author_login})"
+          else
+            author_display="${author}"
+          fi
+          CHANGELOG="${CHANGELOG}- ${subject} (${author_display})"$'\n'
+          if [ -n "$body" ]; then
+            CHANGELOG="${CHANGELOG}$(echo "$body" | sed 's/^/    /')"$'\n'
+          fi
+          CHANGELOG="${CHANGELOG}"$'\n'
+        done < <(git log ${RANGE} --no-merges --pretty=format:"%H")
 
         if [ -z "$CHANGELOG" ]; then
           CHANGELOG="- Initial release"
         fi
 
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGELOG" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        {
+          echo "changelog<<CHANGELOG_EOF"
+          echo "$CHANGELOG"
+          echo "CHANGELOG_EOF"
+        } >> $GITHUB_OUTPUT
         echo "compare_url=${COMPARE_URL}" >> $GITHUB_OUTPUT
 
     - name: Create Release
