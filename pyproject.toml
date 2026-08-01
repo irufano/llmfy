@@ -109,3 +109,13 @@ exclude = ["llmfy/test/"]
 
 [tool.uv.sources]
 xx-ent-pii-sm = { url = "https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl" }
+
+[tool.ruff]
+target-version = "py311"
+exclude = ["llmfy/_version.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["llmfy"]

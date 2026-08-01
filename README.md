@@ -179,6 +179,11 @@ or
 uv sync --all-groups
 ```
 
+### Check Lints
+```sh
+uvx ruff check --statistics . 2>&1 | tail -60 
+```
+
 ### Mkdocs run on local
 
 ```sh
