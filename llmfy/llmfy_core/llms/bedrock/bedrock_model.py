@@ -32,7 +32,7 @@ class BedrockModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: BedrockConfig = BedrockConfig()):
+    def __init__(self, model: str, config: BedrockConfig | None = None):
         """
         BedrockModel
 
@@ -40,6 +40,7 @@ class BedrockModel(BaseAIModel):
             model (str): Model ID
             config (BedrockConfig, optional): Configuration. Defaults to BedrockConfig().
         """
+        config = config if config is not None else BedrockConfig()
         if boto3 is None:
             raise LLMfyException(
                 'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'
@@ -84,7 +85,7 @@ class BedrockModel(BaseAIModel):
                 response = self.client.converse(**params)
                 return response
             except (ClientError, ReadTimeoutError, ConnectTimeoutError) as e:
-                raise handle_bedrock_error(e)
+                raise handle_bedrock_error(e) from e
 
         return _call_bedrock_impl(params)
 
@@ -106,7 +107,7 @@ class BedrockModel(BaseAIModel):
             try:
                 return self.client.converse_stream(**params)
             except (ClientError, ReadTimeoutError, ConnectTimeoutError) as e:
-                raise handle_bedrock_error(e)
+                raise handle_bedrock_error(e) from e
 
         return _call_stream_bedrock_impl(params)
 
@@ -292,7 +293,7 @@ class BedrockModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def generate_stream(
         self,
@@ -512,4 +513,4 @@ class BedrockModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e

@@ -31,7 +31,7 @@ class GoogleAIModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: GoogleAIConfig = GoogleAIConfig()):
+    def __init__(self, model: str, config: GoogleAIConfig | None = None):
         """
         GoogleAIModel
 
@@ -39,6 +39,7 @@ class GoogleAIModel(BaseAIModel):
             model (str): Model ID (e.g. "gemini-2.0-flash")
             config (GoogleAIConfig, optional): Configuration. Defaults to GoogleAIConfig().
         """
+        config = config if config is not None else GoogleAIConfig()
         if genai is None:
             raise LLMfyException(
                 'google-genai package is not installed. Install it using `pip install "llmfy[google-genai]"`'
@@ -122,7 +123,7 @@ class GoogleAIModel(BaseAIModel):
                 )
                 return response
             except (errors.APIError, httpx.TimeoutException) as e:
-                raise handle_google_error(e)
+                raise handle_google_error(e) from e
 
         return _call_googleai_impl(params)
 
@@ -144,7 +145,7 @@ class GoogleAIModel(BaseAIModel):
                     config=params["config"],
                 )
             except (errors.APIError, httpx.TimeoutException) as e:
-                raise handle_google_error(e)
+                raise handle_google_error(e) from e
 
         return _call_stream_googleai_impl(params)
 
@@ -220,7 +221,7 @@ class GoogleAIModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def generate_stream(
         self,
@@ -296,4 +297,4 @@ class GoogleAIModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e

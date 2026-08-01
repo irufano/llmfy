@@ -30,7 +30,7 @@ class OpenAIModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: OpenAIConfig = OpenAIConfig()):
+    def __init__(self, model: str, config: OpenAIConfig | None = None):
         """
         OpenAIModel
 
@@ -38,6 +38,7 @@ class OpenAIModel(BaseAIModel):
             model (str): Model ID
             config (OpenAIConfig, optional): Configuration. Defaults to OpenAIConfig().
         """
+        config = config if config is not None else OpenAIConfig()
         if openai is None:
             raise LLMfyException(
                 'openai package is not installed. Install it using `pip install "llmy[openai]"`'
@@ -63,7 +64,7 @@ class OpenAIModel(BaseAIModel):
                 response = self.client.chat.completions.create(**params)
                 return response
             except openai.APIError as e:
-                raise handle_openai_error(e)
+                raise handle_openai_error(e) from e
             # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return _call_openai_impl(params)
@@ -84,7 +85,7 @@ class OpenAIModel(BaseAIModel):
                 params["stream_options"] = {"include_usage": True}
                 return self.client.chat.completions.create(**params)
             except openai.APIError as e:
-                raise handle_openai_error(e)
+                raise handle_openai_error(e) from e
             # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return __call_stream_openai_impl(params)
@@ -157,7 +158,7 @@ class OpenAIModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
 
     def generate_stream(
         self,
@@ -288,4 +289,4 @@ class OpenAIModel(BaseAIModel):
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
-            raise LLMfyException(str(e), raw_error=e)
+            raise LLMfyException(str(e), raw_error=e) from e
