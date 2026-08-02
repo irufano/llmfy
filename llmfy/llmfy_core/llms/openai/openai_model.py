@@ -35,6 +35,7 @@ class OpenAIModel(BaseAIModel):
         model: str,
         config: OpenAIConfig | None = None,
         api_key: str | None = None,
+        base_url: str | None = None,
     ):
         """
         OpenAIModel
@@ -44,6 +45,8 @@ class OpenAIModel(BaseAIModel):
             config (OpenAIConfig, optional): Configuration. Defaults to OpenAIConfig().
             api_key (str, optional): OpenAI API key. Defaults to the `OPENAI_API_KEY`
                 environment variable if not provided.
+            base_url (str, optional): Base URL for the OpenAI API. Defaults to None,
+                which uses the OpenAI SDK's default base URL.
         """
         config = config if config is not None else OpenAIConfig()
         if openai is None:
@@ -57,7 +60,7 @@ class OpenAIModel(BaseAIModel):
                 "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
             )
 
-        self.client = openai.OpenAI(api_key=api_key)
+        self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config

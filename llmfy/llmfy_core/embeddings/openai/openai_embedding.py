@@ -26,6 +26,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
         self,
         model: str = "text-embedding-3-small",
         api_key: str | None = None,
+        base_url: str | None = None,
     ):
         """
         Initialize OpenAI embeddings client
@@ -34,6 +35,8 @@ class OpenAIEmbedding(BaseEmbeddingModel):
             model (str): Model name for OpenAI embeddings. Defaults to "text-embedding-3-small".
             api_key (str, optional): OpenAI API key. Defaults to the `OPENAI_API_KEY`
                 environment variable if not provided.
+            base_url (str, optional): Base URL for the OpenAI API. Defaults to None,
+                which uses the OpenAI SDK's default base URL.
         """
 
         if openai is None:
@@ -47,7 +50,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                 "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
             )
 
-        self.client = openai.OpenAI(api_key=api_key)
+        self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
         self.provider = ServiceProvider.OPENAI
         self.model = model
 
