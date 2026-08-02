@@ -27,6 +27,7 @@ nav:
       - Overview: documentation/features/overview.md
       - Framework: documentation/features/framework.md
       - Providers: documentation/features/providers.md
+      - Compatible Endpoints (base_url): documentation/features/compatible-endpoints.md
       - LLM:
           - Generation: documentation/features/generate.md
           - Content Types: documentation/features/content.md
@@ -55,6 +56,8 @@ nav:
           - Tool Calling: examples/example-tool-calling.md
           - Streaming: examples/example-stream.md
           - Usage Tracking: examples/example-usage-tracker.md
+      - Compatible Endpoints:
+          - AWS Bedrock Mantle: examples/example-bedrock-mantle.md
       - Prompt Caching:
           - AWS Bedrock: examples/example-prompt-caching-bedrock.md
           - OpenAI: examples/example-prompt-caching-openai.md

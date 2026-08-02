@@ -79,9 +79,18 @@ class OpenAIResponsesPromptCachingConfig(BaseModel):
 class OpenAIResponsesConfig(BaseModel):
     """Configuration for OpenAIResponsesModel."""
 
-    temperature: float = 0.7
+    temperature: float | None = 0.7
+    """Sampling temperature. Set to None to omit the field entirely from the
+    request — required for models that reject it outright (e.g. some
+    reasoning-tuned/routing models return a 400 'unsupported_parameter' for
+    temperature), as opposed to just accepting a default."""
+
     max_output_tokens: int | None = None
-    top_p: float = 1.0
+
+    top_p: float | None = 1.0
+    """Nucleus sampling probability. Set to None to omit the field entirely —
+    same rationale as `temperature` above; models that reject one sampling
+    param often reject both."""
 
     # Thinking / reasoning — grouped so all reasoning-related fields live in one place
     reasoning: OpenAIResponsesReasoningConfig = OpenAIResponsesReasoningConfig()

@@ -41,6 +41,7 @@ class OpenAIResponsesModel(BaseAIModel):
         config: OpenAIResponsesConfig | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        default_headers: dict[str, str] | None = None,
     ):
         """
         OpenAIResponsesModel
@@ -52,6 +53,10 @@ class OpenAIResponsesModel(BaseAIModel):
                 environment variable if not provided.
             base_url (str, optional): Base URL for the OpenAI API. Defaults to None,
                 which uses the OpenAI SDK's default base URL.
+            default_headers (dict[str, str], optional): Extra HTTP headers sent on every
+                request, passed straight through to the `openai` SDK client. Needed for
+                compatible endpoints that require headers beyond `Authorization` — e.g.
+                Bedrock Mantle's Project-scoping headers.
         """
         config = config if config is not None else OpenAIResponsesConfig()
         if openai is None:
@@ -65,7 +70,9 @@ class OpenAIResponsesModel(BaseAIModel):
                 "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
             )
 
-        self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        self.client = openai.OpenAI(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
         self.backend = ModelBackend.OPENAI_RESPONSES
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
@@ -134,11 +141,15 @@ class OpenAIResponsesModel(BaseAIModel):
         params: dict[str, Any] = {
             "model": self.model_name,
             "input": self.__to_responses_input(messages),
-            "temperature": self.config.temperature,
             "max_output_tokens": self.config.max_output_tokens,
-            "top_p": self.config.top_p,
             **kwargs,
         }
+        # Omitted entirely (not sent as null) when None — some models reject
+        # these params outright rather than accepting a default for them.
+        if self.config.temperature is not None:
+            params["temperature"] = self.config.temperature
+        if self.config.top_p is not None:
+            params["top_p"] = self.config.top_p
 
         if self.config.reasoning.enabled:
             reasoning: dict[str, Any] = {

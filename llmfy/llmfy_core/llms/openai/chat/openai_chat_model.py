@@ -37,6 +37,7 @@ class OpenAIChatModel(BaseAIModel):
         config: OpenAIChatConfig | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        default_headers: dict[str, str] | None = None,
     ):
         """
         OpenAIChatModel
@@ -48,6 +49,10 @@ class OpenAIChatModel(BaseAIModel):
                 environment variable if not provided.
             base_url (str, optional): Base URL for the OpenAI API. Defaults to None,
                 which uses the OpenAI SDK's default base URL.
+            default_headers (dict[str, str], optional): Extra HTTP headers sent on every
+                request, passed straight through to the `openai` SDK client. Needed for
+                compatible endpoints that require headers beyond `Authorization` — e.g.
+                Bedrock Mantle's Project-scoping headers.
         """
         config = config if config is not None else OpenAIChatConfig()
         if openai is None:
@@ -61,7 +66,9 @@ class OpenAIChatModel(BaseAIModel):
                 "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
             )
 
-        self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        self.client = openai.OpenAI(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
         self.backend = ModelBackend.OPENAI
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
@@ -131,14 +138,18 @@ class OpenAIChatModel(BaseAIModel):
             params = {
                 "model": self.model_name,
                 "messages": messages,
-                "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
-                "top_p": self.config.top_p,
                 "frequency_penalty": self.config.frequency_penalty,
                 "presence_penalty": self.config.presence_penalty,
                 "stream": False,
                 **kwargs,
             }
+            # Omitted entirely (not sent as null) when None — some models
+            # reject these params outright rather than accepting a default.
+            if self.config.temperature is not None:
+                params["temperature"] = self.config.temperature
+            if self.config.top_p is not None:
+                params["top_p"] = self.config.top_p
 
             if self.config.thinking.enabled:
                 params["reasoning_effort"] = self.config.thinking.effort or "medium"
@@ -209,10 +220,11 @@ class OpenAIChatModel(BaseAIModel):
             params = {
                 "model": self.model_name,
                 "messages": messages,
-                "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
                 **kwargs,
             }
+            if self.config.temperature is not None:
+                params["temperature"] = self.config.temperature
 
             if self.config.thinking.enabled:
                 params["reasoning_effort"] = self.config.thinking.effort or "medium"

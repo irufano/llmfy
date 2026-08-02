@@ -114,9 +114,11 @@ Alternatively, pass `api_key` directly to `OpenAIChatModel` — it takes precede
 from llmfy import OpenAIChatConfig, OpenAIChatThinkingConfig
 
 config = OpenAIChatConfig(
-    temperature=0.7,       # Sampling temperature (0.0-2.0)
+    temperature=0.7,       # Sampling temperature (0.0-2.0); None omits the field entirely
+                            # — needed for models that reject it outright rather than
+                            # accepting a default (400 unsupported_parameter)
     max_tokens=None,       # Max output tokens (None = model default)
-    top_p=1.0,             # Nucleus sampling probability
+    top_p=1.0,             # Nucleus sampling probability; None omits the field, same as temperature
     frequency_penalty=0.0, # Penalise repeated tokens
     presence_penalty=0.0,  # Penalise tokens already in the prompt
     # Thinking / reasoning (o-series models) — grouped in one settings object
@@ -173,9 +175,11 @@ Alternatively, pass `api_key` directly to `OpenAIResponsesModel` — it takes pr
 from llmfy import OpenAIResponsesConfig, OpenAIResponsesReasoningConfig
 
 config = OpenAIResponsesConfig(
-    temperature=0.7,        # Sampling temperature (0.0-2.0)
+    temperature=0.7,        # Sampling temperature (0.0-2.0); None omits the field entirely
+                             # — needed for models that reject it outright rather than
+                             # accepting a default (400 unsupported_parameter)
     max_output_tokens=None, # Max output tokens (None = model default)
-    top_p=1.0,               # Nucleus sampling probability
+    top_p=1.0,               # Nucleus sampling probability; None omits the field, same as temperature
     # Reasoning (o-series and GPT-5.x models) — grouped in one settings object
     reasoning=OpenAIResponsesReasoningConfig(
         enabled=False,  # Set True for o-series/GPT-5.x reasoning models
@@ -354,3 +358,9 @@ llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=config, api_key="...")
 ```
 
 Common model IDs: `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro`
+
+---
+
+## Using a Compatible Endpoint (`base_url`)
+
+`AnthropicMessagesModel`, `OpenAIChatModel`, and `OpenAIResponsesModel` accept `base_url`, so any provider exposing an Anthropic-Messages- or OpenAI-compatible API can be used through llmfy — not just Anthropic/OpenAI themselves. See [Compatible Endpoints](compatible-endpoints.md) for detailed examples (AWS Bedrock Mantle, Groq, Together AI, OpenRouter, self-hosted servers) and the caveats to check before pointing a config at a third-party endpoint.

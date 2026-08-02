@@ -36,6 +36,7 @@ class AnthropicMessagesModel(BaseAIModel):
         config: AnthropicMessagesConfig | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        default_headers: dict[str, str] | None = None,
     ):
         """
         AnthropicMessagesModel
@@ -45,7 +46,12 @@ class AnthropicMessagesModel(BaseAIModel):
             config (AnthropicMessagesConfig, optional): Configuration. Defaults to AnthropicMessagesConfig().
             api_key (str, optional): Anthropic API key. Defaults to the
                 `ANTHROPIC_API_KEY` environment variable if not provided.
-            base_url (str, optional): Override the API base URL (e.g. for a proxy).
+            base_url (str, optional): Override the API base URL (e.g. for a proxy or
+                a compatible endpoint such as AWS Bedrock's `bedrock-mantle`).
+            default_headers (dict[str, str], optional): Extra HTTP headers sent on every
+                request, passed straight through to the `anthropic` SDK client. Needed for
+                endpoints that require headers beyond `x-api-key`/`anthropic-version` — e.g.
+                Bedrock Mantle's `anthropic-workspace-id` header for Workspace scoping.
         """
         config = config if config is not None else AnthropicMessagesConfig()
         if anthropic is None:
@@ -63,7 +69,9 @@ class AnthropicMessagesModel(BaseAIModel):
         self.provider = ServiceProvider.ANTHROPIC
         self.model_name = model
         self.config = config
-        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
+        self.client = anthropic.Anthropic(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
 
     def __call_anthropic(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
@@ -155,7 +163,10 @@ class AnthropicMessagesModel(BaseAIModel):
                 last_msg = _messages[-1]
                 last_content = list(last_msg.get("content", []))
                 if last_content:
-                    last_content[-1] = {**last_content[-1], "cache_control": cache_control}
+                    last_content[-1] = {
+                        **last_content[-1],
+                        "cache_control": cache_control,
+                    }
                     _messages[-1] = {**last_msg, "content": last_content}
                 params["messages"] = _messages
 
