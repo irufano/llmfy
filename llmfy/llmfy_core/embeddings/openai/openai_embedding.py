@@ -25,23 +25,29 @@ class OpenAIEmbedding(BaseEmbeddingModel):
     def __init__(
         self,
         model: str = "text-embedding-3-small",
+        api_key: str | None = None,
     ):
         """
         Initialize OpenAI embeddings client
 
         Args:
             model (str): Model name for OpenAI embeddings. Defaults to "text-embedding-3-small".
-            api_key (str): OpenAI API key. If None, will use OPENAI_API_KEY environment variable.
+            api_key (str, optional): OpenAI API key. Defaults to the `OPENAI_API_KEY`
+                environment variable if not provided.
         """
 
         if openai is None:
             raise LLMfyException(
                 'openai package is not installed. Install it using `pip install "llmfy[openai]"`'
             )
-        if not os.getenv("OPENAI_API_KEY"):
-            raise LLMfyException("Please provide `OPENAI_API_KEY` on your environment!")
+        if not api_key:
+            api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise LLMfyException(
+                "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
+            )
 
-        self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = openai.OpenAI(api_key=api_key)
         self.provider = ServiceProvider.OPENAI
         self.model = model
 
@@ -166,7 +172,9 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                                 )
                                 time.sleep(wait_time)
                                 continue
-                            logger.error(f"Rate limit error after {max_retries} attempts: {e}")
+                            logger.error(
+                                f"Rate limit error after {max_retries} attempts: {e}"
+                            )
                             raise
                         logger.error(f"Error processing text: {e}")
                         if attempt < max_retries - 1:

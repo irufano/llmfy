@@ -25,22 +25,29 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
     def __init__(
         self,
         model: str = "text-embedding-004",
+        api_key: str | None = None,
     ):
         """
         Initialize Google AI embeddings client
 
         Args:
             model (str): Model name for Google AI embeddings. Defaults to "text-embedding-004".
+            api_key (str, optional): Google AI API key. Defaults to the `GOOGLE_API_KEY`
+                environment variable if not provided.
         """
 
         if genai is None:
             raise LLMfyException(
                 'google-genai package is not installed. Install it using `pip install "llmfy[google-genai]"`'
             )
-        if not os.getenv("GOOGLE_API_KEY"):
-            raise LLMfyException("Please provide `GOOGLE_API_KEY` on your environment!")
+        if not api_key:
+            api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise LLMfyException(
+                "Please provide `GOOGLE_API_KEY` on your environment or pass `api_key`!"
+            )
 
-        self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        self.client = genai.Client(api_key=api_key)
         self.provider = ServiceProvider.GOOGLE
         self.model = model
 

@@ -5,28 +5,63 @@ LLMfy can use embedding.
 
 ## Providers
 
+!!! tip
+    Each embedding client reads its credentials from environment variables by
+    default, but you can pass them directly as constructor arguments instead —
+    explicit arguments take precedence over the environment. See
+    [Providers](providers.md) for the equivalent chat/generation models.
+
 ### AWS Bedrock
 
 > See available embedding models: [AWS Bedrock Embedding Models](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html)
 
+Reads `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BEDROCK_REGION` from the environment by default.
+
 ```python
 embedding = BedrockEmbedding(model="amazon.titan-embed-text-v1")
+```
+
+Or pass the credentials directly:
+
+```python
+embedding = BedrockEmbedding(
+    model="amazon.titan-embed-text-v1",
+    aws_access_key_id="...",
+    aws_secret_access_key="...",
+    aws_bedrock_region="us-east-1",
+)
 ```
 
 ### OpenAI
 
 > See available embedding models: [OpenAI Embedding Models](https://developers.openai.com/api/docs/guides/embeddings#embedding-models)
 
+Reads `OPENAI_API_KEY` from the environment by default.
+
 ```python
 embedding = OpenAIEmbedding(model="text-embedding-3-small")
+```
+
+Or pass the API key directly:
+
+```python
+embedding = OpenAIEmbedding(model="text-embedding-3-small", api_key="sk-...")
 ```
 
 ### Google AI
 
 > See available embedding models: [Google AI Embedding Models](https://ai.google.dev/gemini-api/docs/models#specialized_task_models)
 
+Reads `GOOGLE_API_KEY` from the environment by default.
+
 ```python
 embedding = GoogleAIEmbedding(model="gemini-embedding-001")
+```
+
+Or pass the API key directly:
+
+```python
+embedding = GoogleAIEmbedding(model="gemini-embedding-001", api_key="...")
 ```
 
 ## Define Embedding
