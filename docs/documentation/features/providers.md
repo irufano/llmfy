@@ -30,6 +30,8 @@ LLMfy supports three LLM providers. The table below summarises their capabilitie
 
 - `OPENAI_API_KEY`
 
+Alternatively, pass `api_key` directly to `OpenAIModel` — it takes precedence over the environment variable.
+
 ### Configuration
 
 ```python
@@ -62,6 +64,12 @@ llm = OpenAIModel(model="gpt-4o-mini", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
 
+You can also pass the API key directly instead of using an environment variable:
+
+```python
+llm = OpenAIModel(model="gpt-4o-mini", config=config, api_key="sk-...")
+```
+
 Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
 
 ---
@@ -87,6 +95,8 @@ Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_BEDROCK_REGION`
+
+Alternatively, pass `aws_access_key_id`, `aws_secret_access_key`, and `aws_bedrock_region` directly to `BedrockModel` — they take precedence over the environment variables.
 
 ### Configuration
 
@@ -123,6 +133,18 @@ llm = BedrockModel(model="amazon.nova-lite-v1:0", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
 
+You can also pass the credentials directly instead of using environment variables:
+
+```python
+llm = BedrockModel(
+    model="amazon.nova-lite-v1:0",
+    config=config,
+    aws_access_key_id="...",
+    aws_secret_access_key="...",
+    aws_bedrock_region="us-east-1",
+)
+```
+
 Common model IDs: `amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`, `anthropic.claude-3-5-sonnet-20240620-v1:0`
 
 ---
@@ -146,6 +168,8 @@ Common model IDs: `amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`, `anthropic.cl
 ### Environment Variables
 
 - `GOOGLE_API_KEY`
+
+Alternatively, pass `api_key` directly to `GoogleAIModel` — it takes precedence over the environment variable.
 
 ### Configuration
 
@@ -187,6 +211,12 @@ config = GoogleAIConfig(temperature=0.7)
 llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=config)
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
+```
+
+You can also pass the API key directly instead of using an environment variable:
+
+```python
+llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=config, api_key="...")
 ```
 
 Common model IDs: `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro`

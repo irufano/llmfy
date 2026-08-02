@@ -70,17 +70,17 @@ git+https://github.com/irufano/llmfy.git@dev
 
 ## How to use
 ### OpenAI models
-To use `OpenAIModel`, requires install `"llmfy[openai]"` and add below config to your env:
+To use `OpenAIModel`, requires install `"llmfy[openai]"` and add below config to your env (or pass `api_key=` to `OpenAIModel` instead):
 - `OPENAI_API_KEY`
 
 ### AWS Bedrock models
-To use `BedrockModel`, requires install `"llmfy[boto3]"` and add below config to your env:
+To use `BedrockModel`, requires install `"llmfy[boto3]"` and add below config to your env (or pass `aws_access_key_id=`, `aws_secret_access_key=`, `aws_bedrock_region=` to `BedrockModel` instead):
 - `AWS_ACCESS_KEY_ID` 
 - `AWS_SECRET_ACCESS_KEY` 
 - `AWS_BEDROCK_REGION`
 
 ### Google AI models
-To use `GoogleAIModel`, requires install `"llmfy[google-genai]"` and add below config to your env:
+To use `GoogleAIModel`, requires install `"llmfy[google-genai]"` and add below config to your env (or pass `api_key=` to `GoogleAIModel` instead):
 - `GOOGLE_API_KEY`
 
 ### PII Guard — PERSON_NAME / ADDRESS detection

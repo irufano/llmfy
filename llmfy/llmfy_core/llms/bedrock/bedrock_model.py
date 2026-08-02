@@ -32,30 +32,50 @@ class BedrockModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: BedrockConfig | None = None):
+    def __init__(
+        self,
+        model: str,
+        config: BedrockConfig | None = None,
+        aws_access_key_id: str | None = None,
+        aws_secret_access_key: str | None = None,
+        aws_bedrock_region: str | None = None,
+    ):
         """
         BedrockModel
 
         Args:
             model (str): Model ID
             config (BedrockConfig, optional): Configuration. Defaults to BedrockConfig().
+            aws_access_key_id (str, optional): AWS access key ID. Defaults to the
+                `AWS_ACCESS_KEY_ID` environment variable if not provided.
+            aws_secret_access_key (str, optional): AWS secret access key. Defaults to
+                the `AWS_SECRET_ACCESS_KEY` environment variable if not provided.
+            aws_bedrock_region (str, optional): AWS Bedrock region. Defaults to the
+                `AWS_BEDROCK_REGION` environment variable if not provided.
         """
         config = config if config is not None else BedrockConfig()
         if boto3 is None:
             raise LLMfyException(
                 'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'
             )
-        if not os.getenv("AWS_ACCESS_KEY_ID"):
+
+        aws_access_key_id = aws_access_key_id or os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_access_key = aws_secret_access_key or os.getenv(
+            "AWS_SECRET_ACCESS_KEY"
+        )
+        aws_bedrock_region = aws_bedrock_region or os.getenv("AWS_BEDROCK_REGION")
+
+        if not aws_access_key_id:
             raise LLMfyException(
-                "Please provide `AWS_ACCESS_KEY_ID` on your environment!"
+                "Please provide `AWS_ACCESS_KEY_ID` on your environment or pass `aws_access_key_id`!"
             )
-        if not os.getenv("AWS_SECRET_ACCESS_KEY"):
+        if not aws_secret_access_key:
             raise LLMfyException(
-                "Please provide `AWS_SECRET_ACCESS_KEY` on your environment!"
+                "Please provide `AWS_SECRET_ACCESS_KEY` on your environment or pass `aws_secret_access_key`!"
             )
-        if not os.getenv("AWS_BEDROCK_REGION"):
+        if not aws_bedrock_region:
             raise LLMfyException(
-                "Please provide `AWS_BEDROCK_REGION` on your environment!"
+                "Please provide `AWS_BEDROCK_REGION` on your environment or pass `aws_bedrock_region`!"
             )
 
         self.provider = ServiceProvider.BEDROCK
@@ -63,9 +83,9 @@ class BedrockModel(BaseAIModel):
         self.config = config
         self.client = boto3.client(
             "bedrock-runtime",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=os.getenv("AWS_BEDROCK_REGION"),
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            region_name=aws_bedrock_region,
         )
 
     def __call_bedrock(self, params: dict[str, Any]):

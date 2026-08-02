@@ -30,23 +30,34 @@ class OpenAIModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: OpenAIConfig | None = None):
+    def __init__(
+        self,
+        model: str,
+        config: OpenAIConfig | None = None,
+        api_key: str | None = None,
+    ):
         """
         OpenAIModel
 
         Args:
             model (str): Model ID
             config (OpenAIConfig, optional): Configuration. Defaults to OpenAIConfig().
+            api_key (str, optional): OpenAI API key. Defaults to the `OPENAI_API_KEY`
+                environment variable if not provided.
         """
         config = config if config is not None else OpenAIConfig()
         if openai is None:
             raise LLMfyException(
                 'openai package is not installed. Install it using `pip install "llmy[openai]"`'
             )
-        if not os.getenv("OPENAI_API_KEY"):
-            raise LLMfyException("Please provide `OPENAI_API_KEY` on your environment!")
+        if not api_key:
+            api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise LLMfyException(
+                "Please provide `OPENAI_API_KEY` on your environment or pass `api_key`!"
+            )
 
-        self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = openai.OpenAI(api_key=api_key)
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config

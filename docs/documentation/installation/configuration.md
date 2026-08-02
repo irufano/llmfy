@@ -1,4 +1,11 @@
 # Configuration
+
+!!! tip
+    Every credential below can also be passed directly as a constructor argument
+    (e.g. `OpenAIModel(model=..., api_key=...)`) instead of using environment
+    variables. Explicit arguments take precedence over the environment. See
+    [Providers](../features/providers.md) for details.
+
 ## OpenAI
 To use `OpenAI` services, add below config to your env:
 

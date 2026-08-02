@@ -31,13 +31,20 @@ class GoogleAIModel(BaseAIModel):
     ```
     """
 
-    def __init__(self, model: str, config: GoogleAIConfig | None = None):
+    def __init__(
+        self,
+        model: str,
+        config: GoogleAIConfig | None = None,
+        api_key: str | None = None,
+    ):
         """
         GoogleAIModel
 
         Args:
             model (str): Model ID (e.g. "gemini-2.0-flash")
             config (GoogleAIConfig, optional): Configuration. Defaults to GoogleAIConfig().
+            api_key (str, optional): Google AI API key. Defaults to the `GOOGLE_API_KEY`
+                environment variable if not provided.
         """
         config = config if config is not None else GoogleAIConfig()
         if genai is None:
@@ -47,10 +54,14 @@ class GoogleAIModel(BaseAIModel):
 
         import os
 
-        if not os.getenv("GOOGLE_API_KEY"):
-            raise LLMfyException("Please provide `GOOGLE_API_KEY` on your environment!")
+        if not api_key:
+            api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise LLMfyException(
+                "Please provide `GOOGLE_API_KEY` on your environment or pass `api_key`!"
+            )
 
-        self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        self.client = genai.Client(api_key=api_key)
         self.provider = ServiceProvider.GOOGLE
         self.model_name = model
         self.config = config
@@ -97,7 +108,9 @@ class GoogleAIModel(BaseAIModel):
             if self.config.thinking.level is not None:
                 thinking_kwargs["thinking_level"] = self.config.thinking.level
             if self.config.thinking.include_thoughts is not None:
-                thinking_kwargs["include_thoughts"] = self.config.thinking.include_thoughts
+                thinking_kwargs["include_thoughts"] = (
+                    self.config.thinking.include_thoughts
+                )
             config_kwargs["thinking_config"] = types.ThinkingConfig(**thinking_kwargs)
         if system_instruction:
             config_kwargs["system_instruction"] = system_instruction
