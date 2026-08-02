@@ -79,7 +79,7 @@ class LLMfy:
             if not hasattr(func, "_is_tool"):
                 raise LLMfyException("Function must be decorated with @Tool")
 
-            tool_def = Tool._get_tool_definition(func, self.model.provider)
+            tool_def = Tool._get_tool_definition(func, self.model.backend)
             self._tools[func.__name__] = func
             self._tool_definitions[func.__name__] = tool_def
 
@@ -187,7 +187,7 @@ class LLMfy:
                     )
 
             response = self.model.generate(
-                self.messages_temp.get_messages(provider=self.model.provider),
+                self.messages_temp.get_messages(backend=self.model.backend),
                 tools=self.__get_tool_definitions(),
             )
 
@@ -247,7 +247,7 @@ class LLMfy:
 
             while True:
                 response = self.model.generate(
-                    self.messages_temp.get_messages(provider=self.model.provider),
+                    self.messages_temp.get_messages(backend=self.model.backend),
                     tools=self.__get_tool_definitions(),
                 )
 
@@ -267,7 +267,7 @@ class LLMfy:
                             tool_call_id=tool_call.tool_call_id,
                             name=tool_call.name,
                             result=str(result),
-                            provider=self.model.provider,
+                            backend=self.model.backend,
                         )
                     continue
 
@@ -346,7 +346,7 @@ class LLMfy:
                     )
 
             stream = self.model.generate_stream(
-                self.messages_temp.get_messages(provider=self.model.provider),
+                self.messages_temp.get_messages(backend=self.model.backend),
                 tools=self.__get_tool_definitions(),
             )
 
@@ -432,11 +432,11 @@ class LLMfy:
                         ),
                         name=message.name if message.name else "",
                         result=message.tool_results[0] if message.tool_results else "",
-                        provider=self.model.provider,
+                        backend=self.model.backend,
                     )
 
             response = self.model.generate(
-                self.messages_temp.get_messages(provider=self.model.provider),
+                self.messages_temp.get_messages(backend=self.model.backend),
                 tools=self.__get_tool_definitions(),
             )
 
@@ -500,12 +500,12 @@ class LLMfy:
                         ),
                         name=message.name if message.name else "",
                         result=message.tool_results[0] if message.tool_results else "",
-                        provider=self.model.provider,
+                        backend=self.model.backend,
                     )
 
             while True:
                 response = self.model.generate(
-                    self.messages_temp.get_messages(provider=self.model.provider),
+                    self.messages_temp.get_messages(backend=self.model.backend),
                     tools=self.__get_tool_definitions(),
                 )
 
@@ -525,7 +525,7 @@ class LLMfy:
                             tool_call_id=tool_call.tool_call_id,
                             name=tool_call.name,
                             result=str(result),
-                            provider=self.model.provider,
+                            backend=self.model.backend,
                         )
                     continue
 
@@ -614,11 +614,11 @@ class LLMfy:
                         ),
                         name=message.name if message.name else "",
                         result=message.tool_results[0] if message.tool_results else "",
-                        provider=self.model.provider,
+                        backend=self.model.backend,
                     )
 
             stream = self.model.generate_stream(
-                self.messages_temp.get_messages(provider=self.model.provider),
+                self.messages_temp.get_messages(backend=self.model.backend),
                 tools=self.__get_tool_definitions(),
             )
 

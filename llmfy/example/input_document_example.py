@@ -12,8 +12,8 @@ from llmfy import (
     LLMfy,
     LLMfyException,
     Message,
-    OpenAIConfig,
-    OpenAIModel,
+    OpenAIChatConfig,
+    OpenAIChatModel,
     Role,
     llmfy_usage_tracker,
 )
@@ -85,8 +85,8 @@ def doc_bedrock_example():
 
 def doc_openai_example():
     # Configuration
-    config = OpenAIConfig(temperature=0.7)
-    llm = OpenAIModel(
+    config = OpenAIChatConfig(temperature=0.7)
+    llm = OpenAIChatModel(
         model="gpt-4o-mini",
         config=config,
     )

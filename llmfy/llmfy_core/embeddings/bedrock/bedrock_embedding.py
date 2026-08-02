@@ -4,6 +4,7 @@ import time
 
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 
@@ -69,6 +70,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
                 "Please provide `AWS_BEDROCK_REGION` on your environment or pass `aws_bedrock_region`!"
             )
 
+        self.backend = ModelBackend.BEDROCK
         self.provider = ServiceProvider.BEDROCK
         self.model = model
         self.client = boto3.client(

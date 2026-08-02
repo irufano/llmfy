@@ -9,23 +9,24 @@ from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.llms.openai.openai_config import OpenAIConfig
+from llmfy.llmfy_core.llms.openai.chat.openai_chat_config import OpenAIChatConfig
 from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
-class OpenAIModel(BaseAIModel):
+class OpenAIChatModel(BaseAIModel):
     """
-    OpenAIModel class.
+    OpenAIChatModel class.
 
     Example:
     ```python
     # Configuration
-    config = OpenAIConfig(
+    config = OpenAIChatConfig(
             temperature=0.7
     )
-    llm = OpenAIModel(model="gpt-4o-mini", config=config)
+    llm = OpenAIChatModel(model="gpt-4o-mini", config=config)
     ...
     ```
     """
@@ -33,22 +34,22 @@ class OpenAIModel(BaseAIModel):
     def __init__(
         self,
         model: str,
-        config: OpenAIConfig | None = None,
+        config: OpenAIChatConfig | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
     ):
         """
-        OpenAIModel
+        OpenAIChatModel
 
         Args:
             model (str): Model ID
-            config (OpenAIConfig, optional): Configuration. Defaults to OpenAIConfig().
+            config (OpenAIChatConfig, optional): Configuration. Defaults to OpenAIChatConfig().
             api_key (str, optional): OpenAI API key. Defaults to the `OPENAI_API_KEY`
                 environment variable if not provided.
             base_url (str, optional): Base URL for the OpenAI API. Defaults to None,
                 which uses the OpenAI SDK's default base URL.
         """
-        config = config if config is not None else OpenAIConfig()
+        config = config if config is not None else OpenAIChatConfig()
         if openai is None:
             raise LLMfyException(
                 'openai package is not installed. Install it using `pip install "llmy[openai]"`'
@@ -61,6 +62,7 @@ class OpenAIModel(BaseAIModel):
             )
 
         self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        self.backend = ModelBackend.OPENAI
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config
@@ -70,7 +72,9 @@ class OpenAIModel(BaseAIModel):
         import openai
 
         from llmfy.exception.exception_handler import handle_openai_error
-        from llmfy.llmfy_core.llms.openai.openai_usage import track_openai_usage
+        from llmfy.llmfy_core.llms.openai.chat.openai_chat_usage import (
+            track_openai_usage,
+        )
 
         @track_openai_usage
         def _call_openai_impl(params: dict[str, Any]):
@@ -88,7 +92,7 @@ class OpenAIModel(BaseAIModel):
         import openai
 
         from llmfy.exception.exception_handler import handle_openai_error
-        from llmfy.llmfy_core.llms.openai.openai_usage import (
+        from llmfy.llmfy_core.llms.openai.chat.openai_chat_usage import (
             track_openai_stream_usage,
         )
 

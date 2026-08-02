@@ -5,11 +5,11 @@
 ## Initialize LLMfy
 
 ```python linenums="1"
-from llmfy import LLMfy, OpenAIModel, OpenAIConfig
+from llmfy import LLMfy, OpenAIChatModel, OpenAIChatConfig
 
-llm = OpenAIModel(
+llm = OpenAIChatModel(
     model="gpt-4o-mini",
-    config=OpenAIConfig(temperature=0.7),
+    config=OpenAIChatConfig(temperature=0.7),
 )
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")

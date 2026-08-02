@@ -10,8 +10,8 @@ from llmfy import (
     Message,
     Role,
     Tool,
-    # OpenAIConfig,
-    # OpenAIModel,
+    # OpenAIChatConfig,
+    # OpenAIChatModel,
 )
 
 load_dotenv()
@@ -23,9 +23,9 @@ def tool_calling_example():
         config=BedrockConfig(temperature=0.7),
     )
 
-    # llm = OpenAIModel(
+    # llm = OpenAIChatModel(
     #     model="gpt-4o-mini",
-    #     config=OpenAIConfig(temperature=0.7),
+    #     config=OpenAIChatConfig(temperature=0.7),
     # )
 
     # Initialize framework
@@ -68,8 +68,8 @@ def tool_calling_with_invoke_example():
         config=BedrockConfig(temperature=0.7),
     )
 
-    # config = OpenAIConfig(temperature=0.7)
-    # llm = OpenAIModel(
+    # config = OpenAIChatConfig(temperature=0.7)
+    # llm = OpenAIChatModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )

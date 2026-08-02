@@ -2,8 +2,8 @@
 from pydantic import BaseModel
 
 
-class OpenAIThinkingConfig(BaseModel):
-    """Grouped reasoning settings for OpenAIModel.
+class OpenAIChatThinkingConfig(BaseModel):
+    """Grouped reasoning settings for OpenAIChatModel.
 
     Applies to o-series reasoning models and the GPT-5.x family:
       - o1, o1-mini, o3, o3-mini, o4-mini (and any future o-series models)
@@ -46,8 +46,8 @@ class OpenAIThinkingConfig(BaseModel):
     """
 
 
-class OpenAIPromptCachingConfig(BaseModel):
-    """Grouped prompt caching settings for OpenAIModel.
+class OpenAIChatPromptCachingConfig(BaseModel):
+    """Grouped prompt caching settings for OpenAIChatModel.
 
     Reference: https://platform.openai.com/docs/guides/prompt-caching
 
@@ -95,8 +95,8 @@ class OpenAIPromptCachingConfig(BaseModel):
     Supported models: see class docstring."""
 
 
-class OpenAIConfig(BaseModel):
-    """Configuration for OpenAIModel."""
+class OpenAIChatConfig(BaseModel):
+    """Configuration for OpenAIChatModel."""
 
     temperature: float = 0.7
     max_tokens: int | None = None
@@ -105,12 +105,12 @@ class OpenAIConfig(BaseModel):
     presence_penalty: float = 0.0
 
     # Thinking / reasoning — grouped so all reasoning-related fields live in one place
-    thinking: OpenAIThinkingConfig = OpenAIThinkingConfig()
-    """Grouped reasoning settings. See OpenAIThinkingConfig for supported models
+    thinking: OpenAIChatThinkingConfig = OpenAIChatThinkingConfig()
+    """Grouped reasoning settings. See OpenAIChatThinkingConfig for supported models
     and field details."""
 
     # Prompt caching — grouped so all caching-related fields live in one place
-    prompt_caching: OpenAIPromptCachingConfig = OpenAIPromptCachingConfig()
-    """Grouped prompt caching settings. See OpenAIPromptCachingConfig for
+    prompt_caching: OpenAIChatPromptCachingConfig = OpenAIChatPromptCachingConfig()
+    """Grouped prompt caching settings. See OpenAIChatPromptCachingConfig for
     supported models and details — caching itself is automatic on OpenAI's
     side; this is an intent flag for usage-stat visibility."""

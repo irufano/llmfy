@@ -36,7 +36,7 @@ class ToolRegistry:
             if not hasattr(func, "_is_tool"):
                 raise LLMfyException("Function must be decorated with @Tool")
 
-            tool_def = Tool._get_tool_definition(func, model.provider)
+            tool_def = Tool._get_tool_definition(func, model.backend)
             self._tools[func.__name__] = func
             self._tool_definitions[func.__name__] = tool_def
             # print(f"`{func.__name__}` registered ✅")

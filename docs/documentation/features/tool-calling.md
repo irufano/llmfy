@@ -31,9 +31,9 @@ Tool calling works identically across all providers — only the model initializ
 ### OpenAI
 
 ```python linenums="1"
-from llmfy import OpenAIModel, OpenAIConfig
+from llmfy import OpenAIChatModel, OpenAIChatConfig
 
-llm = OpenAIModel(model="gpt-4o-mini", config=OpenAIConfig(temperature=0.7))
+llm = OpenAIChatModel(model="gpt-4o-mini", config=OpenAIChatConfig(temperature=0.7))
 ```
 
 ### AWS Bedrock

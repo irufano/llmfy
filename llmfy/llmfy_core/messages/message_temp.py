@@ -6,7 +6,7 @@ from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 from llmfy.llmfy_core.messages.tool_call import ToolCall
-from llmfy.llmfy_core.service_provider import ServiceProvider
+from llmfy.llmfy_core.model_backend import ModelBackend
 
 
 class MessageTemp:
@@ -16,26 +16,32 @@ class MessageTemp:
     # eagerly importing the provider formatters here would pull in each
     # provider's package `__init__.py` (and its concrete Model class), which
     # imports back from `llms.base_ai_model` and creates a circular import.
-    _formatters: dict[ServiceProvider, ModelFormatter] | None = None
+    _formatters: dict[ModelBackend, ModelFormatter] | None = None
 
     def __init__(self):
         self.messages: list[Message] = []
 
     @classmethod
-    def _get_formatter(cls, provider: ServiceProvider) -> ModelFormatter | None:
+    def _get_formatter(cls, backend: ModelBackend) -> ModelFormatter | None:
         if cls._formatters is None:
             from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
             from llmfy.llmfy_core.llms.google.googleai_formatter import (
                 GoogleAIFormatter,
             )
-            from llmfy.llmfy_core.llms.openai.openai_formatter import OpenAIFormatter
+            from llmfy.llmfy_core.llms.openai.chat.openai_chat_formatter import (
+                OpenAIChatFormatter,
+            )
+            from llmfy.llmfy_core.llms.openai.responses.openai_responses_formatter import (
+                OpenAIResponsesFormatter,
+            )
 
             cls._formatters = {
-                ServiceProvider.OPENAI: OpenAIFormatter(),
-                ServiceProvider.BEDROCK: BedrockFormatter(),
-                ServiceProvider.GOOGLE: GoogleAIFormatter(),
+                ModelBackend.OPENAI: OpenAIChatFormatter(),
+                ModelBackend.OPENAI_RESPONSES: OpenAIResponsesFormatter(),
+                ModelBackend.BEDROCK: BedrockFormatter(),
+                ModelBackend.GOOGLE: GoogleAIFormatter(),
             }
-        return cls._formatters.get(provider)
+        return cls._formatters.get(backend)
 
     def add_system_message(self, content: str) -> None:
         self.messages.insert(0, Message(role=Role.SYSTEM, content=content))
@@ -66,12 +72,12 @@ class MessageTemp:
         tool_call_id: str,
         name: str,
         result: str,
-        provider: ServiceProvider,
+        backend: ModelBackend,
         request_call_id: str | None = None,
     ) -> None:
-        formatter = self._get_formatter(provider)
+        formatter = self._get_formatter(backend)
         if not formatter:
-            raise LLMfyException(f"Unsupported model provider: {provider}")
+            raise LLMfyException(f"Unsupported model backend: {backend}")
 
         formatter.format_tool_message(
             messages=self.messages,
@@ -82,10 +88,10 @@ class MessageTemp:
             result=result,
         )
 
-    def get_messages(self, provider: ServiceProvider) -> list[dict[str, Any]]:
-        formatter = self._get_formatter(provider)
+    def get_messages(self, backend: ModelBackend) -> list[dict[str, Any]]:
+        formatter = self._get_formatter(backend)
         if not formatter:
-            raise LLMfyException(f"Unsupported model provider: {provider}")
+            raise LLMfyException(f"Unsupported model backend: {backend}")
         return [formatter.format_message(msg) for msg in self.messages]
 
     def get_instance_messages(self) -> list[Message]:

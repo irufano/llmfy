@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 from llmfy import (
     LLMfy,
     LLMfyException,
-    OpenAIConfig,
-    OpenAIModel,
-    OpenAIPromptCachingConfig,
+    OpenAIChatConfig,
+    OpenAIChatModel,
+    OpenAIChatPromptCachingConfig,
     llmfy_usage_tracker,
 )
 
@@ -50,8 +50,8 @@ Prompt caching on OpenAI:
   or code changes are needed. The longest common prompt prefix is cached
   server-side. Requests that reuse the same prefix within the TTL window
   (5–10 minutes inactivity, max 1 hour) pay no additional fees and benefit
-  from reduced latency. Setting prompt_caching=OpenAIPromptCachingConfig(enabled=True)
-  on OpenAIConfig is an intent flag that ensures cached token counts appear in
+  from reduced latency. Setting prompt_caching=OpenAIChatPromptCachingConfig(enabled=True)
+  on OpenAIChatConfig is an intent flag that ensures cached token counts appear in
   usage details.
 
   Cache TTL:
@@ -83,13 +83,13 @@ def prompt_caching_openai_example():
     Second call: prefix served from cache (cache_read_tokens > 0).
     """
 
-    config = OpenAIConfig(
+    config = OpenAIChatConfig(
         temperature=0.7,
         # intent flag — caching is always automatic
-        prompt_caching=OpenAIPromptCachingConfig(enabled=True),
+        prompt_caching=OpenAIChatPromptCachingConfig(enabled=True),
     )
 
-    llm = OpenAIModel(
+    llm = OpenAIChatModel(
         model="gpt-4o",
         config=config,
     )

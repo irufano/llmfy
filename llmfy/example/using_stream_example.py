@@ -9,8 +9,8 @@ from llmfy import (
     Role,
     llmfy_usage_tracker,
 )
-from llmfy.llmfy_core.llms.openai.openai_config import OpenAIConfig
-from llmfy.llmfy_core.llms.openai.openai_model import OpenAIModel
+from llmfy.llmfy_core.llms.openai.chat.openai_chat_config import OpenAIChatConfig
+from llmfy.llmfy_core.llms.openai.chat.openai_chat_model import OpenAIChatModel
 
 load_dotenv()
 
@@ -31,9 +31,9 @@ def stream_example():
     #     config=BedrockConfig(temperature=0.7),
     # )
 
-    llm = OpenAIModel(
+    llm = OpenAIChatModel(
         model="gpt-4o-mini",
-        config=OpenAIConfig(temperature=0.7),
+        config=OpenAIChatConfig(temperature=0.7),
     )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
@@ -91,9 +91,9 @@ def stream_invoke_example():
     #     config=BedrockConfig(temperature=0.7),
     # )
 
-    llm = OpenAIModel(
+    llm = OpenAIChatModel(
         model="gpt-4o-mini",
-        config=OpenAIConfig(temperature=0.7),
+        config=OpenAIChatConfig(temperature=0.7),
     )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:

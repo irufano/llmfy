@@ -99,7 +99,7 @@ def build_agent(use_redis: bool = True):
         config=BedrockConfig(temperature=0.7),
     )
 
-    # model = OpenAIModel(model="gpt-4o-mini", config=OpenAIConfig())
+    # model = OpenAIChatModel(model="gpt-4o-mini", config=OpenAIChatConfig())
 
     llm = LLMfy(model, system_message="You are Hoki a helpfull assistant.")
 

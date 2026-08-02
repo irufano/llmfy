@@ -13,6 +13,7 @@ from llmfy.llmfy_core.llms.bedrock.bedrock_config import (
     BedrockConfig,
 )
 from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -78,6 +79,7 @@ class BedrockModel(BaseAIModel):
                 "Please provide `AWS_BEDROCK_REGION` on your environment or pass `aws_bedrock_region`!"
             )
 
+        self.backend = ModelBackend.BEDROCK
         self.provider = ServiceProvider.BEDROCK
         self.model_name = model
         self.config = config

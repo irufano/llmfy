@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 from llmfy import (
     # BedrockConfig,
     # BedrockModel,
-    # OpenAIConfig,
-    # OpenAIModel,
+    # OpenAIChatConfig,
+    # OpenAIChatModel,
+    # OpenAIResponsesConfig,
+    # OpenAIResponsesModel,
     GoogleAIConfig,
     GoogleAIModel,
     GoogleAIThinkingConfig,
@@ -34,8 +36,14 @@ def retrieval_example():
     #     config=config,
     # )
 
-    # config = OpenAIConfig(temperature=0.7)
-    # llm = OpenAIModel(
+    # config = OpenAIChatConfig(temperature=0.7)
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=config,
+    # )
+
+    # config = OpenAIResponsesConfig(temperature=0.7)
+    # llm = OpenAIResponsesModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )
@@ -83,8 +91,14 @@ def retrieval_invoke_example():
     #     config=config,
     # )
 
-    # config = OpenAIConfig(temperature=0.7)
-    # llm = OpenAIModel(
+    # config = OpenAIChatConfig(temperature=0.7)
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=config,
+    # )
+
+    # config = OpenAIResponsesConfig(temperature=0.7)
+    # llm = OpenAIResponsesModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )

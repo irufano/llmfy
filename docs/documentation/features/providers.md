@@ -4,13 +4,17 @@ LLMfy supports three LLM providers. The table below summarises their capabilitie
 
 | Provider | Class | Install Extra | Tool Calling | Streaming | Image | Document | Video |
 |----------|-------|---------------|--------------|-----------|-------|----------|-------|
-| OpenAI | `OpenAIModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| OpenAI (Chat Completions) | `OpenAIChatModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| OpenAI (Responses API) | `OpenAIResponsesModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | AWS Bedrock | `BedrockModel` | `llmfy[boto3]` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Google AI | `GoogleAIModel` | `llmfy[google-genai]` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
+!!! note "Two OpenAI backends, one vendor"
+    `OpenAIChatModel` and `OpenAIResponsesModel` both talk to OpenAI — they just use different API surfaces (Chat Completions vs the newer Responses API). Pick one per `LLMfy` instance; they are not interchangeable mid-conversation since their wire formats differ. See [OpenAI (Responses API)](#openai-responses-api) below.
+
 ---
 
-## OpenAI
+## OpenAI (Chat Completions)
 
 ### Installation
 
@@ -30,21 +34,21 @@ LLMfy supports three LLM providers. The table below summarises their capabilitie
 
 - `OPENAI_API_KEY`
 
-Alternatively, pass `api_key` directly to `OpenAIModel` — it takes precedence over the environment variable.
+Alternatively, pass `api_key` directly to `OpenAIChatModel` — it takes precedence over the environment variable.
 
 ### Configuration
 
 ```python
-from llmfy import OpenAIConfig, OpenAIThinkingConfig
+from llmfy import OpenAIChatConfig, OpenAIChatThinkingConfig
 
-config = OpenAIConfig(
+config = OpenAIChatConfig(
     temperature=0.7,       # Sampling temperature (0.0-2.0)
     max_tokens=None,       # Max output tokens (None = model default)
     top_p=1.0,             # Nucleus sampling probability
     frequency_penalty=0.0, # Penalise repeated tokens
     presence_penalty=0.0,  # Penalise tokens already in the prompt
     # Thinking / reasoning (o-series models) — grouped in one settings object
-    thinking=OpenAIThinkingConfig(
+    thinking=OpenAIChatThinkingConfig(
         enabled=False,   # Set True for o1/o3/o4-mini reasoning models
         effort=None,     # 'low', 'medium', 'high' — defaults to 'medium'
     ),
@@ -56,10 +60,10 @@ See [Thinking Config](thinking-config.md) for usage with reasoning models.
 ### Usage
 
 ```python linenums="1"
-from llmfy import OpenAIModel, OpenAIConfig, LLMfy
+from llmfy import OpenAIChatModel, OpenAIChatConfig, LLMfy
 
-config = OpenAIConfig(temperature=0.7)
-llm = OpenAIModel(model="gpt-4o-mini", config=config)
+config = OpenAIChatConfig(temperature=0.7)
+llm = OpenAIChatModel(model="gpt-4o-mini", config=config)
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
@@ -67,10 +71,68 @@ agent = LLMfy(llm, system_message="You are a helpful assistant.")
 You can also pass the API key directly instead of using an environment variable:
 
 ```python
-llm = OpenAIModel(model="gpt-4o-mini", config=config, api_key="sk-...")
+llm = OpenAIChatModel(model="gpt-4o-mini", config=config, api_key="sk-...")
 ```
 
 Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
+
+---
+
+## OpenAI (Responses API)
+
+`OpenAIResponsesModel` talks to OpenAI's newer [Responses API](https://developers.openai.com/api/reference/responses/overview) instead of Chat Completions. Same vendor, same `OPENAI_API_KEY`/install extra as above — just a different wire format (flat `input`/`output` items instead of nested `messages`/`tool_calls`), and access to Responses-only features like `reasoning.summary`.
+
+!!! warning "Document input not yet supported"
+    `ContentType.DOCUMENT` and `ContentType.VIDEO` raise `LLMfyException` on `OpenAIResponsesModel` — only text and image input are implemented. Use `OpenAIChatModel` for document input on OpenAI.
+
+### Installation
+
+Same as [OpenAI](#openai) above — `llmfy[openai]`.
+
+### Environment Variables
+
+- `OPENAI_API_KEY`
+
+Alternatively, pass `api_key` directly to `OpenAIResponsesModel` — it takes precedence over the environment variable.
+
+### Configuration
+
+```python
+from llmfy import OpenAIResponsesConfig, OpenAIResponsesReasoningConfig
+
+config = OpenAIResponsesConfig(
+    temperature=0.7,        # Sampling temperature (0.0-2.0)
+    max_output_tokens=None, # Max output tokens (None = model default)
+    top_p=1.0,               # Nucleus sampling probability
+    # Reasoning (o-series and GPT-5.x models) — grouped in one settings object
+    reasoning=OpenAIResponsesReasoningConfig(
+        enabled=False,  # Set True for o-series/GPT-5.x reasoning models
+        effort=None,    # 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'
+        summary=None,   # 'auto', 'concise', 'detailed' — request a reasoning summary
+    ),
+)
+```
+
+See [Thinking Config](thinking-config.md#openai-responses-api) for usage with reasoning models.
+
+### Usage
+
+```python linenums="1"
+from llmfy import OpenAIResponsesModel, OpenAIResponsesConfig, LLMfy
+
+config = OpenAIResponsesConfig(temperature=0.7)
+llm = OpenAIResponsesModel(model="gpt-4o-mini", config=config)
+
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+```
+
+You can also pass the API key directly instead of using an environment variable:
+
+```python
+llm = OpenAIResponsesModel(model="gpt-4o-mini", config=config, api_key="sk-...")
+```
+
+Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`
 
 ---
 

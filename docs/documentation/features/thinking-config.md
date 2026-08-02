@@ -6,7 +6,8 @@ LLMfy provides a grouped `thinking` settings object across all three providers t
 |----------|-------------|--------|---------------|----------------|
 | **AWS Bedrock** (Claude) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
 | **AWS Bedrock** (Nova 2) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.reasoning_effort` | — |
-| **OpenAI** | `OpenAIThinkingConfig` | `thinking.enabled=True` | `thinking.effort` | — |
+| **OpenAI** (Chat Completions) | `OpenAIChatThinkingConfig` | `thinking.enabled=True` | `thinking.effort` | — |
+| **OpenAI** (Responses API) | `OpenAIResponsesReasoningConfig` | `reasoning.enabled=True` | `reasoning.effort` | — |
 | **Google AI** | `GoogleAIThinkingConfig` | `thinking.enabled=True` | `thinking.level` | `thinking.budget_tokens` |
 
 ---
@@ -168,9 +169,9 @@ config = BedrockConfig(
 
 ---
 
-## OpenAI
+## OpenAI (Chat Completions)
 
-Reasoning is enabled on o-series models via `OpenAIThinkingConfig`. These models always reason internally — `enabled` only controls whether `effort` is sent explicitly; it does not turn reasoning off entirely (the API applies its own default when omitted).
+Reasoning is enabled on o-series models via `OpenAIChatThinkingConfig`. These models always reason internally — `enabled` only controls whether `effort` is sent explicitly; it does not turn reasoning off entirely (the API applies its own default when omitted).
 
 **Supported models**
 
@@ -182,7 +183,7 @@ Reasoning is enabled on o-series models via `OpenAIThinkingConfig`. These models
 | o3-mini | `o3-mini` |
 | o4-mini | `o4-mini` |
 
-**`OpenAIThinkingConfig` fields**
+**`OpenAIChatThinkingConfig` fields**
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
@@ -190,16 +191,50 @@ Reasoning is enabled on o-series models via `OpenAIThinkingConfig`. These models
 | `effort` | `str \| None` | `'low'`, `'medium'`, `'high'` | Defaults to `'medium'` when not set. |
 
 ```python linenums="1"
-from llmfy import OpenAIModel, OpenAIConfig, OpenAIThinkingConfig, LLMfy
+from llmfy import OpenAIChatModel, OpenAIChatConfig, OpenAIChatThinkingConfig, LLMfy
 
-config = OpenAIConfig(
-    thinking=OpenAIThinkingConfig(
+config = OpenAIChatConfig(
+    thinking=OpenAIChatThinkingConfig(
         enabled=True,
         effort="high",
     ),
 )
 
-llm = OpenAIModel(model="o4-mini", config=config)
+llm = OpenAIChatModel(model="o4-mini", config=config)
+
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+response = agent.invoke("What is the time complexity of Dijkstra's algorithm?")
+print(response.result.content)
+```
+
+---
+
+## OpenAI (Responses API)
+
+Reasoning on `OpenAIResponsesModel` is controlled through `OpenAIResponsesReasoningConfig`, nested under `reasoning` (not `thinking`) since the Responses API itself nests reasoning params under a `reasoning` object. Same o-series/GPT-5.x models as Chat Completions — see the table above.
+
+Unlike `OpenAIChatThinkingConfig`, this adds a `summary` field: the Responses API can return a natural-language summary of the model's internal reasoning, useful for debugging without exposing the raw chain of thought.
+
+**`OpenAIResponsesReasoningConfig` fields**
+
+| Field | Type | Values | Description |
+|-------|------|--------|-------------|
+| `enabled` | `bool` | — | Set to `True` to enable. |
+| `effort` | `str \| None` | `'none'`, `'minimal'`, `'low'`, `'medium'`, `'high'`, `'xhigh'`, `'max'` | Defaults to `'medium'` when not set. Not every value is supported by every model. |
+| `summary` | `str \| None` | `'auto'`, `'concise'`, `'detailed'` | Requests a summary of the model's reasoning. Left unset (`None`) omits the field entirely. |
+
+```python linenums="1"
+from llmfy import OpenAIResponsesModel, OpenAIResponsesConfig, OpenAIResponsesReasoningConfig, LLMfy
+
+config = OpenAIResponsesConfig(
+    reasoning=OpenAIResponsesReasoningConfig(
+        enabled=True,
+        effort="high",
+        summary="concise",
+    ),
+)
+
+llm = OpenAIResponsesModel(model="gpt-5.6-terra", config=config)
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 response = agent.invoke("What is the time complexity of Dijkstra's algorithm?")

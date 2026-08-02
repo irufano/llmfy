@@ -90,10 +90,15 @@ nav:
                   - Model: reference/llmfy_core.llms.bedrock.bedrock_model.md
                   - Usage: reference/llmfy_core.llms.bedrock.bedrock_usage.md
                   - Pricing: reference/llmfy_core.llms.bedrock.bedrock_pricing_list.md
-              - OpenAI:
-                  - Config: reference/llmfy_core.llms.openai.openai_config.md
-                  - Model: reference/llmfy_core.llms.openai.openai_model.md
-                  - Usage: reference/llmfy_core.llms.openai.openai_usage.md
+              - OpenAI (Chat Completions):
+                  - Config: reference/llmfy_core.llms.openai.chat.openai_chat_config.md
+                  - Model: reference/llmfy_core.llms.openai.chat.openai_chat_model.md
+                  - Usage: reference/llmfy_core.llms.openai.chat.openai_chat_usage.md
+                  - Pricing: reference/llmfy_core.llms.openai.openai_pricing_list.md
+              - OpenAI (Responses API):
+                  - Config: reference/llmfy_core.llms.openai.responses.openai_responses_config.md
+                  - Model: reference/llmfy_core.llms.openai.responses.openai_responses_model.md
+                  - Usage: reference/llmfy_core.llms.openai.responses.openai_responses_usage.md
                   - Pricing: reference/llmfy_core.llms.openai.openai_pricing_list.md
               - Google:
                   - Config: reference/llmfy_core.llms.google.googleai_config.md

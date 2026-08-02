@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
@@ -9,6 +10,7 @@ class BaseEmbeddingModel(ABC):
 
     def __init__(self):
         """Model provider."""
+        self.backend: ModelBackend
         self.provider: ServiceProvider
         self.model: str
 

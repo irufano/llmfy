@@ -6,8 +6,8 @@ from llmfy import (
     LLMfy,
     LLMfyException,
     Message,
-    OpenAIConfig,
-    OpenAIModel,
+    OpenAIChatConfig,
+    OpenAIChatModel,
     Role,
     llmfy_usage_tracker,
 )
@@ -26,9 +26,9 @@ def usage_example():
         config=BedrockConfig(temperature=0.7),
     )
 
-    llm2 = OpenAIModel(
+    llm2 = OpenAIChatModel(
         model="gpt-4o-mini",
-        config=OpenAIConfig(temperature=0.7),
+        config=OpenAIChatConfig(temperature=0.7),
     )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:

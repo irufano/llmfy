@@ -10,6 +10,7 @@ from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.google.googleai_config import GoogleAIConfig
 from llmfy.llmfy_core.messages.tool_call import ToolCall
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
@@ -62,6 +63,7 @@ class GoogleAIModel(BaseAIModel):
             )
 
         self.client = genai.Client(api_key=api_key)
+        self.backend = ModelBackend.GOOGLE
         self.provider = ServiceProvider.GOOGLE
         self.model_name = model
         self.config = config

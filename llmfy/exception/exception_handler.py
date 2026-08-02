@@ -23,7 +23,7 @@ def handle_bedrock_error(e) -> LLMfyException:
         return TimeoutException(
             message=str(e),
             raw_error=e,
-            provider="bedrock",
+            provider=ServiceProvider.BEDROCK,
             timeout_type=TimeoutType.READ,
         )
 
@@ -31,7 +31,7 @@ def handle_bedrock_error(e) -> LLMfyException:
         return TimeoutException(
             message=str(e),
             raw_error=e,
-            provider="bedrock",
+            provider=ServiceProvider.BEDROCK,
             timeout_type=TimeoutType.CONNECT,
         )
 
@@ -39,7 +39,7 @@ def handle_bedrock_error(e) -> LLMfyException:
         return LLMfyException(
             message=str(e),
             raw_error=e,
-            provider="bedrock",
+            provider=ServiceProvider.BEDROCK,
         )
 
     error_code = e.response["Error"]["Code"]
@@ -153,7 +153,7 @@ def handle_google_error(e) -> LLMfyException:
         return TimeoutException(
             message=str(e),
             raw_error=e,
-            provider="google",
+            provider=ServiceProvider.GOOGLE,
             timeout_type=timeout_type_map.get(type(e)),
         )
 

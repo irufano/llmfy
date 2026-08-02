@@ -70,7 +70,7 @@ git+https://github.com/irufano/llmfy.git@dev
 
 ## How to use
 ### OpenAI models
-To use `OpenAIModel`, requires install `"llmfy[openai]"` and add below config to your env (or pass `api_key=` to `OpenAIModel` instead):
+To use `OpenAIChatModel` (Chat Completions) or `OpenAIResponsesModel` (Responses API), requires install `"llmfy[openai]"` and add below config to your env (or pass `api_key=` to the model instead):
 - `OPENAI_API_KEY`
 
 ### AWS Bedrock models
@@ -102,8 +102,8 @@ All other `PIIType`s work with no extra install. Note that `PIIGuard()` defaults
 ### LLMfy Example
 ```python
 from llmfy import (
-    OpenAIModel,
-    OpenAIConfig,
+    OpenAIChatModel,
+    OpenAIChatConfig,
     LLMfy,
     Message,
     Role,
@@ -116,8 +116,8 @@ def sample_prompt():
     Kamu bisa mengunjungi websitenya di https:://irufano.github.io"""
 
     # Configuration
-    config = OpenAIConfig(temperature=0.7)
-    llm = OpenAIModel(model="gpt-4o-mini", config=config)
+    config = OpenAIChatConfig(temperature=0.7)
+    llm = OpenAIChatModel(model="gpt-4o-mini", config=config)
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>

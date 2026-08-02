@@ -26,8 +26,18 @@ except LLMfyException as e:
 ```
 """
 
+from __future__ import annotations
+
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    # Deferred: `llmfy_exception.py` loads very early (`llmfy/__init__.py`
+    # imports `.exception` before `.llmfy_core`), so a real top-level import
+    # here would trigger `llmfy_core/__init__.py` — which pulls in every
+    # provider model, several of which import back `from llmfy import
+    # LLMfyException` — before `llmfy.LLMfyException` itself exists yet.
+    from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
 class TimeoutType(Enum):
@@ -66,7 +76,7 @@ class LLMfyException(Exception):
         message: str,
         status_code: int | None = None,
         raw_error: Any | None = None,
-        provider: str | None = None,
+        provider: ServiceProvider | str | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -103,7 +113,7 @@ class TimeoutException(LLMfyException):
         message: str,
         status_code: int | None = None,
         raw_error: Any | None = None,
-        provider: str | None = None,
+        provider: ServiceProvider | str | None = None,
         timeout_type: TimeoutType | None = None,
     ):
         super().__init__(message, status_code, raw_error, provider)

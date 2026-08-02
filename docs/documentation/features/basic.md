@@ -10,9 +10,9 @@ Each provider has its own configuration class.
     Install `"llmfy[openai]"` and `OPENAI_API_KEY` environment variable.
 
 ```python
-from llmfy import OpenAIConfig
+from llmfy import OpenAIChatConfig
 
-config = OpenAIConfig(temperature=0.7)
+config = OpenAIChatConfig(temperature=0.7)
 ```
 
 ### AWS Bedrock
@@ -42,9 +42,9 @@ config = GoogleAIConfig(temperature=0.7)
 ### OpenAI
 
 ```python
-from llmfy import OpenAIModel
+from llmfy import OpenAIChatModel
 
-llm = OpenAIModel(model="gpt-4o-mini", config=config)
+llm = OpenAIChatModel(model="gpt-4o-mini", config=config)
 ```
 
 ### AWS Bedrock

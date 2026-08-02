@@ -5,7 +5,8 @@ LLMfy provides a grouped `prompt_caching` settings object across all three provi
 | Provider | Config class | Mechanism | Min tokens | Default TTL | Savings |
 |----------|-------------|-----------|------------|-------------|---------|
 | **AWS Bedrock** | `BedrockPromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
-| **OpenAI** | `OpenAIPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
+| **OpenAI** (Chat Completions) | `OpenAIChatPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
+| **OpenAI** (Responses API) | `OpenAIResponsesPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | Same as Chat Completions — pricing is per-model, not per-endpoint |
 | **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
 
 ---
@@ -133,7 +134,7 @@ print(usage)
 
 ---
 
-## OpenAI
+## OpenAI (Chat Completions)
 
 OpenAI applies caching automatically — no code changes or markers are required. `prompt_caching.enabled` is **informational only**; it signals intent and ensures `cache_read_tokens` are tracked in usage details.
 
@@ -179,20 +180,51 @@ The cache-read discount is **not** the same across all model generations — che
 | Cache writes — pre-GPT-5.6 models | No additional fee |
 | Uncached tokens | Billed at the standard rate |
 
-### `OpenAIPromptCachingConfig` fields
+### `OpenAIChatPromptCachingConfig` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `enabled` | `bool` | Intent flag. Does not alter the request. Enables cache token reporting in usage details. |
 
 ```python linenums="1"
-from llmfy import OpenAIModel, OpenAIConfig, OpenAIPromptCachingConfig, LLMfy, llmfy_usage_tracker
+from llmfy import OpenAIChatModel, OpenAIChatConfig, OpenAIChatPromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = OpenAIConfig(
-    prompt_caching=OpenAIPromptCachingConfig(enabled=True),
+config = OpenAIChatConfig(
+    prompt_caching=OpenAIChatPromptCachingConfig(enabled=True),
 )
 
-llm = OpenAIModel(model="gpt-4o", config=config)
+llm = OpenAIChatModel(model="gpt-4o", config=config)
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+
+with llmfy_usage_tracker() as usage:
+    # Both calls share the same large system prompt prefix
+    agent.invoke("What is the capital of France?")
+    agent.invoke("What is the capital of Germany?")
+
+print(usage)
+# cache_read_tokens appears in Request Details when the prefix was served from cache
+```
+
+---
+
+## OpenAI (Responses API)
+
+Same automatic, marker-free caching as Chat Completions above — same models, TTLs, and pricing (pricing is tracked per-model, not per-endpoint, so `OpenAIChatModel` and `OpenAIResponsesModel` share the same rate table). The only difference is the config class name, since it lives alongside `OpenAIResponsesModel`'s other Responses-specific settings.
+
+### `OpenAIResponsesPromptCachingConfig` fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled` | `bool` | Intent flag. Does not alter the request. Enables cache token reporting in usage details. |
+
+```python linenums="1"
+from llmfy import OpenAIResponsesModel, OpenAIResponsesConfig, OpenAIResponsesPromptCachingConfig, LLMfy, llmfy_usage_tracker
+
+config = OpenAIResponsesConfig(
+    prompt_caching=OpenAIResponsesPromptCachingConfig(enabled=True),
+)
+
+llm = OpenAIResponsesModel(model="gpt-4o", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 
 with llmfy_usage_tracker() as usage:

@@ -12,8 +12,8 @@ from llmfy import (
     Role,
     BedrockConfig,
     BedrockModel,
-    # OpenAIConfig,
-    # OpenAIModel,
+    # OpenAIChatConfig,
+    # OpenAIChatModel,
 )
 
 env_file = os.getenv("ENV_FILE", ".env")  # Default to .env if ENV_FILE is not set
@@ -33,8 +33,8 @@ def retrieval_chat_example():
         config=config,
     )
 
-    # config = OpenAIConfig(temperature=0.7)
-    # llm = OpenAIModel(
+    # config = OpenAIChatConfig(temperature=0.7)
+    # llm = OpenAIChatModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )
@@ -73,8 +73,8 @@ def retrieval_invoke_example():
         config=config,
     )
 
-    # config = OpenAIConfig(temperature=0.7)
-    # llm = OpenAIModel(
+    # config = OpenAIChatConfig(temperature=0.7)
+    # llm = OpenAIChatModel(
     #     model="gpt-4o-mini",
     #     config=config,
     # )

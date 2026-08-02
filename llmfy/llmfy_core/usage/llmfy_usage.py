@@ -8,6 +8,7 @@ from llmfy.llmfy_core.llms.bedrock.bedrock_pricing_list import BEDROCK_PRICING
 from llmfy.llmfy_core.llms.google.googleai_pricing_list import GOOGLEAI_PRICING
 from llmfy.llmfy_core.llms.model_pricing import ModelPricing
 from llmfy.llmfy_core.llms.openai.openai_pricing_list import OPENAI_PRICING
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.service_type import ServiceType
 
@@ -18,7 +19,7 @@ class LLMfyUsage:
 
     Count all provider token usage.
 
-    Usage in `OpenAIModel`, `openai_usage_tracker` and `track_openai_usage`
+    Usage in `OpenAIChatModel`, `openai_usage_tracker` and `track_openai_usage`
     """
 
     def __init__(
@@ -198,6 +199,7 @@ class LLMfyUsage:
             + "\n".join(
                 f"{i + 1}. {detail['model']} "
                 f"\n\tprovider: {detail['provider']} "
+                f"\n\tbackend: {detail.get('backend')} "
                 f"\n\ttype: {detail['type']} "
                 f"\n\tinput_tokens: {detail['input_tokens']} "
                 f"\n\toutput_tokens: {detail['output_tokens']} "
@@ -374,7 +376,7 @@ class LLMfyUsage:
 
     def update(
         self,
-        provider: ServiceProvider,
+        backend: ModelBackend,
         type: ServiceType,
         model: str,
         usage: dict[str, int],
@@ -383,28 +385,30 @@ class LLMfyUsage:
         Update usage statistics and calculate price.
 
         Args:
-            provider (ModelProvider): Model provider
+            backend (ModelBackend): Model backend (implementation path)
             model (str): Model name
             usage (Dict[str, int]): Dictionary containing token counts
         """
         match type:
             case ServiceType.LLM:
-                match provider:
-                    case ServiceProvider.OPENAI:
+                match backend:
+                    case ModelBackend.OPENAI:
                         self.__openai_update(model=model, usage=usage)
-                    case ServiceProvider.BEDROCK:
+                    case ModelBackend.OPENAI_RESPONSES:
+                        self.__openai_responses_update(model=model, usage=usage)
+                    case ModelBackend.BEDROCK:
                         self.__bedrock_update(model=model, usage=usage)
-                    case ServiceProvider.GOOGLE:
+                    case ModelBackend.GOOGLE:
                         self.__googleai_update(model=model, usage=usage)
                     case _:
                         pass
             case ServiceType.EMBEDDING:
-                match provider:
-                    case ServiceProvider.OPENAI:
+                match backend:
+                    case ModelBackend.OPENAI:
                         self.__openai_embedding_update(model=model, usage=usage)
-                    case ServiceProvider.BEDROCK:
+                    case ModelBackend.BEDROCK:
                         self.__bedrock_embedding_update(model=model, usage=usage)
-                    case ServiceProvider.GOOGLE:
+                    case ModelBackend.GOOGLE:
                         self.__googleai_embedding_update(model=model, usage=usage)
                     case _:
                         pass
@@ -497,6 +501,102 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.OPENAI,
+                "provider": ServiceProvider.OPENAI,
+                "type": ServiceType.LLM,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
+                "token_unit": price_info.token_unit if price_info else None,
+                "total_cost": total_cost_per_request,
+                "cache_read_tokens": cache_read_tokens,
+                "cache_write_tokens": cache_write_tokens,
+            }
+        )
+        pass
+
+    def __openai_responses_update(
+        self,
+        model: str,
+        usage: dict[str, int],
+    ) -> None:
+        """
+        OpenAI Responses API update usage statistics and calculate price.
+
+        Field names differ from Chat Completions: `input_tokens`/`output_tokens`
+        instead of `prompt_tokens`/`completion_tokens`, and cache details nest
+        under `input_tokens_details` instead of `prompt_tokens_details`. Priced
+        against the same `self.openai_pricing` table as Chat Completions and
+        embeddings — pricing is per-model, not per-endpoint.
+
+        Args:
+            model (str): Model name
+            usage (Dict[str, int]): Dictionary containing token counts
+        """
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        input_tokens_details = usage_dict.get("input_tokens_details")
+        if hasattr(input_tokens_details, "__dict__"):
+            input_tokens_details = vars(input_tokens_details)
+        if isinstance(input_tokens_details, dict):
+            cache_read_tokens = (input_tokens_details or {}).get("cached_tokens", 0) or 0
+            cache_write_tokens = (input_tokens_details or {}).get("cache_write_tokens", 0) or 0
+        else:
+            cache_read_tokens = getattr(input_tokens_details, "cached_tokens", 0) or 0
+            cache_write_tokens = getattr(input_tokens_details, "cache_write_tokens", 0) or 0
+
+        # usage per-request
+        input_tokens = usage_dict.get("input_tokens", 0)
+        output_tokens = usage_dict.get("output_tokens", 0)
+        total_tokens = input_tokens + output_tokens
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+        self.cache_read_tokens += cache_read_tokens
+        self.cache_write_tokens += cache_write_tokens
+
+        # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+
+        if model in self.openai_pricing:
+            price_info = self.openai_pricing[model]
+
+            # Same cache-pricing shape as Chat Completions — see __openai_update
+            # for the rate-selection rationale.
+            non_cached_input = input_tokens - cache_read_tokens - cache_write_tokens
+            cache_read_rate = (
+                price_info.cache_read
+                if price_info.cache_read is not None
+                else price_info.token_input * 0.50
+            )
+            cache_write_rate = price_info.cache_write if price_info.cache_write is not None else 0
+
+            i_price = (non_cached_input / price_info.token_unit) * price_info.token_input
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * cache_read_rate
+            cache_w_price = (cache_write_tokens / price_info.token_unit) * cache_write_rate
+            o_price = (output_tokens / price_info.token_unit) * price_info.token_output
+            total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified openai pricing. You can add in custom prices with `llmfy_usage_tracker(openai_pricing=prices)`",
+                stacklevel=2,
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "backend": ModelBackend.OPENAI_RESPONSES,
                 "provider": ServiceProvider.OPENAI,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
@@ -561,6 +661,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.OPENAI,
                 "provider": ServiceProvider.OPENAI,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
@@ -653,6 +754,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.BEDROCK,
                 "provider": ServiceProvider.BEDROCK,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
@@ -718,6 +820,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.BEDROCK,
                 "provider": ServiceProvider.BEDROCK,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
@@ -843,6 +946,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.GOOGLE,
                 "provider": ServiceProvider.GOOGLE,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
@@ -909,6 +1013,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
+                "backend": ModelBackend.GOOGLE,
                 "provider": ServiceProvider.GOOGLE,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,

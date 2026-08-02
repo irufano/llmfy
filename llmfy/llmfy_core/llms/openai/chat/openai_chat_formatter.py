@@ -9,8 +9,8 @@ from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 
 
-class OpenAIFormatter(ModelFormatter):
-    """OpenAIFormatter
+class OpenAIChatFormatter(ModelFormatter):
+    """OpenAIChatFormatter
 
     BasicRequest:
     ```

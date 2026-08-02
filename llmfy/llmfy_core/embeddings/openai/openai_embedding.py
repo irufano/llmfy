@@ -3,6 +3,7 @@ import time
 
 from llmfy import LLMfyException
 from llmfy.llmfy_core.embeddings.base_embedding_model import BaseEmbeddingModel
+from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_utils.logger.llmfy_logger import LLMfyLogger
 
@@ -51,11 +52,12 @@ class OpenAIEmbedding(BaseEmbeddingModel):
             )
 
         self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        self.backend = ModelBackend.OPENAI
         self.provider = ServiceProvider.OPENAI
         self.model = model
 
     def __call_openai_embedding(self, model: str, text: str):
-        from llmfy.llmfy_core.llms.openai.openai_usage import (
+        from llmfy.llmfy_core.llms.openai.chat.openai_chat_usage import (
             track_openai_embedding_usage,
         )
 
