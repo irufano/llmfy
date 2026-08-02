@@ -3,8 +3,8 @@ from typing import Any
 from pydantic import BaseModel
 
 
-class GoogleAIThinkingConfig(BaseModel):
-    """Grouped thinking settings for GoogleAIModel.
+class GoogleAIGenerateThinkingConfig(BaseModel):
+    """Grouped thinking settings for GoogleAIGenerateModel.
 
     Supported models:
 
@@ -68,8 +68,8 @@ class GoogleAIThinkingConfig(BaseModel):
     """
 
 
-class GoogleAIPromptCachingConfig(BaseModel):
-    """Grouped prompt caching settings for GoogleAIModel.
+class GoogleAIGeneratePromptCachingConfig(BaseModel):
+    """Grouped prompt caching settings for GoogleAIGenerateModel.
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
 
@@ -155,14 +155,14 @@ class GoogleAIPromptCachingConfig(BaseModel):
     models/gemini-3.1-pro-preview, models/gemini-3.5-flash."""
 
 
-class GoogleAIConfig(BaseModel):
-    """Configuration for GoogleAIModel.
+class GoogleAIGenerateConfig(BaseModel):
+    """Configuration for GoogleAIGenerateModel.
 
     Maps to `google.genai.types.GenerateContentConfig` parameters.
 
     Example:
     ```python
-    config = GoogleAIConfig(temperature=0.7)
+    config = GoogleAIGenerateConfig(temperature=0.7)
     ```
     """
 
@@ -191,11 +191,11 @@ class GoogleAIConfig(BaseModel):
     """List of google.genai.types.SafetySetting instances."""
 
     # Thinking — grouped so all thinking-related fields live in one place
-    thinking: GoogleAIThinkingConfig = GoogleAIThinkingConfig()
-    """Grouped thinking settings. See GoogleAIThinkingConfig for supported models
+    thinking: GoogleAIGenerateThinkingConfig = GoogleAIGenerateThinkingConfig()
+    """Grouped thinking settings. See GoogleAIGenerateThinkingConfig for supported models
     and field details."""
 
     # Prompt caching — grouped so all caching-related fields live in one place
-    prompt_caching: GoogleAIPromptCachingConfig = GoogleAIPromptCachingConfig()
-    """Grouped prompt caching settings. See GoogleAIPromptCachingConfig for
+    prompt_caching: GoogleAIGeneratePromptCachingConfig = GoogleAIGeneratePromptCachingConfig()
+    """Grouped prompt caching settings. See GoogleAIGeneratePromptCachingConfig for
     explicit vs implicit caching, supported models, and pricing."""

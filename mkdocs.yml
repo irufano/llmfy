@@ -109,9 +109,9 @@ nav:
                   - Usage: reference/llmfy_core.llms.openai.responses.openai_responses_usage.md
                   - Pricing: reference/llmfy_core.llms.openai.openai_pricing_list.md
               - Google:
-                  - Config: reference/llmfy_core.llms.google.googleai_config.md
-                  - Model: reference/llmfy_core.llms.google.googleai_model.md
-                  - Usage: reference/llmfy_core.llms.google.googleai_usage.md
+                  - Config: reference/llmfy_core.llms.google.generate.googleai_generate_config.md
+                  - Model: reference/llmfy_core.llms.google.generate.googleai_generate_model.md
+                  - Usage: reference/llmfy_core.llms.google.generate.googleai_generate_usage.md
                   - Pricing: reference/llmfy_core.llms.google.googleai_pricing_list.md
           - Embeddings:
               - Base Embedding Model: reference/llmfy_core.embeddings.base_embedding_model.md

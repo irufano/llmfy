@@ -468,7 +468,7 @@ class LLMfyUsage:
                         self.__openai_responses_update(model=model, usage=usage)
                     case ModelBackend.BEDROCK_CONVERSE:
                         self.__bedrock_converse_update(model=model, usage=usage)
-                    case ModelBackend.GOOGLE:
+                    case ModelBackend.GOOGLE_GENERATE:
                         self.__googleai_update(model=model, usage=usage)
                     case ModelBackend.ANTHROPIC_MESSAGES:
                         self.__anthropic_messages_update(model=model, usage=usage)
@@ -1047,7 +1047,7 @@ class LLMfyUsage:
             # Compute full i_price first, then subtract the 75% savings on cached tokens.
             #
             # cached_content_token_count is the subset of prompt_token_count served
-            # from an explicit cachedContent object (GoogleAIConfig.prompt_caching.cached_content).
+            # from an explicit cachedContent object (GoogleAIGenerateConfig.prompt_caching.cached_content).
             # Implicit caching (Gemini 2.5+ automatic) does not populate this field.
             #
             # Reference: https://ai.google.dev/gemini-api/docs/caching
@@ -1099,7 +1099,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.GOOGLE,
+                "backend": ModelBackend.GOOGLE_GENERATE,
                 "provider": ServiceProvider.GOOGLE,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,

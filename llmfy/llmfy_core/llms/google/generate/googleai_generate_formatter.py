@@ -9,8 +9,8 @@ from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 
 
-class GoogleAIFormatter(ModelFormatter):
-    """GoogleAIFormatter.
+class GoogleAIGenerateFormatter(ModelFormatter):
+    """GoogleAIGenerateFormatter.
 
     Formats messages to Google AI (Gemini) API format using dict-based
     representation compatible with the google-genai SDK.

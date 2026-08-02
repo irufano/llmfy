@@ -5,11 +5,14 @@ class ModelBackend(StrEnum):
     """ModelBackend enum."""
 
     # OpenAI
-    OPENAI_CHAT = "openai_chat"  # Chat Completions
+    OPENAI_CHAT = "openai_chat"  # Chat Completions API
     OPENAI_RESPONSES = "openai_responses"  # Responses API
 
+    # AWS Bedrock
     BEDROCK_CONVERSE = "bedrock_converse"  # Converse API
-    GOOGLE = "google"
+
+    # Google AI
+    GOOGLE_GENERATE = "google_generate"  # generate_content API
 
     # Anthropic
     ANTHROPIC_MESSAGES = "anthropic_messages"  # Messages API

@@ -7,8 +7,8 @@ from llmfy import (
     BedrockConverseModel,
     Content,
     ContentType,
-    GoogleAIConfig,
-    GoogleAIModel,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateModel,
     LLMfy,
     LLMfyException,
     Message,
@@ -147,8 +147,8 @@ def doc_openai_example():
 
 def doc_googleai_example():
     # Configuration
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )

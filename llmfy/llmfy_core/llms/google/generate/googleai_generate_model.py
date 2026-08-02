@@ -8,26 +8,28 @@ from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.llms.google.googleai_config import GoogleAIConfig
+from llmfy.llmfy_core.llms.google.generate.googleai_generate_config import (
+    GoogleAIGenerateConfig,
+)
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
-class GoogleAIModel(BaseAIModel):
+class GoogleAIGenerateModel(BaseAIModel):
     """
-    GoogleAIModel class.
+    GoogleAIGenerateModel class.
 
     Uses the `google-genai` package to interact with Google AI (Gemini) models.
 
     Example:
     ```python
     # Configuration
-    config = GoogleAIConfig(
+    config = GoogleAIGenerateConfig(
             temperature=0.7
     )
-    llm = GoogleAIModel(model="gemini-2.0-flash", config=config)
+    llm = GoogleAIGenerateModel(model="gemini-2.0-flash", config=config)
     ...
     ```
     """
@@ -35,19 +37,19 @@ class GoogleAIModel(BaseAIModel):
     def __init__(
         self,
         model: str,
-        config: GoogleAIConfig | None = None,
+        config: GoogleAIGenerateConfig | None = None,
         api_key: str | None = None,
     ):
         """
-        GoogleAIModel
+        GoogleAIGenerateModel
 
         Args:
             model (str): Model ID (e.g. "gemini-2.0-flash")
-            config (GoogleAIConfig, optional): Configuration. Defaults to GoogleAIConfig().
+            config (GoogleAIGenerateConfig, optional): Configuration. Defaults to GoogleAIGenerateConfig().
             api_key (str, optional): Google AI API key. Defaults to the `GOOGLE_API_KEY`
                 environment variable if not provided.
         """
-        config = config if config is not None else GoogleAIConfig()
+        config = config if config is not None else GoogleAIGenerateConfig()
         if genai is None:
             raise LLMfyException(
                 'google-genai package is not installed. Install it using `pip install "llmfy[google-genai]"`'
@@ -63,7 +65,7 @@ class GoogleAIModel(BaseAIModel):
             )
 
         self.client = genai.Client(api_key=api_key)
-        self.backend = ModelBackend.GOOGLE
+        self.backend = ModelBackend.GOOGLE_GENERATE
         self.provider = ServiceProvider.GOOGLE
         self.model_name = model
         self.config = config
@@ -126,7 +128,9 @@ class GoogleAIModel(BaseAIModel):
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
-        from llmfy.llmfy_core.llms.google.googleai_usage import track_googleai_usage
+        from llmfy.llmfy_core.llms.google.generate.googleai_generate_usage import (
+            track_googleai_usage,
+        )
 
         @track_googleai_usage
         def _call_googleai_impl(params: dict[str, Any]):
@@ -147,7 +151,7 @@ class GoogleAIModel(BaseAIModel):
         from google.genai import errors
 
         from llmfy.exception.exception_handler import handle_google_error
-        from llmfy.llmfy_core.llms.google.googleai_usage import (
+        from llmfy.llmfy_core.llms.google.generate.googleai_generate_usage import (
             track_googleai_stream_usage,
         )
 

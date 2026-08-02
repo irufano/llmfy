@@ -11,9 +11,9 @@ from llmfy import (
     # OpenAIChatModel,
     # OpenAIResponsesConfig,
     # OpenAIResponsesModel,
-    GoogleAIConfig,
-    GoogleAIModel,
-    GoogleAIThinkingConfig,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateModel,
+    GoogleAIGenerateThinkingConfig,
     LLMfy,
     LLMfyException,
     Message,
@@ -56,10 +56,10 @@ def retrieval_example():
     #     config=config,
     # )
 
-    config = GoogleAIConfig(
-        temperature=0.7, thinking=GoogleAIThinkingConfig(enabled=True)
+    config = GoogleAIGenerateConfig(
+        temperature=0.7, thinking=GoogleAIGenerateThinkingConfig(enabled=True)
     )
-    llm = GoogleAIModel(
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )
@@ -117,8 +117,8 @@ def retrieval_invoke_example():
     #     config=config,
     # )
 
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )

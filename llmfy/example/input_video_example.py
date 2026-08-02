@@ -5,8 +5,8 @@ from llmfy import (
     BedrockConverseModel,
     Content,
     ContentType,
-    GoogleAIConfig,
-    GoogleAIModel,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateModel,
     LLMfy,
     LLMfyException,
     Message,
@@ -80,8 +80,8 @@ def video_bedrock_example():
 
 def video_googleai_example():
     # Configuration
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )
@@ -139,8 +139,8 @@ def video_googleai_example():
 
 def video_googleai_bytes_example():
     # Configuration
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )

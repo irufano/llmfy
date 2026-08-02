@@ -5,8 +5,8 @@ from llmfy import (
     # BedrockConverseModel,
     # OpenAIChatConfig,
     # OpenAIChatModel,
-    GoogleAIConfig,
-    GoogleAIModel,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateModel,
     LLMfy,
     Message,
     Role,
@@ -34,8 +34,8 @@ def tool_calling_example():
     #     config=config,
     # )
 
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )
@@ -109,8 +109,8 @@ def tool_calling_with_invoke_example():
     # model="anthropic.claude-3-5-sonnet-20240620-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    config = GoogleAIConfig(temperature=0.7)
-    llm = GoogleAIModel(
+    config = GoogleAIGenerateConfig(temperature=0.7)
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
         config=config,
     )

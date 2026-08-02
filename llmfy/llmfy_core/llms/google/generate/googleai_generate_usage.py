@@ -17,7 +17,7 @@ def _extract_usage(usage_metadata) -> dict:
     Prompt caching fields:
       - cached_content_token_count: tokens served from an explicit cachedContent
         object (~25% of normal input price). Only populated for explicit caching
-        (GoogleAIConfig.prompt_caching.cached_content is set). Implicit caching (Gemini 2.5+
+        (GoogleAIGenerateConfig.prompt_caching.cached_content is set). Implicit caching (Gemini 2.5+
         automatic) does not surface this field in the API response.
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
@@ -36,11 +36,11 @@ def _extract_usage(usage_metadata) -> dict:
 
 
 def track_googleai_usage(func):
-    """Decorator to wrap `__call_googleai` calls on `GoogleAIModel`.
+    """Decorator to wrap `__call_googleai` calls on `GoogleAIGenerateModel`.
 
     Extracts usage_metadata from the GenerateContentResponse and forwards it
     to the usage tracker via _extract_usage(). When explicit prompt caching is
-    active (GoogleAIConfig.prompt_caching.cached_content is set), cached_content_token_count
+    active (GoogleAIGenerateConfig.prompt_caching.cached_content is set), cached_content_token_count
     is populated and reported as cache_read_tokens in the usage details.
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
@@ -56,7 +56,7 @@ def track_googleai_usage(func):
         if response.usage_metadata:
             usage = _extract_usage(response.usage_metadata)
             usage_tracker.update(
-                backend=ModelBackend.GOOGLE,
+                backend=ModelBackend.GOOGLE_GENERATE,
                 type=ServiceType.LLM,
                 model=model,
                 usage=usage,
@@ -67,12 +67,12 @@ def track_googleai_usage(func):
 
 
 def track_googleai_stream_usage(func):
-    """Decorator to wrap `__call_stream_googleai` calls on `GoogleAIModel`.
+    """Decorator to wrap `__call_stream_googleai` calls on `GoogleAIGenerateModel`.
 
     Tees the response stream to extract usage_metadata from the final chunk
     without consuming the stream. Forwards the same fields as the non-stream
     decorator, including cached_content_token_count when explicit caching is
-    active (GoogleAIConfig.prompt_caching.cached_content is set).
+    active (GoogleAIGenerateConfig.prompt_caching.cached_content is set).
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
     """
@@ -100,7 +100,7 @@ def track_googleai_stream_usage(func):
 
         if stream_usage:
             usage_tracker.update(
-                backend=ModelBackend.GOOGLE,
+                backend=ModelBackend.GOOGLE_GENERATE,
                 type=ServiceType.LLM,
                 model=model,
                 usage=stream_usage,

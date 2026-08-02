@@ -8,7 +8,7 @@ LLMfy provides a grouped `prompt_caching` settings object across all three provi
 | **AWS Bedrock** | `BedrockConversePromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
 | **OpenAI** (Chat Completions) | `OpenAIChatPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
 | **OpenAI** (Responses API) | `OpenAIResponsesPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | Same as Chat Completions — pricing is per-model, not per-endpoint |
-| **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
+| **Google AI** | `GoogleAIGeneratePromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
 
 ---
 
@@ -389,7 +389,7 @@ Google AI supports two caching modes:
 - **Default**: 1 hour
 - **Minimum / Maximum**: No enforced bounds — set any value (e.g. `"300s"`, `"3600s"`)
 
-### `GoogleAIPromptCachingConfig` fields
+### `GoogleAIGeneratePromptCachingConfig` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -421,16 +421,16 @@ print(cache.name)  # e.g. 'cachedContents/abc123efg456'
 ### Step 2 — Use the cache in requests
 
 ```python linenums="1"
-from llmfy import GoogleAIModel, GoogleAIConfig, GoogleAIPromptCachingConfig, LLMfy, llmfy_usage_tracker
+from llmfy import GoogleAIGenerateModel, GoogleAIGenerateConfig, GoogleAIGeneratePromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = GoogleAIConfig(
-    prompt_caching=GoogleAIPromptCachingConfig(
+config = GoogleAIGenerateConfig(
+    prompt_caching=GoogleAIGeneratePromptCachingConfig(
         enabled=True,
         cached_content="cachedContents/abc123efg456",  # name from Step 1
     ),
 )
 
-llm = GoogleAIModel(model="gemini-2.5-flash", config=config)
+llm = GoogleAIGenerateModel(model="gemini-2.5-flash", config=config)
 
 # Note: do NOT repeat the cached content in system_message —
 # it is already inside the cache object

@@ -20,6 +20,7 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
   - Install [anthropic](https://pypi.org/project/anthropic) to use Anthropic Claude models (native Messages API) — 🔸 optional.
   - Install [openai](https://pypi.org/project/openai) to use OpenAI models — 🔸 optional.
   - Install [boto3](https://pypi.org/project/boto3/) to use AWS Bedrock models — 🔸 optional.
+  - Install [google-genai](https://pypi.org/project/google-genai) to use Google AI (Gemini) models — 🔸 optional.
   - Install [numpy](https://pypi.org/project/numpy/) to use Embedding, `FAISSVectorStore` — 🔸 optional.
   - Install [faiss-cpu](https://pypi.org/project/faiss-cpu/) to use `FAISSVectorStore` — 🔸 optional.
   - Install [typing_extensions](https://pypi.org/project/typing-extensions/) to use state in `FlowEngine` — 🔸 optional.
@@ -70,6 +71,8 @@ git+https://github.com/irufano/llmfy.git@dev
 ```
 
 ## How to use
+Model class names follow `<Vendor><APIVariant>Model` — e.g. `OpenAIChatModel` vs `OpenAIResponsesModel` for OpenAI's two APIs, `GoogleAIGenerateModel` for Google's `generate_content` API — so the class name always tells you which API it talks to.
+
 ### Anthropic models
 To use `AnthropicMessagesModel` (native Messages API), requires install `"llmfy[anthropic]"` and add below config to your env (or pass `api_key=` to the model instead):
 - `ANTHROPIC_API_KEY`
@@ -85,7 +88,7 @@ To use `BedrockConverseModel`, requires install `"llmfy[boto3]"` and add below c
 - `AWS_BEDROCK_REGION`
 
 ### Google AI models
-To use `GoogleAIModel`, requires install `"llmfy[google-genai]"` and add below config to your env (or pass `api_key=` to `GoogleAIModel` instead):
+To use `GoogleAIGenerateModel`, requires install `"llmfy[google-genai]"` and add below config to your env (or pass `api_key=` to `GoogleAIGenerateModel` instead):
 - `GOOGLE_API_KEY`
 
 ### PII Guard — PERSON_NAME / ADDRESS detection

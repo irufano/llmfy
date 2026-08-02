@@ -17,11 +17,11 @@ from .bedrock import (
 )
 from .google import (
     GOOGLEAI_PRICING,
-    GoogleAIConfig,
-    GoogleAIFormatter,
-    GoogleAIModel,
-    GoogleAIPromptCachingConfig,
-    GoogleAIThinkingConfig,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateFormatter,
+    GoogleAIGenerateModel,
+    GoogleAIGeneratePromptCachingConfig,
+    GoogleAIGenerateThinkingConfig,
 )
 from .model_pricing import ModelPricing
 from .openai import (
@@ -60,10 +60,10 @@ __all__ = [
     "BedrockConverseFormatter",
     "BedrockConverseModel",
     "BEDROCK_PRICING",
-    "GoogleAIConfig",
-    "GoogleAIThinkingConfig",
-    "GoogleAIPromptCachingConfig",
-    "GoogleAIFormatter",
-    "GoogleAIModel",
+    "GoogleAIGenerateConfig",
+    "GoogleAIGenerateThinkingConfig",
+    "GoogleAIGeneratePromptCachingConfig",
+    "GoogleAIGenerateFormatter",
+    "GoogleAIGenerateModel",
     "GOOGLEAI_PRICING",
 ]

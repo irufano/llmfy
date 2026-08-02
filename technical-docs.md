@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock, Google AI), workflow orchestration via FlowEngine, vector storage with FAISS, and utility functions for text processing.
+LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock, Google AI, Anthropic), workflow orchestration via FlowEngine, vector storage with FAISS, and utility functions for text processing.
 
 - **Python**: >= 3.11
 - **Package Manager**: [UV](https://docs.astral.sh/uv/)
@@ -30,8 +30,16 @@ llmfy/
 │   ├── py.typed                # PEP 561 type marker
 │   ├── exception/              # Custom exception classes
 │   ├── llmfy_core/             # Core LLM abstractions
-│   │   ├── models/             # LLM model implementations (OpenAI, Bedrock, Google AI)
-│   │   │   ├── google/         # Google AI (Gemini) model, config, usage, pricing
+│   │   ├── llms/                # LLM model implementations (OpenAI, Bedrock, Google AI, Anthropic)
+│   │   │   ├── openai/           # openai_pricing_list.py (shared) + chat/ + responses/ variants
+│   │   │   │   ├── chat/           # Chat Completions API (OpenAIChatModel, ...)
+│   │   │   │   └── responses/      # Responses API (OpenAIResponsesModel, ...)
+│   │   │   ├── bedrock/          # bedrock_pricing_list.py (shared) + converse/ variant
+│   │   │   │   └── converse/        # Converse API (BedrockConverseModel, ...)
+│   │   │   ├── google/           # googleai_pricing_list.py (shared) + generate/ variant
+│   │   │   │   └── generate/        # generate_content API (GoogleAIGenerateModel, ...)
+│   │   │   └── anthropic/        # anthropic_pricing_list.py (shared) + messages/ variant
+│   │   │       └── messages/        # Messages API (AnthropicMessagesModel, ...)
 │   │   ├── embeddings/         # Embedding models
 │   │   ├── messages/           # Message handling
 │   │   ├── tools/              # Tool definitions and registry
@@ -51,6 +59,20 @@ llmfy/
 │   └── llmfy_utils/            # Utilities (chunking, logging, text processing)
 └── site/                       # Generated documentation (not committed)
 ```
+
+### LLM backend naming convention
+
+Each vendor under `llms/` nests its model/config/formatter/usage files one level deeper, under a folder named after its API variant; a vendor with more than one variant (OpenAI) gets one subfolder per variant. `ModelBackend` (`llmfy_core/model_backend.py`) mirrors this with a `VENDOR_APIVARIANT = "vendor_apivariant"` member per variant:
+
+| Vendor | API variant | Folder | `ModelBackend` member |
+|---|---|---|---|
+| OpenAI | Chat Completions | `llms/openai/chat/` | `OPENAI_CHAT` |
+| OpenAI | Responses | `llms/openai/responses/` | `OPENAI_RESPONSES` |
+| AWS Bedrock | Converse | `llms/bedrock/converse/` | `BEDROCK_CONVERSE` |
+| Google AI | `generate_content` | `llms/google/generate/` | `GOOGLE_GENERATE` |
+| Anthropic | Messages | `llms/anthropic/messages/` | `ANTHROPIC_MESSAGES` |
+
+Each vendor's `*_pricing_list.py` stays one level up (directly under `llms/<vendor>/`), since pricing is shared with that vendor's embedding model (e.g. `GoogleAIEmbedding` reads `googleai_pricing_list.py`) and isn't tied to a specific API variant.
 
 ---
 
@@ -114,6 +136,7 @@ Install with `pip install llmfy[extra_name]` or `pip install llmfy[all]`.
 | `openai`           | openai             | OpenAI API client            |
 | `boto3`            | boto3              | AWS SDK (Bedrock)            |
 | `google-genai`     | google-genai       | Google AI (Gemini) client    |
+| `anthropic`        | anthropic          | Anthropic Claude API client (native Messages API) |
 | `numpy`            | numpy              | Numerical computing          |
 | `faiss-cpu`        | faiss-cpu          | FAISS vector similarity      |
 | `typing_extensions`| typing_extensions  | Backported typing features   |
@@ -150,7 +173,7 @@ from llmfy import LLMfyException
 | `message`    | Human-readable error message             |
 | `status_code`| HTTP status code (if applicable)         |
 | `raw_error`  | Original provider error payload          |
-| `provider`   | Provider name (`openai`, `bedrock`, `google`) |
+| `provider`   | Provider name (`openai`, `bedrock`, `google`, `anthropic`) |
 
 ### Exception Classes
 
@@ -171,11 +194,12 @@ from llmfy import LLMfyException
 
 Each provider has a dedicated handler that translates native errors:
 
-| Function               | Provider   |
-|------------------------|------------|
-| `handle_openai_error`  | OpenAI     |
-| `handle_bedrock_error` | AWS Bedrock|
-| `handle_google_error`  | Google AI  |
+| Function                  | Provider   |
+|---------------------------|------------|
+| `handle_openai_error`     | OpenAI     |
+| `handle_bedrock_error`    | AWS Bedrock|
+| `handle_google_error`     | Google AI  |
+| `handle_anthropic_error`  | Anthropic  |
 
 ### Usage
 

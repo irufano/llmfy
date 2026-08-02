@@ -9,7 +9,7 @@ LLMfy provides a grouped `thinking` settings object across all three providers t
 | **AWS Bedrock** (Nova 2) | `BedrockConverseThinkingConfig` | `thinking.enabled=True` | `thinking.reasoning_effort` | — |
 | **OpenAI** (Chat Completions) | `OpenAIChatThinkingConfig` | `thinking.enabled=True` | `thinking.effort` | — |
 | **OpenAI** (Responses API) | `OpenAIResponsesReasoningConfig` | `reasoning.enabled=True` | `reasoning.effort` | — |
-| **Google AI** | `GoogleAIThinkingConfig` | `thinking.enabled=True` | `thinking.level` | `thinking.budget_tokens` |
+| **Google AI** | `GoogleAIGenerateThinkingConfig` | `thinking.enabled=True` | `thinking.level` | `thinking.budget_tokens` |
 
 ---
 
@@ -332,7 +332,7 @@ print(response.result.content)
 
 ## Google AI
 
-Thinking is controlled through `GoogleAIThinkingConfig`. You can use either a named effort level (`level`) or a token budget (`budget_tokens`).
+Thinking is controlled through `GoogleAIGenerateThinkingConfig`. You can use either a named effort level (`level`) or a token budget (`budget_tokens`).
 
 !!! note
     `gemini-2.5-pro` cannot fully disable thinking — it has a non-zero minimum thinking budget regardless of this config. Only `gemini-2.5-flash` and `gemini-2.5-flash-lite` support a true off state via `budget_tokens=0`.
@@ -344,7 +344,7 @@ Thinking is controlled through `GoogleAIThinkingConfig`. You can use either a na
 | Gemini 2.5 | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
 | Gemini 3 | `gemini-3-flash`, `gemini-3.1-pro`, `gemini-3.1-flash-lite`, `gemini-3.5-flash` |
 
-**`GoogleAIThinkingConfig` fields**
+**`GoogleAIGenerateThinkingConfig` fields**
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
@@ -357,16 +357,16 @@ Thinking is controlled through `GoogleAIThinkingConfig`. You can use either a na
 === "Named level (level)"
 
     ```python linenums="1"
-    from llmfy import GoogleAIModel, GoogleAIConfig, GoogleAIThinkingConfig, LLMfy
+    from llmfy import GoogleAIGenerateModel, GoogleAIGenerateConfig, GoogleAIGenerateThinkingConfig, LLMfy
 
-    config = GoogleAIConfig(
-        thinking=GoogleAIThinkingConfig(
+    config = GoogleAIGenerateConfig(
+        thinking=GoogleAIGenerateThinkingConfig(
             enabled=True,
             level="HIGH",
         ),
     )
 
-    llm = GoogleAIModel(model="gemini-2.5-flash", config=config)
+    llm = GoogleAIGenerateModel(model="gemini-2.5-flash", config=config)
 
     agent = LLMfy(llm, system_message="You are a helpful assistant.")
     response = agent.invoke("Explain how transformers work in deep learning.")
@@ -376,17 +376,17 @@ Thinking is controlled through `GoogleAIThinkingConfig`. You can use either a na
 === "Token budget (budget_tokens)"
 
     ```python linenums="1"
-    from llmfy import GoogleAIModel, GoogleAIConfig, GoogleAIThinkingConfig, LLMfy
+    from llmfy import GoogleAIGenerateModel, GoogleAIGenerateConfig, GoogleAIGenerateThinkingConfig, LLMfy
 
-    config = GoogleAIConfig(
-        thinking=GoogleAIThinkingConfig(
+    config = GoogleAIGenerateConfig(
+        thinking=GoogleAIGenerateThinkingConfig(
             enabled=True,
             budget_tokens=2048,
             include_thoughts=True,
         ),
     )
 
-    llm = GoogleAIModel(model="gemini-2.5-pro", config=config)
+    llm = GoogleAIGenerateModel(model="gemini-2.5-pro", config=config)
 
     agent = LLMfy(llm, system_message="You are a helpful assistant.")
     response = agent.invoke("Explain how transformers work in deep learning.")
@@ -397,15 +397,15 @@ Thinking is controlled through `GoogleAIThinkingConfig`. You can use either a na
 
     ```python linenums="1"
     from google.genai import types
-    from llmfy import GoogleAIModel, GoogleAIConfig, GoogleAIThinkingConfig, LLMfy
+    from llmfy import GoogleAIGenerateModel, GoogleAIGenerateConfig, GoogleAIGenerateThinkingConfig, LLMfy
 
-    config = GoogleAIConfig(
-        thinking=GoogleAIThinkingConfig(
+    config = GoogleAIGenerateConfig(
+        thinking=GoogleAIGenerateThinkingConfig(
             raw=types.ThinkingConfig(thinking_budget=1024),
         ),
     )
 
-    llm = GoogleAIModel(model="gemini-2.5-flash", config=config)
+    llm = GoogleAIGenerateModel(model="gemini-2.5-flash", config=config)
 
     agent = LLMfy(llm, system_message="You are a helpful assistant.")
     response = agent.invoke("Explain how transformers work in deep learning.")

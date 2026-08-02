@@ -8,7 +8,7 @@ LLMfy supports four LLM providers. The table below summarises their capabilities
 | OpenAI (Chat Completions) | `OpenAIChatModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | OpenAI (Responses API) | `OpenAIResponsesModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | AWS Bedrock | `BedrockConverseModel` | `llmfy[boto3]` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Google AI | `GoogleAIModel` | `llmfy[google-genai]` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Google AI | `GoogleAIGenerateModel` | `llmfy[google-genai]` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 !!! note "Two OpenAI backends, one vendor"
     `OpenAIChatModel` and `OpenAIResponsesModel` both talk to OpenAI — they just use different API surfaces (Chat Completions vs the newer Responses API). Pick one per `LLMfy` instance; they are not interchangeable mid-conversation since their wire formats differ. See [OpenAI (Responses API)](#openai-responses-api) below.
@@ -307,14 +307,14 @@ Common model IDs: `amazon.nova-lite-v1:0`, `amazon.nova-pro-v1:0`, `anthropic.cl
 
 - `GOOGLE_API_KEY`
 
-Alternatively, pass `api_key` directly to `GoogleAIModel` — it takes precedence over the environment variable.
+Alternatively, pass `api_key` directly to `GoogleAIGenerateModel` — it takes precedence over the environment variable.
 
 ### Configuration
 
 ```python
-from llmfy import GoogleAIConfig, GoogleAIThinkingConfig
+from llmfy import GoogleAIGenerateConfig, GoogleAIGenerateThinkingConfig
 
-config = GoogleAIConfig(
+config = GoogleAIGenerateConfig(
     temperature=0.7,              # Sampling temperature
     max_tokens=None,              # Max output tokens (maps to max_output_tokens)
     top_p=None,                   # Nucleus sampling probability
@@ -328,7 +328,7 @@ config = GoogleAIConfig(
     response_schema=None,         # Schema for structured output
     safety_settings=None,         # List of SafetySetting instances
     # Thinking (Gemini 2.5+ and Gemini 3 series) — grouped in one settings object
-    thinking=GoogleAIThinkingConfig(
+    thinking=GoogleAIGenerateThinkingConfig(
         enabled=False,            # Set True to enable thinking
         level=None,               # 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH'
         budget_tokens=None,       # Token budget (-1=dynamic, 0=disable)
@@ -343,10 +343,10 @@ See [Thinking Config](thinking-config.md) for per-model details.
 ### Usage
 
 ```python linenums="1"
-from llmfy import GoogleAIModel, GoogleAIConfig, LLMfy
+from llmfy import GoogleAIGenerateModel, GoogleAIGenerateConfig, LLMfy
 
-config = GoogleAIConfig(temperature=0.7)
-llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=config)
+config = GoogleAIGenerateConfig(temperature=0.7)
+llm = GoogleAIGenerateModel(model="gemini-2.5-flash-lite", config=config)
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
@@ -354,7 +354,7 @@ agent = LLMfy(llm, system_message="You are a helpful assistant.")
 You can also pass the API key directly instead of using an environment variable:
 
 ```python
-llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=config, api_key="...")
+llm = GoogleAIGenerateModel(model="gemini-2.5-flash-lite", config=config, api_key="...")
 ```
 
 Common model IDs: `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro`

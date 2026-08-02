@@ -30,8 +30,8 @@ class MessageTemp:
             from llmfy.llmfy_core.llms.bedrock.converse.bedrock_converse_formatter import (
                 BedrockConverseFormatter,
             )
-            from llmfy.llmfy_core.llms.google.googleai_formatter import (
-                GoogleAIFormatter,
+            from llmfy.llmfy_core.llms.google.generate.googleai_generate_formatter import (
+                GoogleAIGenerateFormatter,
             )
             from llmfy.llmfy_core.llms.openai.chat.openai_chat_formatter import (
                 OpenAIChatFormatter,
@@ -44,7 +44,7 @@ class MessageTemp:
                 ModelBackend.OPENAI_CHAT: OpenAIChatFormatter(),
                 ModelBackend.OPENAI_RESPONSES: OpenAIResponsesFormatter(),
                 ModelBackend.BEDROCK_CONVERSE: BedrockConverseFormatter(),
-                ModelBackend.GOOGLE: GoogleAIFormatter(),
+                ModelBackend.GOOGLE_GENERATE: GoogleAIGenerateFormatter(),
                 ModelBackend.ANTHROPIC_MESSAGES: AnthropicMessagesFormatter(),
             }
         return cls._formatters.get(backend)

@@ -6,8 +6,8 @@ from llmfy import (
     # AnthropicMessagesModel,
     # BedrockConverseConfig,
     # BedrockConverseModel,
-    GoogleAIConfig,
-    GoogleAIModel,
+    GoogleAIGenerateConfig,
+    GoogleAIGenerateModel,
     LLMfy,
     Message,
     # OpenAIResponsesConfig,
@@ -47,9 +47,9 @@ def stream_example():
     #     config=OpenAIResponsesConfig(temperature=0.7),
     # )
 
-    llm = GoogleAIModel(
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
-        config=GoogleAIConfig(temperature=0.7),
+        config=GoogleAIGenerateConfig(temperature=0.7),
     )
 
     # llm = OpenAIChatModel(
@@ -122,9 +122,9 @@ def stream_invoke_example():
     #     config=OpenAIResponsesConfig(temperature=0.7),
     # )
 
-    llm = GoogleAIModel(
+    llm = GoogleAIGenerateModel(
         model="gemini-2.5-flash-lite",
-        config=GoogleAIConfig(temperature=0.7),
+        config=GoogleAIGenerateConfig(temperature=0.7),
     )
 
     # llm = OpenAIChatModel(
