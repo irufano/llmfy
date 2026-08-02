@@ -35,11 +35,60 @@ response = llmfy.invoke(content)
 
 ## Image
 
-Image input is supported by **OpenAI**, **AWS Bedrock**, and **Google AI**.
+Image input is supported by **Anthropic**, **OpenAI** (Chat Completions and Responses API), **AWS Bedrock**, and **Google AI**.
 
-### OpenAI
+### Anthropic
+
+Accepts raw image bytes (auto-encoded to base64) or an already-base64-encoded string. `format` is required. Supported formats: `jpeg`, `png`, `gif`, `webp`.
+
+!!! warning "No data URI, no plain URL, no S3"
+    Unlike OpenAI/Google, `Content.value` must be raw bytes or a bare base64 string — **not** a `data:image/...;base64,...` URI and not a plain image URL. `use_s3` is a Bedrock-only field and raises `LLMfyException` on `AnthropicMessagesModel`.
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_image = "path/to/image.jpg"
+with open(input_image, "rb") as f:
+    image_bytes = f.read()
+
+content = [
+    Content(value="Describe this image."),
+    Content(
+        type=ContentType.IMAGE,
+        format="jpeg",
+        value=image_bytes,
+    ),
+]
+
+response = llmfy.invoke(content)
+```
+
+### OpenAI (Chat Completions)
 
 Accepts a base64 data URI or an image URL.
+
+```python linenums="1"
+import base64
+from llmfy import Content, ContentType
+
+input_image = "path/to/image.jpg"
+with open(input_image, "rb") as f:
+    image = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+
+# Or use an image URL directly:
+# image = "https://example.com/image.jpg"
+
+content = [
+    Content(value="Describe this image."),
+    Content(type=ContentType.IMAGE, value=image),
+]
+
+response = llmfy.invoke(content)
+```
+
+### OpenAI (Responses API)
+
+Same as OpenAI (Chat Completions) above — a base64 data URI or an image URL.
 
 ```python linenums="1"
 import base64
@@ -128,9 +177,35 @@ response = llmfy.invoke(content)
 
 ## Document
 
-Document (PDF only) input is supported by **OpenAI**, **AWS Bedrock**, and **Google AI**.
+Document (PDF only) input is supported by **Anthropic**, **OpenAI** (Chat Completions only), **AWS Bedrock**, and **Google AI**.
 
-### OpenAI
+!!! warning "Not supported on OpenAI Responses API"
+    `ContentType.DOCUMENT` raises `LLMfyException` on `OpenAIResponsesModel` — only text and image input are implemented there. Use `OpenAIChatModel` for document input on OpenAI.
+
+### Anthropic
+
+Accepts raw PDF bytes (auto-encoded to base64) or an already-base64-encoded string. `filename` is required but is only used as a display title — it does not need a `.pdf` extension. `use_s3` is a Bedrock-only field and raises `LLMfyException` on `AnthropicMessagesModel`.
+
+```python linenums="1"
+from llmfy import Content, ContentType
+
+input_doc = "path/to/document.pdf"
+with open(input_doc, "rb") as f:
+    doc = f.read()
+
+content = [
+    Content(
+        type=ContentType.DOCUMENT,
+        filename="document",
+        value=doc,
+    ),
+    Content(value="Who are the characters in this document?"),
+]
+
+response = llmfy.invoke(content)
+```
+
+### OpenAI (Chat Completions)
 
 Accepts a base64 data URI. The `filename` must include the `.pdf` extension.
 
@@ -153,6 +228,10 @@ content = [
 
 response = llmfy.invoke(content)
 ```
+
+### OpenAI (Responses API)
+
+Not supported. `ContentType.DOCUMENT` raises `LLMfyException` — use `OpenAIChatModel` instead.
 
 ### AWS Bedrock
 
@@ -229,9 +308,17 @@ response = llmfy.invoke(content)
 
 ## Video
 
-Video input is supported by **AWS Bedrock** and **Google AI**. OpenAI does not support video input yet.
+Video input is supported by **AWS Bedrock** and **Google AI**. Anthropic and OpenAI do not support video input.
 
-### OpenAI
+### Anthropic
+
+Not supported. `ContentType.VIDEO` raises `LLMfyException` — the native Messages API has no video input support.
+
+### OpenAI (Chat Completions)
+
+Not supported yet.
+
+### OpenAI (Responses API)
 
 Not supported yet.
 

@@ -1,3 +1,11 @@
+from .anthropic import (
+    ANTHROPIC_PRICING,
+    AnthropicMessagesConfig,
+    AnthropicMessagesFormatter,
+    AnthropicMessagesModel,
+    AnthropicMessagesPromptCachingConfig,
+    AnthropicMessagesThinkingConfig,
+)
 from .base_ai_model import BaseAIModel
 from .bedrock import (
     BEDROCK_PRICING,
@@ -31,6 +39,12 @@ from .openai import (
 __all__ = [
     "BaseAIModel",
     "ModelPricing",
+    "AnthropicMessagesConfig",
+    "AnthropicMessagesThinkingConfig",
+    "AnthropicMessagesPromptCachingConfig",
+    "AnthropicMessagesFormatter",
+    "AnthropicMessagesModel",
+    "ANTHROPIC_PRICING",
     "OpenAIChatConfig",
     "OpenAIChatThinkingConfig",
     "OpenAIChatPromptCachingConfig",

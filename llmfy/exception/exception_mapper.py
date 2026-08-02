@@ -80,3 +80,21 @@ GOOGLE_ERROR_MAP = {
 }
 
 
+# ============================================================================
+# Anthropic Error Mapping
+# Docs: https://github.com/anthropics/anthropic-sdk-python#handling-errors
+# ============================================================================
+
+ANTHROPIC_ERROR_MAP = {
+    'RateLimitError': (RateLimitException, 429),
+    'APITimeoutError': (TimeoutException, 408),
+    'APIConnectionError': (ServiceUnavailableException, None),
+    'AuthenticationError': (AuthenticationException, 401),
+    'PermissionDeniedError': (PermissionDeniedException, 403),
+    'BadRequestError': (InvalidRequestException, 400),
+    'NotFoundError': (ModelNotFoundException, 404),
+    'UnprocessableEntityError': (InvalidRequestException, 422),
+    'InternalServerError': (ServiceUnavailableException, 500),
+}
+
+

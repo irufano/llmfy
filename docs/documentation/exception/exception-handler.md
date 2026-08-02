@@ -16,7 +16,7 @@ from llmfy import LLMfyException
 |-----------|------|-------------|
 | `message` | `str` | Human-readable error message |
 | `status_code` | `int \| None` | HTTP status code from the provider |
-| `provider` | `str \| None` | Provider name (e.g. `"openai"`, `"bedrock"`, `"google"`) |
+| `provider` | `str \| None` | Provider name (e.g. `"anthropic"`, `"openai"`, `"bedrock"`, `"google"`) |
 | `raw_error` | `Any \| None` | The original exception from the provider SDK |
 
 ## Exception Types
@@ -100,6 +100,7 @@ from llmfy import TimeoutException, TimeoutType
 
 | Provider | Trigger | `timeout_type` |
 |----------|---------|----------------|
+| **Anthropic** | `APITimeoutError` (inspects `__cause__`) | `CONNECT` / `READ` / `WRITE` / `POOL` / `None` |
 | **Bedrock** | `botocore.ReadTimeoutError` | `CONNECT` |
 | **Bedrock** | `botocore.ConnectTimeoutError` | `READ` |
 | **Bedrock** | `ClientError: ModelTimeoutException` | `MODEL` |
@@ -133,6 +134,22 @@ except TimeoutException as e:
 ## Provider Error Mapping
 
 LLMfy automatically maps provider-specific errors to the corresponding exception type.
+
+### Anthropic
+
+The `anthropic` SDK's exception hierarchy is httpx-based and structurally analogous to OpenAI's, so the mapping is identical in shape:
+
+| Provider Error | LLMfy Exception | Status Code |
+|----------------|----------------|-------------|
+| `RateLimitError` | `RateLimitException` | 429 |
+| `APITimeoutError` | `TimeoutException` | 408 |
+| `APIConnectionError` | `ServiceUnavailableException` | — |
+| `AuthenticationError` | `AuthenticationException` | 401 |
+| `PermissionDeniedError` | `PermissionDeniedException` | 403 |
+| `BadRequestError` | `InvalidRequestException` | 400 |
+| `NotFoundError` | `ModelNotFoundException` | 404 |
+| `UnprocessableEntityError` | `InvalidRequestException` | 422 |
+| `InternalServerError` | `ServiceUnavailableException` | 500 |
 
 ### OpenAI
 

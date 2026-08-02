@@ -24,6 +24,9 @@ class MessageTemp:
     @classmethod
     def _get_formatter(cls, backend: ModelBackend) -> ModelFormatter | None:
         if cls._formatters is None:
+            from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_formatter import (
+                AnthropicMessagesFormatter,
+            )
             from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
             from llmfy.llmfy_core.llms.google.googleai_formatter import (
                 GoogleAIFormatter,
@@ -40,6 +43,7 @@ class MessageTemp:
                 ModelBackend.OPENAI_RESPONSES: OpenAIResponsesFormatter(),
                 ModelBackend.BEDROCK: BedrockFormatter(),
                 ModelBackend.GOOGLE: GoogleAIFormatter(),
+                ModelBackend.ANTHROPIC_MESSAGES: AnthropicMessagesFormatter(),
             }
         return cls._formatters.get(backend)
 

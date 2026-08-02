@@ -10,6 +10,9 @@ class ModelBackend(StrEnum):
 	BEDROCK = "bedrock"
 	GOOGLE = "google"
 
+	# Anthropic
+	ANTHROPIC_MESSAGES = "anthropic_messages"  # Messages API
+
 	def __str__(self):
 		return self.value
 

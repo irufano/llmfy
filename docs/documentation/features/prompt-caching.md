@@ -4,10 +4,126 @@ LLMfy provides a grouped `prompt_caching` settings object across all three provi
 
 | Provider | Config class | Mechanism | Min tokens | Default TTL | Savings |
 |----------|-------------|-----------|------------|-------------|---------|
+| **Anthropic** (Messages API) | `AnthropicMessagesPromptCachingConfig` | Inline `cache_control` markers injected on the last content block | 1,024–4,096 | 5 min (or 1h) | ~90% on cached reads |
 | **AWS Bedrock** | `BedrockPromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
 | **OpenAI** (Chat Completions) | `OpenAIChatPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
 | **OpenAI** (Responses API) | `OpenAIResponsesPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | Same as Chat Completions — pricing is per-model, not per-endpoint |
 | **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
+
+---
+
+## Anthropic (Messages API)
+
+When `prompt_caching.enabled=True`, llmfy injects an inline `cache_control` key directly onto the **last content block** of:
+
+- The **system** prompt (when present) — since Anthropic's render order is `tools → system → messages` and caching is a byte-prefix match, caching the end of `system` implicitly caches `tools + system` together.
+- The **last message** (grows the cached conversation prefix each turn).
+
+This is a different mechanism from Bedrock's Converse API, which injects a sibling `cachePoint` block instead of an inline key — the two are not wire-compatible, even though both ultimately cache the same underlying Claude model.
+
+### Supported models
+
+| Model | Model ID | Min tokens | TTL support |
+|-------|----------|------------|-------------|
+| Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 4,096 | 5m and 1h |
+| Claude Haiku 4.5 | `claude-haiku-4-5` | 4,096 | 5m and 1h |
+| Claude Opus 4.5 | `claude-opus-4-5-20251101` | 4,096 | 5m and 1h |
+| Claude Sonnet 5 | `claude-sonnet-5` | 1,024 | 5m and 1h |
+| Claude Opus 5 | `claude-opus-5` | 1,024 | 5m and 1h |
+| Claude Fable 5 | `claude-fable-5` | 1,024 | 5m and 1h |
+
+!!! info "Minimum cacheable prefix"
+    The minimum cacheable prefix is model-dependent (as low as 1,024 tokens on current models, up to 4,096 on some others). Shorter prefixes silently don't cache — no error, `cache_creation_input_tokens` is just `0`.
+
+### Pricing
+
+| Item | Cost |
+|------|------|
+| Cache reads | ~10% of normal input price (~90% savings) |
+| Cache writes (5m TTL) | ~125% of normal input price (one-time, on first write) |
+| Cache writes (1h TTL) | ~200% of normal input price (one-time, on first write) |
+| Uncached tokens | Billed at the standard rate |
+
+!!! note "TTL pricing simplification"
+    `ModelPricing.cache_write` has no TTL dimension, so `ANTHROPIC_PRICING` relies on the same 125% default fallback regardless of TTL (matching `BedrockPromptCachingConfig`'s simplification). Set `cache_write` explicitly per model via a custom `llmfy_usage_tracker(anthropic_pricing=...)` dict if you need the 1-hour ~200% premium modeled precisely.
+
+### `AnthropicMessagesPromptCachingConfig` fields
+
+| Field | Type | Values | Description |
+|-------|------|--------|-------------|
+| `enabled` | `bool` | — | Set to `True` to inject `cache_control` markers. |
+| `ttl` | `str \| None` | `"5m"`, `"1h"` | Cache TTL. Defaults to `"5m"` when unset. |
+
+=== "Default TTL (5 minutes)"
+
+    ```python linenums="1"
+    from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, AnthropicMessagesPromptCachingConfig, LLMfy
+
+    config = AnthropicMessagesConfig(
+        prompt_caching=AnthropicMessagesPromptCachingConfig(enabled=True),
+    )
+
+    llm = AnthropicMessagesModel(
+        model="claude-sonnet-5",
+        config=config,
+    )
+
+    agent = LLMfy(
+        llm,
+        system_message="You are an expert analyst. " + open("large_document.txt").read(),
+    )
+
+    # First call — caches system + message prefix
+    response = agent.invoke("Summarize the key points.")
+    print(response.result.content)
+
+    # Second call — system served from cache (~90% cheaper)
+    response = agent.invoke("What are the risks mentioned?")
+    print(response.result.content)
+    ```
+
+=== "Extended TTL (1 hour)"
+
+    ```python linenums="1"
+    from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, AnthropicMessagesPromptCachingConfig, LLMfy
+
+    config = AnthropicMessagesConfig(
+        prompt_caching=AnthropicMessagesPromptCachingConfig(
+            enabled=True,
+            ttl="1h",
+        ),
+    )
+
+    llm = AnthropicMessagesModel(
+        model="claude-sonnet-5",
+        config=config,
+    )
+
+    agent = LLMfy(
+        llm,
+        system_message="You are an expert analyst. " + open("large_document.txt").read(),
+    )
+
+    response = agent.invoke("Summarize the key points.")
+    print(response.result.content)
+    ```
+
+### Cache usage in usage tracking
+
+```python linenums="1"
+from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, AnthropicMessagesPromptCachingConfig, LLMfy, llmfy_usage_tracker
+
+config = AnthropicMessagesConfig(prompt_caching=AnthropicMessagesPromptCachingConfig(enabled=True))
+llm = AnthropicMessagesModel(model="claude-sonnet-5", config=config)
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+
+with llmfy_usage_tracker() as usage:
+    agent.invoke("What is the capital of France?")
+    agent.invoke("What is the capital of Germany?")  # system served from cache
+
+print(usage)
+# cache_read_tokens and cache_write_tokens appear in Request Details when non-zero
+```
 
 ---
 
@@ -422,8 +538,8 @@ Cache token counts are exposed in `usage.to_dict()["details"]` and shown in `rep
 
 | Field | Providers | Meaning |
 |-------|-----------|---------|
-| `cache_read_tokens` | Bedrock, OpenAI, Google | Tokens served from cache this request |
-| `cache_write_tokens` | Bedrock, OpenAI (GPT-5.6+ only) | Tokens written to cache this request (Bedrock: ~125% input rate; OpenAI GPT-5.6+: 125% input rate; 0 on older OpenAI models, which have no write fee) |
+| `cache_read_tokens` | Anthropic, Bedrock, OpenAI, Google | Tokens served from cache this request |
+| `cache_write_tokens` | Anthropic, Bedrock, OpenAI (GPT-5.6+ only) | Tokens written to cache this request (Anthropic: ~125%/~200% input rate for 5m/1h TTL; Bedrock: ~125% input rate; OpenAI GPT-5.6+: 125% input rate; 0 on older OpenAI models, which have no write fee) |
 
 ```python linenums="1"
 from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker

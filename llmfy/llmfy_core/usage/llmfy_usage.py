@@ -4,6 +4,7 @@ import warnings
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.anthropic.anthropic_pricing_list import ANTHROPIC_PRICING
 from llmfy.llmfy_core.llms.bedrock.bedrock_pricing_list import BEDROCK_PRICING
 from llmfy.llmfy_core.llms.google.googleai_pricing_list import GOOGLEAI_PRICING
 from llmfy.llmfy_core.llms.model_pricing import ModelPricing
@@ -27,6 +28,7 @@ class LLMfyUsage:
         openai_pricing: dict[str, Any] | None = None,
         bedrock_pricing: dict[str, Any] | None = None,
         googleai_pricing: dict[str, Any] | None = None,
+        anthropic_pricing: dict[str, Any] | None = None,
     ):
         if openai_pricing:
             if not self.__is_valid_openai_pricing_structure(openai_pricing):
@@ -129,6 +131,27 @@ class LLMfyUsage:
                 """
                 raise LLMfyException(error)
 
+        if anthropic_pricing:
+            if not self.__is_valid_anthropic_pricing_structure(anthropic_pricing):
+                error = """
+				Please provide the right pricing structure for anthropic, example:
+				```
+				{
+					"claude-sonnet-5": {
+						"input": 3.30,
+						"output": 16.50,
+						"token_unit": 1_000_000
+					},
+					"claude-opus-5": {
+						"input": 5.50,
+						"output": 27.50,
+						"token_unit": 1_000_000
+					}
+				}
+				```
+				"""
+                raise LLMfyException(error)
+
         self.total_request: int = 0
         self.output_tokens: int = 0
         self.input_tokens: int = 0
@@ -150,6 +173,12 @@ class LLMfyUsage:
         self.googleai_pricing: dict[str, dict[str, Any]] = (
             self._load_googleai_pricing(
                 pricing_source=googleai_pricing or GOOGLEAI_PRICING
+            )
+            or {}
+        )
+        self.anthropic_pricing: dict[str, ModelPricing] = (
+            self._load_anthropic_pricing(
+                pricing_source=anthropic_pricing or ANTHROPIC_PRICING
             )
             or {}
         )
@@ -312,6 +341,17 @@ class LLMfyUsage:
 
         return True
 
+    def __is_valid_anthropic_pricing_structure(self, pricing: Any) -> bool:
+        if not isinstance(pricing, dict):
+            return False
+        for outer_dict in pricing.values():
+            if not isinstance(outer_dict, dict):
+                return False
+            for value in outer_dict.values():
+                if not isinstance(value, (float, int)):
+                    return False
+        return True
+
     def _load_openai_pricing(
         self,
         pricing_source: dict[str, dict[str, Any]],
@@ -361,6 +401,28 @@ class LLMfyUsage:
             for model, regions in pricing_data.items()
         }
 
+    def _load_anthropic_pricing(
+        self,
+        pricing_source: dict[str, dict[str, Any]],
+    ) -> dict[str, ModelPricing]:
+        """
+        Load anthropic pricing from dictionary.
+
+        Price per 1M tokens for different models (USD)
+        - https://platform.claude.com/docs/en/about-claude/pricing
+        """
+        pricing_data = pricing_source
+        return {
+            model: ModelPricing(
+                token_input=data["input"],
+                token_output=data["output"],
+                token_unit=data.get("token_unit", 1_000_000),
+                cache_read=data.get("cache_read"),
+                cache_write=data.get("cache_write"),
+            )
+            for model, data in pricing_data.items()
+        }
+
     def _load_googleai_pricing(
         self,
         pricing_source: dict[str, dict[str, Any]],
@@ -400,6 +462,8 @@ class LLMfyUsage:
                         self.__bedrock_update(model=model, usage=usage)
                     case ModelBackend.GOOGLE:
                         self.__googleai_update(model=model, usage=usage)
+                    case ModelBackend.ANTHROPIC_MESSAGES:
+                        self.__anthropic_messages_update(model=model, usage=usage)
                     case _:
                         pass
             case ServiceType.EMBEDDING:
@@ -756,6 +820,89 @@ class LLMfyUsage:
                 "model": model,
                 "backend": ModelBackend.BEDROCK,
                 "provider": ServiceProvider.BEDROCK,
+                "type": ServiceType.LLM,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "input_price": price_info.token_input if price_info else None,
+                "output_price": price_info.token_output if price_info else None,
+                "token_unit": price_info.token_unit if price_info else None,
+                "total_cost": total_cost_per_request,
+                "cache_read_tokens": cache_read_tokens,
+                "cache_write_tokens": cache_write_tokens,
+            }
+        )
+        pass
+
+    def __anthropic_messages_update(self, model: str, usage: dict[str, int]) -> None:
+        """
+        ANTHROPIC Update usage statistics and calculate price.
+
+        Args:
+            model (str): Model name
+            usage (Dict[str, int]): input_tokens, output_tokens,
+                cache_creation_input_tokens, cache_read_input_tokens
+        """
+        self.raw_usages.append(usage)
+        usage_dict = vars(usage) if hasattr(usage, "__dict__") else usage
+
+        # usage per-request
+        input_tokens = usage_dict.get("input_tokens", 0)
+        output_tokens = usage_dict.get("output_tokens", 0)
+        total_tokens = input_tokens + output_tokens
+
+        # cache_creation_input_tokens / cache_read_input_tokens are Anthropic's
+        # native field names — see AnthropicMessagesPromptCachingConfig.
+        cache_write_tokens = usage_dict.get("cache_creation_input_tokens", 0) or 0
+        cache_read_tokens = usage_dict.get("cache_read_input_tokens", 0) or 0
+
+        # usage accumulation
+        self.total_request += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += total_tokens
+        self.cache_read_tokens += cache_read_tokens
+        self.cache_write_tokens += cache_write_tokens
+
+        # Calculate price
+        price_info = None
+        total_cost_per_request = 0
+
+        if model in self.anthropic_pricing:
+            price_info = self.anthropic_pricing[model]
+
+            # Native Anthropic pricing has no region dimension — flat lookup,
+            # unlike __bedrock_update's self.bedrock_pricing[MODEL][REGION].
+            cache_read_rate = (
+                price_info.cache_read
+                if price_info.cache_read is not None
+                else price_info.token_input * 0.10
+            )
+            cache_write_rate = (
+                price_info.cache_write
+                if price_info.cache_write is not None
+                else price_info.token_input * 1.25
+            )
+            i_price = (input_tokens / price_info.token_unit) * price_info.token_input
+            cache_r_price = (cache_read_tokens / price_info.token_unit) * cache_read_rate
+            cache_w_price = (cache_write_tokens / price_info.token_unit) * cache_write_rate
+            o_price = (output_tokens / price_info.token_unit) * price_info.token_output
+            total_cost_per_request = i_price + cache_r_price + cache_w_price + o_price
+
+            # pricing accumulation
+            self.total_cost += total_cost_per_request
+        else:
+            warnings.warn(
+                "MODEL not found at specified anthropic pricing. You can add in custom prices with `llmfy_usage_tracker(anthropic_pricing=prices)`",
+                stacklevel=2,
+            )
+
+        # add to details per-request
+        self.details.append(
+            {
+                "model": model,
+                "backend": ModelBackend.ANTHROPIC_MESSAGES,
+                "provider": ServiceProvider.ANTHROPIC,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,

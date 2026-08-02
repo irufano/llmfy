@@ -6,6 +6,11 @@
     variables. Explicit arguments take precedence over the environment. See
     [Providers](../features/providers.md) for details.
 
+## Anthropic
+To use `Anthropic` (native Messages API) services, add below config to your env:
+
+- `ANTHROPIC_API_KEY`
+
 ## OpenAI
 To use `OpenAI` services, add below config to your env:
 
@@ -29,6 +34,7 @@ To use `Google AI` services, add below config to your env:
 ```shell title=".env"
 DEBUG=true
 VERSION="0.0.0"
+ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=

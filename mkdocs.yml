@@ -24,7 +24,7 @@ nav:
       - Installation: documentation/installation/how-to-install.md
       - Configuration: documentation/installation/configuration.md
   - Guide:
-      - Overview: documentation/features/basic.md
+      - Overview: documentation/features/overview.md
       - Framework: documentation/features/framework.md
       - Providers: documentation/features/providers.md
       - LLM:
@@ -85,6 +85,11 @@ nav:
               - AI Response: reference/llmfy_core.responses.ai_response.md
           - LLMs:
               - Base Model: reference/llmfy_core.llms.base_ai_model.md
+              - Anthropic (Messages API):
+                  - Config: reference/llmfy_core.llms.anthropic.messages.anthropic_messages_config.md
+                  - Model: reference/llmfy_core.llms.anthropic.messages.anthropic_messages_model.md
+                  - Usage: reference/llmfy_core.llms.anthropic.messages.anthropic_messages_usage.md
+                  - Pricing: reference/llmfy_core.llms.anthropic.anthropic_pricing_list.md
               - Bedrock:
                   - Config: reference/llmfy_core.llms.bedrock.bedrock_config.md
                   - Model: reference/llmfy_core.llms.bedrock.bedrock_model.md

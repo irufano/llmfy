@@ -2,6 +2,9 @@ from collections.abc import Callable
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
+from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_formatter import (
+    AnthropicMessagesFormatter,
+)
 from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
 from llmfy.llmfy_core.llms.google.googleai_formatter import GoogleAIFormatter
 from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
@@ -25,6 +28,7 @@ class Tool:
         ModelBackend.OPENAI_RESPONSES: OpenAIResponsesFormatter(),
         ModelBackend.BEDROCK: BedrockFormatter(),
         ModelBackend.GOOGLE: GoogleAIFormatter(),
+        ModelBackend.ANTHROPIC_MESSAGES: AnthropicMessagesFormatter(),
     }
 
     def __init__(self, strict: bool = True):

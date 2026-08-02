@@ -1,16 +1,22 @@
 from dotenv import load_dotenv
 
 from llmfy import (
+    GenerationResponse,
+    # AnthropicMessagesConfig,
+    # AnthropicMessagesModel,
     # BedrockConfig,
     # BedrockModel,
-    GenerationResponse,
+    GoogleAIConfig,
+    GoogleAIModel,
     LLMfy,
     Message,
+    # OpenAIResponsesConfig,
+    # OpenAIResponsesModel,
+    # OpenAIChatConfig,
+    # OpenAIChatModel
     Role,
     llmfy_usage_tracker,
 )
-from llmfy.llmfy_core.llms.openai.chat.openai_chat_config import OpenAIChatConfig
-from llmfy.llmfy_core.llms.openai.chat.openai_chat_model import OpenAIChatModel
 
 load_dotenv()
 
@@ -31,10 +37,25 @@ def stream_example():
     #     config=BedrockConfig(temperature=0.7),
     # )
 
-    llm = OpenAIChatModel(
-        model="gpt-4o-mini",
-        config=OpenAIChatConfig(temperature=0.7),
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=AnthropicMessagesConfig(temperature=0.7),
+    # )
+
+    # llm = OpenAIResponsesModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIResponsesConfig(temperature=0.7),
+    # )
+
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=GoogleAIConfig(temperature=0.7),
     )
+
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIChatConfig(temperature=0.7),
+    # )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
@@ -91,10 +112,25 @@ def stream_invoke_example():
     #     config=BedrockConfig(temperature=0.7),
     # )
 
-    llm = OpenAIChatModel(
-        model="gpt-4o-mini",
-        config=OpenAIChatConfig(temperature=0.7),
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=AnthropicMessagesConfig(temperature=0.7),
+    # )
+
+    # llm = OpenAIResponsesModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIResponsesConfig(temperature=0.7),
+    # )
+
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=GoogleAIConfig(temperature=0.7),
     )
+
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIChatConfig(temperature=0.7),
+    # )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>

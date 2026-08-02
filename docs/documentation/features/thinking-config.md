@@ -4,11 +4,98 @@ LLMfy provides a grouped `thinking` settings object across all three providers t
 
 | Provider | Config class | Toggle | Effort control | Budget control |
 |----------|-------------|--------|---------------|----------------|
+| **Anthropic** (Messages API) | `AnthropicMessagesThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
 | **AWS Bedrock** (Claude) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
 | **AWS Bedrock** (Nova 2) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.reasoning_effort` | — |
 | **OpenAI** (Chat Completions) | `OpenAIChatThinkingConfig` | `thinking.enabled=True` | `thinking.effort` | — |
 | **OpenAI** (Responses API) | `OpenAIResponsesReasoningConfig` | `reasoning.enabled=True` | `reasoning.effort` | — |
 | **Google AI** | `GoogleAIThinkingConfig` | `thinking.enabled=True` | `thinking.level` | `thinking.budget_tokens` |
+
+---
+
+## Anthropic (Messages API)
+
+`AnthropicMessagesThinkingConfig` is a direct port of the native Anthropic `thinking` block — it supports the same two thinking modes as Claude models on Bedrock (see below), but has **no `reasoning_effort` field**, since that mechanism is Bedrock/Amazon-Nova-specific with no native Anthropic equivalent.
+
+### Mode 1 — Extended Thinking
+
+Uses a fixed token budget. `budget_tokens` must be strictly less than `max_tokens`.
+
+**Supported models**
+
+| Model | Model ID |
+|-------|----------|
+| Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` |
+| Claude Haiku 4.5 | `claude-haiku-4-5` |
+| Claude Opus 4.5 | `claude-opus-4-5-20251101` |
+
+**`AnthropicMessagesThinkingConfig` fields used**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled` | `bool` | Set to `True` to enable. |
+| `budget_tokens` | `int \| None` | Max thinking tokens. Min `1024`. |
+
+```python linenums="1"
+from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, AnthropicMessagesThinkingConfig, LLMfy
+
+config = AnthropicMessagesConfig(
+    max_tokens=8192,
+    thinking=AnthropicMessagesThinkingConfig(
+        enabled=True,
+        budget_tokens=4000,
+    ),
+)
+
+llm = AnthropicMessagesModel(model="claude-sonnet-4-5-20250929", config=config)
+
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+response = agent.invoke("Explain the halting problem step by step.")
+print(response.result.content)
+```
+
+---
+
+### Mode 2 — Adaptive Thinking
+
+For current-generation models. The model dynamically decides when and how much to think, using a named effort level instead of a token budget.
+
+**Supported models**
+
+| Model | Model ID | Notes |
+|-------|----------|-------|
+| Claude Sonnet 5 | `claude-sonnet-5` | Adaptive only |
+| Claude Opus 5 | `claude-opus-5` | Adaptive only |
+| Claude Fable 5 | `claude-fable-5` | Adaptive only |
+
+!!! note
+    Current-generation models **only** accept `thinking.type='adaptive'`. Leaving `type` unset falls back to extended thinking, which several of these models reject with a `400` error.
+
+**`AnthropicMessagesThinkingConfig` fields used**
+
+| Field | Type | Values | Description |
+|-------|------|--------|-------------|
+| `enabled` | `bool` | — | Set to `True` to enable. |
+| `type` | `str \| None` | `'adaptive'` | Must be set to `'adaptive'` for this mode. |
+| `effort` | `str \| None` | `'low'`, `'medium'`, `'high'`, `'xhigh'`, `'max'` | Controls thinking depth. Sent via a top-level `output_config.effort` field, not nested inside `thinking`. |
+
+```python linenums="1"
+from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, AnthropicMessagesThinkingConfig, LLMfy
+
+config = AnthropicMessagesConfig(
+    thinking=AnthropicMessagesThinkingConfig(
+        enabled=True,
+        type="adaptive",
+        effort="high",
+    ),
+)
+
+llm = AnthropicMessagesModel(model="claude-sonnet-5", config=config)
+
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+response = agent.invoke("Solve this step by step: If 3x + 7 = 22, find x.")
+print(response.result.content)
+```
 
 ---
 

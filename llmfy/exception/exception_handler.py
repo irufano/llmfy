@@ -1,4 +1,5 @@
 from llmfy.exception.exception_mapper import (
+    ANTHROPIC_ERROR_MAP,
     BEDROCK_ERROR_MAP,
     GOOGLE_ERROR_MAP,
     OPENAI_ERROR_MAP,
@@ -131,6 +132,68 @@ def handle_openai_error(e) -> LLMfyException:
         status_code=status_code,
         raw_error=raw_error,
         provider=ServiceProvider.OPENAI,
+    )
+
+
+def handle_anthropic_error(e) -> LLMfyException:
+    """
+    Handle Anthropic API exceptions.
+
+    Docs: https://github.com/anthropics/anthropic-sdk-python#handling-errors
+    """
+    error_type = type(e).__name__
+
+    # Extract status code from APIStatusError subclasses
+    status_code = getattr(e, "status_code", None)
+
+    # Build raw error dict
+    raw_error = {
+        "type": error_type,
+        "message": str(e),
+    }
+
+    # Add response if available
+    if hasattr(e, "response"):
+        raw_error["response"] = e.response
+
+    # Add request_id if available
+    if hasattr(e, "request_id"):
+        raw_error["request_id"] = e.request_id
+
+    # Add body if available
+    if hasattr(e, "body"):
+        raw_error["body"] = e.body
+
+    if error_type in ANTHROPIC_ERROR_MAP:
+        exception_class, default_status = ANTHROPIC_ERROR_MAP[error_type]
+        status_code = status_code or default_status
+    else:
+        exception_class = LLMfyException
+
+    if exception_class is TimeoutException:
+        import httpx
+
+        timeout_type_map = {
+            httpx.ConnectTimeout: TimeoutType.CONNECT,
+            httpx.ReadTimeout: TimeoutType.READ,
+            httpx.WriteTimeout: TimeoutType.WRITE,
+            httpx.PoolTimeout: TimeoutType.POOL,
+        }
+        cause = getattr(e, "__cause__", None)
+        timeout_type = timeout_type_map.get(type(cause))
+        return TimeoutException(
+            message=str(e),
+            status_code=status_code,
+            raw_error=raw_error,
+            provider=ServiceProvider.ANTHROPIC,
+            timeout_type=timeout_type,
+        )
+
+    return exception_class(
+        message=str(e),
+        status_code=status_code,
+        raw_error=raw_error,
+        provider=ServiceProvider.ANTHROPIC,
     )
 
 

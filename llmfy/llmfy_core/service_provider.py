@@ -10,6 +10,7 @@ class ServiceProvider(StrEnum):
 	OPENAI = "openai"
 	BEDROCK = "bedrock"
 	GOOGLE = "google"
+	ANTHROPIC = "anthropic"
 
 	def __str__(self):
 		return self.value

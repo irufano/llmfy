@@ -18,6 +18,7 @@
 | Package                                                          | Required/Optional | Purpose                                                 | How to Install                          |
 | ---------------------------------------------------------------- | ----------------- | ------------------------------------------------------- | --------------------------------------- |
 | [pydantic](https://pypi.org/project/pydantic)                    | ✅ Required        | Core dependency       | Auto-installed with `llmfy`             |
+| [anthropic](https://pypi.org/project/anthropic)                  | 🔸 Optional        | Use Anthropic Claude models (native Messages API)       | `pip install "llmfy[anthropic]"`        |
 | [openai](https://pypi.org/project/openai)                        | 🔸 Optional        | Use OpenAI models                                       | `pip install "llmfy[openai]"`           |
 | [boto3](https://pypi.org/project/boto3/)                         | 🔸 Optional        | Use AWS Bedrock models                                  | `pip install "llmfy[boto3]"`            |
 | [google-genai](https://pypi.org/project/google-genai/)           | 🔸 Optional        | Use Google AI (Gemini) models                           | `pip install "llmfy[google-genai]"`     |
@@ -47,6 +48,9 @@ Install only the provider packages you need:
 === "UV"
 
     ```shell
+    # Anthropic (Claude, native Messages API) support
+    uv add "llmfy[anthropic]"
+
     # OpenAI support
     uv add "llmfy[openai]"
 
@@ -63,6 +67,9 @@ Install only the provider packages you need:
 === "pip"
 
     ```shell
+    # Anthropic (Claude, native Messages API) support
+    pip install "llmfy[anthropic]"
+
     # OpenAI support
     pip install "llmfy[openai]"
 

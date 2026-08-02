@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 
 from llmfy import (
+    # AnthropicMessagesConfig,
+    # AnthropicMessagesModel,
     # BedrockConfig,
     # BedrockModel,
     # OpenAIChatConfig,
@@ -30,6 +32,12 @@ def retrieval_example():
 	"""
 
     # Configuration
+    # config = AnthropicMessagesConfig(temperature=0.7)
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=config,
+    # )
+
     # config = BedrockConfig(temperature=0.7)
     # llm = BedrockModel(
     #     model="amazon.nova-lite-v1:0",
@@ -85,6 +93,12 @@ def retrieval_invoke_example():
 	"""
 
     # Configuration
+    # config = AnthropicMessagesConfig(temperature=0.7)
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=config,
+    # )
+
     # config = BedrockConfig(temperature=0.7)
     # llm = BedrockModel(
     #     model="amazon.nova-lite-v1:0",

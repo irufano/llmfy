@@ -24,36 +24,6 @@ The decorator reads the function signature and docstring to build the schema pas
 
 ---
 
-## Provider Support
-
-Tool calling works identically across all providers — only the model initialization differs:
-
-### OpenAI
-
-```python linenums="1"
-from llmfy import OpenAIChatModel, OpenAIChatConfig
-
-llm = OpenAIChatModel(model="gpt-4o-mini", config=OpenAIChatConfig(temperature=0.7))
-```
-
-### AWS Bedrock
-
-```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig
-
-llm = BedrockModel(model="amazon.nova-lite-v1:0", config=BedrockConfig(temperature=0.7))
-```
-
-### Google AI
-
-```python linenums="1"
-from llmfy import GoogleAIModel, GoogleAIConfig
-
-llm = GoogleAIModel(model="gemini-2.5-flash-lite", config=GoogleAIConfig(temperature=0.7))
-```
-
----
-
 ## Register Tools
 
 ```python linenums="1"

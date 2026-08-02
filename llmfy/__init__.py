@@ -45,6 +45,10 @@ from .guardrails import (
 )
 from .llmfy_core import (
     AIResponse,
+    AnthropicMessagesConfig,
+    AnthropicMessagesModel,
+    AnthropicMessagesPromptCachingConfig,
+    AnthropicMessagesThinkingConfig,
     BedrockConfig,
     BedrockModel,
     BedrockPromptCachingConfig,
@@ -90,6 +94,10 @@ __all__ = [
     "ToolRegistry",
     "AIResponse",
     "GenerationResponse",
+    "AnthropicMessagesConfig",
+    "AnthropicMessagesThinkingConfig",
+    "AnthropicMessagesPromptCachingConfig",
+    "AnthropicMessagesModel",
     "OpenAIChatConfig",
     "OpenAIChatThinkingConfig",
     "OpenAIChatPromptCachingConfig",

@@ -4,9 +4,15 @@ from .embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy import LLMfy
 from .llms import (
+    ANTHROPIC_PRICING,
     BEDROCK_PRICING,
     GOOGLEAI_PRICING,
     OPENAI_PRICING,
+    AnthropicMessagesConfig,
+    AnthropicMessagesFormatter,
+    AnthropicMessagesModel,
+    AnthropicMessagesPromptCachingConfig,
+    AnthropicMessagesThinkingConfig,
     BaseAIModel,
     BedrockConfig,
     BedrockFormatter,
@@ -36,6 +42,12 @@ from .usage import LLMfyUsage, llmfy_usage_tracker
 __all__ = [
     "LLMfy",
     "MessageTemp",
+    "AnthropicMessagesConfig",
+    "AnthropicMessagesThinkingConfig",
+    "AnthropicMessagesPromptCachingConfig",
+    "AnthropicMessagesFormatter",
+    "AnthropicMessagesModel",
+    "ANTHROPIC_PRICING",
     "Message",
     "Role",
     "ToolCall",

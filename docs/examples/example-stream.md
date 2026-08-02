@@ -4,12 +4,20 @@
 from dotenv import load_dotenv
 
 from llmfy import (
+    GenerationResponse,
+    # AnthropicMessagesConfig,
+    # AnthropicMessagesModel,
+    # BedrockConfig,
+    # BedrockModel,
+    GoogleAIConfig,
+    GoogleAIModel,
     LLMfy,
     Message,
+    # OpenAIResponsesConfig,
+    # OpenAIResponsesModel,
+    # OpenAIChatConfig,
+    # OpenAIChatModel,
     Role,
-    BedrockConfig,
-    BedrockModel,
-    GenerationResponse,
     llmfy_usage_tracker,
 )
 
@@ -27,10 +35,30 @@ def stream_example():
     # model="us.anthropic.claude-3-5-haiku-20241022-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    llm = BedrockModel(
-        model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+    # llm = BedrockModel(
+    #     model="amazon.nova-lite-v1:0",
+    #     config=BedrockConfig(temperature=0.7),
+    # )
+
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=AnthropicMessagesConfig(temperature=0.7),
+    # )
+
+    # llm = OpenAIResponsesModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIResponsesConfig(temperature=0.7),
+    # )
+
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=GoogleAIConfig(temperature=0.7),
     )
+
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIChatConfig(temperature=0.7),
+    # )
 
     SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
     <data>
@@ -45,16 +73,89 @@ def stream_example():
     try:
         # Example conversation with tool use
         messages = [Message(role=Role.USER, content="apa ibukota jakarta?")]
-        # with openai_usage_tracker() as usage:
         with llmfy_usage_tracker() as usage:
             stream = chat.chat_stream(messages, info=info)
             full_content = ""
+            num = 0
             for chunk in stream:
                 if isinstance(chunk, GenerationResponse):
                     if chunk.result.content:
                         content = chunk.result.content
                         full_content += content
-                        print(content, end="", flush=True)
+                        num += 1
+                        print(f"chunk: {num}")
+                        print(content, flush=True)
+                        print("\n")
+
+            print("--- full ---")
+            print(full_content)
+            print("------")
+
+            print(usage)
+
+    except Exception as e:
+        raise e
+
+
+def stream_invoke_example():
+    info = """
+	Irufano adalah seorang sofware engineer.
+	Dia berasal dari Indonesia.
+	"""
+
+    # llm = BedrockModel(
+    #     model="amazon.nova-lite-v1:0",
+    #     config=BedrockConfig(temperature=0.7),
+    # )
+
+    # llm = AnthropicMessagesModel(
+    #     model="claude-haiku-4-5",
+    #     config=AnthropicMessagesConfig(temperature=0.7),
+    # )
+
+    # llm = OpenAIResponsesModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIResponsesConfig(temperature=0.7),
+    # )
+
+    llm = GoogleAIModel(
+        model="gemini-2.5-flash-lite",
+        config=GoogleAIConfig(temperature=0.7),
+    )
+
+    # llm = OpenAIChatModel(
+    #     model="gpt-4o-mini",
+    #     config=OpenAIChatConfig(temperature=0.7),
+    # )
+
+    SYSTEM_PROMPT = """Answer any user questions based solely on the data below:
+    <data>
+    {{info}}
+    </data>
+    
+    DO NOT response outside context."""
+
+    # Initialize framework
+    chat = LLMfy(llm, system_message=SYSTEM_PROMPT, input_variables=["info"])
+
+    try:
+        with llmfy_usage_tracker() as usage:
+            stream = chat.invoke_stream(contents="apa ibukota jakarta?", info=info)
+            full_content = ""
+            num = 0
+            for chunk in stream:
+                if isinstance(chunk, GenerationResponse):
+                    if chunk.result.content:
+                        content = chunk.result.content
+                        full_content += content
+                        num += 1
+                        print(f"chunk: {num}")
+                        print(content, flush=True)
+                        print("\n")
+
+            print("--- full ---")
+            print(full_content)
+            print("------")
 
             print(usage)
 

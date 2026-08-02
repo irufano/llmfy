@@ -13,6 +13,7 @@ def llmfy_usage_tracker(
     openai_pricing: dict[str, Any] | None = None,
     bedrock_pricing: dict[str, Any] | None = None,
     googleai_pricing: dict[str, Any] | None = None,
+    anthropic_pricing: dict[str, Any] | None = None,
 ):
     """LLMfy usage tracker.
 
@@ -89,6 +90,24 @@ def llmfy_usage_tracker(
             }
             ```
 
+        anthropic_pricing (Optional[Dict[str, Any]], optional): Anthropic (native Messages API)
+            Pricing dictionary source. Defaults to None. If None then use default pricing from
+            this dependency.
+
+            Example pricing structure:
+            ```
+            {
+                "claude-sonnet-5": {
+                    "input": 3.30,
+                    "output": 16.50
+                },
+                "claude-opus-5": {
+                    "input": 5.50,
+                    "output": 27.50
+                }
+            }
+            ```
+
     Yields:
             OpenAIUsage: OpenAI usage accumulation.
     """
@@ -97,6 +116,7 @@ def llmfy_usage_tracker(
         openai_pricing=openai_pricing,
         bedrock_pricing=bedrock_pricing,
         googleai_pricing=googleai_pricing,
+        anthropic_pricing=anthropic_pricing,
     )
     LLMFY_USAGE_TRACKER_VAR.set(usage_tracker)  # Store usage_tracker it in the context
     try:

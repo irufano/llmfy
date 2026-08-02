@@ -70,6 +70,45 @@ Request Details:
 ## Customize Prices Data
 If the model is not found in the lmfy usage tracker, you can customize the model price source list based on the provider.
 
+### Anthropic
+Anthropic (native Messages API) Pricing dictionary source. Flat structure, like OpenAI's — native Anthropic pricing has no region dimension, unlike Bedrock.
+
+Example pricing structure:
+```json linenums="1"
+{
+    "claude-sonnet-5": {
+        "input": 3.30,
+        "output": 16.50,
+        "token_unit": 1000000
+    },
+    "claude-opus-5": {
+        "input": 5.50,
+        "output": 27.50,
+        "token_unit": 1000000
+    },
+    "claude-haiku-4-5": {
+        "input": 1.10,
+        "output": 5.50,
+        "token_unit": 1000000
+    }
+}
+```
+
+!!! info "Optional `cache_read` / `cache_write` fields"
+    Add `cache_read` and/or `cache_write` to a model entry to set its **explicit** per-token cache price (same unit as `input`/`output`, not a ratio). If omitted, llmfy falls back to the default ratio — 10% of input for cache reads, 125% of input for cache writes (5-minute TTL) — the same defaults used by Bedrock's Claude pricing. The 1-hour cache TTL uses a ~200% write premium instead of ~125%; set `cache_write` explicitly if you need that modeled precisely, since `ModelPricing` has no TTL dimension to distinguish the two automatically.
+
+    ```json linenums="1"
+    {
+        "claude-sonnet-5": {
+            "input": 3.30,
+            "output": 16.50,
+            "cache_read": 0.33,
+            "cache_write": 6.60,
+            "token_unit": 1000000
+        }
+    }
+    ```
+
 ### OpenAI
 OpenAI Pricing dictionary source. 
 
@@ -270,6 +309,19 @@ Google AI supports four pricing structures (all prices are per 1M tokens in USD)
 ### Example
 
 ```python linenums="1"
+anthropic_prices = {
+    "claude-sonnet-5": {
+        "input": 3.30,
+        "output": 16.50,
+        "token_unit": 1_000_000,
+    },
+    "claude-opus-5": {
+        "input": 5.50,
+        "output": 27.50,
+        "token_unit": 1_000_000,
+    },
+}
+
 openai_prices = {
     "gpt-4o": {
         "input": 2.50,
@@ -333,6 +385,7 @@ googleai_prices = {
 }
 
 with llmfy_usage_tracker(
+    anthropic_pricing=anthropic_prices,
     openai_pricing=openai_prices,
     bedrock_pricing=bedrock_prices,
     googleai_pricing=googleai_prices,

@@ -1,9 +1,10 @@
 # Providers
 
-LLMfy supports three LLM providers. The table below summarises their capabilities:
+LLMfy supports four LLM providers. The table below summarises their capabilities:
 
 | Provider | Class | Install Extra | Tool Calling | Streaming | Image | Document | Video |
 |----------|-------|---------------|--------------|-----------|-------|----------|-------|
+| Anthropic (Messages API) | `AnthropicMessagesModel` | `llmfy[anthropic]` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | OpenAI (Chat Completions) | `OpenAIChatModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | OpenAI (Responses API) | `OpenAIResponsesModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | AWS Bedrock | `BedrockModel` | `llmfy[boto3]` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -11,6 +12,77 @@ LLMfy supports three LLM providers. The table below summarises their capabilitie
 
 !!! note "Two OpenAI backends, one vendor"
     `OpenAIChatModel` and `OpenAIResponsesModel` both talk to OpenAI — they just use different API surfaces (Chat Completions vs the newer Responses API). Pick one per `LLMfy` instance; they are not interchangeable mid-conversation since their wire formats differ. See [OpenAI (Responses API)](#openai-responses-api) below.
+
+---
+
+## Anthropic (Messages API)
+
+`AnthropicMessagesModel` talks directly to Anthropic's native [Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages) (`api.anthropic.com`) via the official `anthropic` Python SDK — distinct from using Claude models through AWS Bedrock's Converse API (see [AWS Bedrock](#aws-bedrock) below, which is a separate backend/provider pairing: `ModelBackend.ANTHROPIC_MESSAGES` vs `ModelBackend.BEDROCK`).
+
+!!! warning "Video input not supported"
+    `ContentType.VIDEO` raises `LLMfyException` on `AnthropicMessagesModel` — the native Messages API has no video input support. Text, image, and document (PDF) input are implemented.
+
+### Installation
+
+=== "UV"
+
+    ```shell
+    uv add "llmfy[anthropic]"
+    ```
+
+=== "pip"
+
+    ```shell
+    pip install "llmfy[anthropic]"
+    ```
+
+### Environment Variables
+
+- `ANTHROPIC_API_KEY`
+
+Alternatively, pass `api_key` directly to `AnthropicMessagesModel` — it takes precedence over the environment variable. A `base_url` argument is also accepted, for pointing at a proxy or compatible endpoint.
+
+### Configuration
+
+```python
+from llmfy import AnthropicMessagesConfig, AnthropicMessagesThinkingConfig
+
+config = AnthropicMessagesConfig(
+    max_tokens=4096,       # REQUIRED by the Messages API — always sent
+    temperature=None,      # None = API default (1.0)
+    top_p=None,            # Nucleus sampling probability
+    top_k=None,            # Top-k sampling
+    stop_sequences=None,   # List of stop sequences
+    # Thinking — grouped in one settings object
+    thinking=AnthropicMessagesThinkingConfig(
+        enabled=False,   # Set True to enable
+        budget_tokens=None,  # Extended thinking: token budget (min 1024)
+        type=None,           # 'adaptive' for current-generation models
+        effort=None,         # Adaptive: 'low', 'medium', 'high', 'xhigh', 'max'
+    ),
+)
+```
+
+See [Thinking Config](thinking-config.md#anthropic-messages-api) for usage with reasoning models and [Prompt Caching](prompt-caching.md#anthropic-messages-api) for caching.
+
+### Usage
+
+```python linenums="1"
+from llmfy import AnthropicMessagesModel, AnthropicMessagesConfig, LLMfy
+
+config = AnthropicMessagesConfig(temperature=0.7)
+llm = AnthropicMessagesModel(model="claude-sonnet-5", config=config)
+
+agent = LLMfy(llm, system_message="You are a helpful assistant.")
+```
+
+You can also pass the API key directly instead of using an environment variable:
+
+```python
+llm = AnthropicMessagesModel(model="claude-sonnet-5", config=config, api_key="sk-ant-...")
+```
+
+Common model IDs: `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`, `claude-fable-5`
 
 ---
 
@@ -87,7 +159,7 @@ Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
 
 ### Installation
 
-Same as [OpenAI](#openai) above — `llmfy[openai]`.
+Same as [OpenAI (Chat Completions)](#openai-chat-completions) above — `llmfy[openai]`.
 
 ### Environment Variables
 

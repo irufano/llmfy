@@ -17,6 +17,7 @@ See complete documentation at [https://llmfy.readthedocs.io/](https://llmfy.read
 ## How to install
 
 - Optional Library:
+  - Install [anthropic](https://pypi.org/project/anthropic) to use Anthropic Claude models (native Messages API) — 🔸 optional.
   - Install [openai](https://pypi.org/project/openai) to use OpenAI models — 🔸 optional.
   - Install [boto3](https://pypi.org/project/boto3/) to use AWS Bedrock models — 🔸 optional.
   - Install [numpy](https://pypi.org/project/numpy/) to use Embedding, `FAISSVectorStore` — 🔸 optional.
@@ -69,6 +70,10 @@ git+https://github.com/irufano/llmfy.git@dev
 ```
 
 ## How to use
+### Anthropic models
+To use `AnthropicMessagesModel` (native Messages API), requires install `"llmfy[anthropic]"` and add below config to your env (or pass `api_key=` to the model instead):
+- `ANTHROPIC_API_KEY`
+
 ### OpenAI models
 To use `OpenAIChatModel` (Chat Completions) or `OpenAIResponsesModel` (Responses API), requires install `"llmfy[openai]"` and add below config to your env (or pass `api_key=` to the model instead):
 - `OPENAI_API_KEY`

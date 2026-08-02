@@ -1,7 +1,17 @@
-from abc import ABC, abstractmethod
-from typing import Any
+from __future__ import annotations
 
-from llmfy.llmfy_core.messages.message import Message
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    # Deferred: only used for type hints here. A real top-level import would
+    # make this module's own import order matter (whichever provider package
+    # happens to import `ModelFormatter` first would trigger the `messages`
+    # package from inside `model_formatter`'s own partial import, causing a
+    # circular-import error) — fragile, and not something import-sorting
+    # tools know to preserve. Deferring it removes the runtime dependency
+    # entirely, so no ordering constraint exists at all.
+    from llmfy.llmfy_core.messages.message import Message
 
 
 class ModelFormatter(ABC):
