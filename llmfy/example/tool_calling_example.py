@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 
 from llmfy import (
-    # BedrockConfig,
-    # BedrockModel,
+    # BedrockConverseConfig,
+    # BedrockConverseModel,
     # OpenAIChatConfig,
     # OpenAIChatModel,
     GoogleAIConfig,
@@ -23,9 +23,9 @@ def tool_calling_example():
     # model="anthropic.claude-3-5-sonnet-20240620-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    # llm = BedrockModel(
+    # llm = BedrockConverseModel(
     #     model="amazon.nova-lite-v1:0",
-    #     config=BedrockConfig(temperature=0.7),
+    #     config=BedrockConverseConfig(temperature=0.7),
     # )
 
     # config = OpenAIChatConfig(temperature=0.7)

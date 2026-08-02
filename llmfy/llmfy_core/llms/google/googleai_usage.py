@@ -2,6 +2,7 @@ import functools
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
+from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
@@ -138,7 +139,7 @@ def track_googleai_embedding_usage(func):
             pass
 
         usage_tracker.update(
-            backend=ModelBackend.GOOGLE,
+            provider=ServiceProvider.GOOGLE,
             type=ServiceType.EMBEDDING,
             model=model,
             usage={"prompt_token_count": token_count},

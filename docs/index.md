@@ -22,7 +22,7 @@ def example():
     {{info}}
     Answer only relevant questions, otherwise, say I don't know."""
 
-    llm = BedrockModel(model="amazon.nova-lite-v1:0", config=BedrockConfig(temperature=0.7))
+    llm = BedrockConverseModel(model="amazon.nova-lite-v1:0", config=BedrockConverseConfig(temperature=0.7))
     framework = LLMfy(llm, system_message=SYSTEM_PROMPT, input_variables=["info"])
     content = "What is LLMfy?"
     response = framework.invoke(content, info=info)

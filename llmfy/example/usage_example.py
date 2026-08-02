@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     LLMfy,
     LLMfyException,
     Message,
@@ -21,9 +21,9 @@ def usage_example():
 	"""
 
     # Configuration
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+        config=BedrockConverseConfig(temperature=0.7),
     )
 
     llm2 = OpenAIChatModel(

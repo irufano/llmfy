@@ -1,17 +1,17 @@
-from .bedrock_config import (
-    BedrockConfig,
-    BedrockPromptCachingConfig,
-    BedrockThinkingConfig,
-)
-from .bedrock_formatter import BedrockFormatter
-from .bedrock_model import BedrockModel
 from .bedrock_pricing_list import BEDROCK_PRICING
+from .converse.bedrock_converse_config import (
+    BedrockConverseConfig,
+    BedrockConversePromptCachingConfig,
+    BedrockConverseThinkingConfig,
+)
+from .converse.bedrock_converse_formatter import BedrockConverseFormatter
+from .converse.bedrock_converse_model import BedrockConverseModel
 
 __all__ = [
-    "BedrockConfig",
-    "BedrockThinkingConfig",
-    "BedrockPromptCachingConfig",
-    "BedrockFormatter",
-    "BedrockModel",
+    "BedrockConverseConfig",
+    "BedrockConverseThinkingConfig",
+    "BedrockConversePromptCachingConfig",
+    "BedrockConverseFormatter",
+    "BedrockConverseModel",
     "BEDROCK_PRICING",
 ]

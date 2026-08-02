@@ -69,7 +69,7 @@ class OpenAIChatModel(BaseAIModel):
         self.client = openai.OpenAI(
             api_key=api_key, base_url=base_url, default_headers=default_headers
         )
-        self.backend = ModelBackend.OPENAI
+        self.backend = ModelBackend.OPENAI_CHAT
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
         self.config = config

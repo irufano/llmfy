@@ -9,11 +9,11 @@ from .anthropic import (
 from .base_ai_model import BaseAIModel
 from .bedrock import (
     BEDROCK_PRICING,
-    BedrockConfig,
-    BedrockFormatter,
-    BedrockModel,
-    BedrockPromptCachingConfig,
-    BedrockThinkingConfig,
+    BedrockConverseConfig,
+    BedrockConverseFormatter,
+    BedrockConverseModel,
+    BedrockConversePromptCachingConfig,
+    BedrockConverseThinkingConfig,
 )
 from .google import (
     GOOGLEAI_PRICING,
@@ -54,11 +54,11 @@ __all__ = [
     "OpenAIResponsesReasoningConfig",
     "OpenAIResponsesPromptCachingConfig",
     "OpenAIResponsesModel",
-    "BedrockConfig",
-    "BedrockThinkingConfig",
-    "BedrockPromptCachingConfig",
-    "BedrockFormatter",
-    "BedrockModel",
+    "BedrockConverseConfig",
+    "BedrockConverseThinkingConfig",
+    "BedrockConversePromptCachingConfig",
+    "BedrockConverseFormatter",
+    "BedrockConverseModel",
     "BEDROCK_PRICING",
     "GoogleAIConfig",
     "GoogleAIThinkingConfig",

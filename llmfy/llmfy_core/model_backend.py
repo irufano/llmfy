@@ -2,19 +2,20 @@ from enum import StrEnum
 
 
 class ModelBackend(StrEnum):
-	"""ModelBackend enum."""
-	# OpenAI
-	OPENAI = "openai"                      # Chat Completions
-	OPENAI_RESPONSES = "openai_responses"  # Responses API
+    """ModelBackend enum."""
 
-	BEDROCK = "bedrock"
-	GOOGLE = "google"
+    # OpenAI
+    OPENAI_CHAT = "openai_chat"  # Chat Completions
+    OPENAI_RESPONSES = "openai_responses"  # Responses API
 
-	# Anthropic
-	ANTHROPIC_MESSAGES = "anthropic_messages"  # Messages API
+    BEDROCK_CONVERSE = "bedrock_converse"  # Converse API
+    GOOGLE = "google"
 
-	def __str__(self):
-		return self.value
+    # Anthropic
+    ANTHROPIC_MESSAGES = "anthropic_messages"  # Messages API
 
-	def __repr__(self):
-		return f"'{self.value}'"
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return f"'{self.value}'"

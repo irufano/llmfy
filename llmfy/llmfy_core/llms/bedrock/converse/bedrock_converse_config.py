@@ -3,8 +3,8 @@ from typing import Literal
 from pydantic import BaseModel
 
 
-class BedrockThinkingConfig(BaseModel):
-    """Grouped thinking/reasoning settings for BedrockModel.
+class BedrockConverseThinkingConfig(BaseModel):
+    """Grouped thinking/reasoning settings for BedrockConverseModel.
 
     Bedrock exposes three distinct thinking modes depending on the model family.
     Only set the field(s) relevant to the mode your model uses — the others are
@@ -37,7 +37,7 @@ class BedrockThinkingConfig(BaseModel):
 
     budget_tokens: int | None = None
     """Claude extended thinking only (type left unset or 'enabled'). Token budget
-    for the reasoning pass. Min 1024. Requires BedrockConfig.temperature, top_p,
+    for the reasoning pass. Min 1024. Requires BedrockConverseConfig.temperature, top_p,
     and top_k to all be None — the API errors otherwise.
 
     Supported models:
@@ -78,7 +78,7 @@ class BedrockThinkingConfig(BaseModel):
     reasoning_effort: str | None = None
     """Amazon Nova 2 Lite only: 'low', 'medium', or 'high'. Uses the Nova
     reasoningConfig request format instead of Claude's thinking block — when set,
-    it takes priority over type/effort above. 'high' requires BedrockConfig
+    it takes priority over type/effort above. 'high' requires BedrockConverseConfig
     temperature, top_p, and max_tokens to all be None.
 
     Supported models:
@@ -86,8 +86,8 @@ class BedrockThinkingConfig(BaseModel):
     """
 
 
-class BedrockPromptCachingConfig(BaseModel):
-    """Grouped prompt caching settings for BedrockModel.
+class BedrockConversePromptCachingConfig(BaseModel):
+    """Grouped prompt caching settings for BedrockConverseModel.
 
     Enables prompt caching via the Converse API cachePoint mechanism.
 
@@ -174,8 +174,8 @@ class BedrockPromptCachingConfig(BaseModel):
     caching-compatible Claude models support "5m" (see class docstring)."""
 
 
-class BedrockConfig(BaseModel):
-    """Configuration for BedrockModel."""
+class BedrockConverseConfig(BaseModel):
+    """Configuration for BedrockConverseModel."""
 
     temperature: float | None = 0.7
     """Must be set to None when thinking.enabled=True (Claude extended thinking) or
@@ -188,12 +188,12 @@ class BedrockConfig(BaseModel):
     stopSequences: list[str] | None = None
 
     # Thinking / reasoning — grouped so all thinking-related fields live in one place
-    thinking: BedrockThinkingConfig = BedrockThinkingConfig()
-    """Grouped thinking/reasoning settings. See BedrockThinkingConfig for which
+    thinking: BedrockConverseThinkingConfig = BedrockConverseThinkingConfig()
+    """Grouped thinking/reasoning settings. See BedrockConverseThinkingConfig for which
     fields apply to which model family (Claude extended, Claude adaptive, or
     Amazon Nova 2 Lite reasoning)."""
 
     # Prompt caching — grouped so all caching-related fields live in one place
-    prompt_caching: BedrockPromptCachingConfig = BedrockPromptCachingConfig()
-    """Grouped prompt caching settings. See BedrockPromptCachingConfig for
+    prompt_caching: BedrockConversePromptCachingConfig = BedrockConversePromptCachingConfig()
+    """Grouped prompt caching settings. See BedrockConversePromptCachingConfig for
     supported models, TTL rules, and pricing."""

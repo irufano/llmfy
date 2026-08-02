@@ -5,7 +5,7 @@ LLMfy provides a grouped `prompt_caching` settings object across all three provi
 | Provider | Config class | Mechanism | Min tokens | Default TTL | Savings |
 |----------|-------------|-----------|------------|-------------|---------|
 | **Anthropic** (Messages API) | `AnthropicMessagesPromptCachingConfig` | Inline `cache_control` markers injected on the last content block | 1,024–4,096 | 5 min (or 1h) | ~90% on cached reads |
-| **AWS Bedrock** | `BedrockPromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
+| **AWS Bedrock** | `BedrockConversePromptCachingConfig` | `cachePoint` markers injected automatically | 1,024–4,096 | 5 min | ~90% on cached reads |
 | **OpenAI** (Chat Completions) | `OpenAIChatPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | ~50% pre-GPT-5.6 / ~90% GPT-5.6+ on cached reads |
 | **OpenAI** (Responses API) | `OpenAIResponsesPromptCachingConfig` | Fully automatic — no markers needed | 1,024 | 5–10 min rolling | Same as Chat Completions — pricing is per-model, not per-endpoint |
 | **Google AI** | `GoogleAIPromptCachingConfig` | Explicit: pre-created cache object; Implicit: auto on Gemini 2.5+ | 2,048–4,096 | 1 hour (no bounds) | ~75% explicit / reduced implicit |
@@ -45,7 +45,7 @@ This is a different mechanism from Bedrock's Converse API, which injects a sibli
 | Uncached tokens | Billed at the standard rate |
 
 !!! note "TTL pricing simplification"
-    `ModelPricing.cache_write` has no TTL dimension, so `ANTHROPIC_PRICING` relies on the same 125% default fallback regardless of TTL (matching `BedrockPromptCachingConfig`'s simplification). Set `cache_write` explicitly per model via a custom `llmfy_usage_tracker(anthropic_pricing=...)` dict if you need the 1-hour ~200% premium modeled precisely.
+    `ModelPricing.cache_write` has no TTL dimension, so `ANTHROPIC_PRICING` relies on the same 125% default fallback regardless of TTL (matching `BedrockConversePromptCachingConfig`'s simplification). Set `cache_write` explicitly per model via a custom `llmfy_usage_tracker(anthropic_pricing=...)` dict if you need the 1-hour ~200% premium modeled precisely.
 
 ### `AnthropicMessagesPromptCachingConfig` fields
 
@@ -168,7 +168,7 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 !!! note "Batch API"
     Prompt caching is only available with on-demand inference. It is **not** compatible with the Bedrock Batch API.
 
-### `BedrockPromptCachingConfig` fields
+### `BedrockConversePromptCachingConfig` fields
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
@@ -178,13 +178,13 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 === "Default TTL (5 minutes)"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
+    from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy
 
-    config = BedrockConfig(
-        prompt_caching=BedrockPromptCachingConfig(enabled=True),
+    config = BedrockConverseConfig(
+        prompt_caching=BedrockConversePromptCachingConfig(enabled=True),
     )
 
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="anthropic.claude-3-5-sonnet-20241022-v2:0",
         config=config,
     )
@@ -206,16 +206,16 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 === "Extended TTL (1 hour)"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
+    from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy
 
-    config = BedrockConfig(
-        prompt_caching=BedrockPromptCachingConfig(
+    config = BedrockConverseConfig(
+        prompt_caching=BedrockConversePromptCachingConfig(
             enabled=True,
             ttl="1h",  # only Claude 4.5, 4.6, 4.8, Fable 5
         ),
     )
 
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="anthropic.claude-sonnet-4-5-20250929-v1:0",
         config=config,
     )
@@ -234,10 +234,10 @@ Cross-region inference IDs (`us.`, `eu.`, `ap.` prefixes) are also supported, e.
 When `llmfy_usage_tracker()` is active, cache token counts appear in the `details` list:
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker
+from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
-llm = BedrockModel(model="anthropic.claude-sonnet-4-6", config=config)
+config = BedrockConverseConfig(prompt_caching=BedrockConversePromptCachingConfig(enabled=True))
+llm = BedrockConverseModel(model="anthropic.claude-sonnet-4-6", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 
 with llmfy_usage_tracker() as usage:
@@ -492,10 +492,10 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
 === "✅ Recommended"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
+    from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy
 
-    config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
-    llm = BedrockModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
+    config = BedrockConverseConfig(prompt_caching=BedrockConversePromptCachingConfig(enabled=True))
+    llm = BedrockConverseModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
 
     # Large stable knowledge base in the system prompt — always cached
     agent = LLMfy(
@@ -510,10 +510,10 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
 === "❌ Avoid"
 
     ```python linenums="1"
-    from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy
+    from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy
 
-    config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
-    llm = BedrockModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
+    config = BedrockConverseConfig(prompt_caching=BedrockConversePromptCachingConfig(enabled=True))
+    llm = BedrockConverseModel(model="anthropic.claude-sonnet-4-20250514-v1:0", config=config)
 
     # Dynamic variable in the system prompt — different value = different cache prefix
     agent = LLMfy(
@@ -528,7 +528,7 @@ Move the **dynamic part into the user message**. Keep only the **large stable co
     ```
 
 !!! tip "Best practice"
-    Use `prompt_caching=BedrockPromptCachingConfig(enabled=True)` (or the equivalent for OpenAI/Google) when the system prompt is **large (hundreds to thousands of tokens) and constant** across many calls. Large stable content like reference documents, knowledge bases, or detailed instructions benefit the most.
+    Use `prompt_caching=BedrockConversePromptCachingConfig(enabled=True)` (or the equivalent for OpenAI/Google) when the system prompt is **large (hundreds to thousands of tokens) and constant** across many calls. Large stable content like reference documents, knowledge bases, or detailed instructions benefit the most.
 
 ---
 
@@ -542,10 +542,10 @@ Cache token counts are exposed in `usage.to_dict()["details"]` and shown in `rep
 | `cache_write_tokens` | Anthropic, Bedrock, OpenAI (GPT-5.6+ only) | Tokens written to cache this request (Anthropic: ~125%/~200% input rate for 5m/1h TTL; Bedrock: ~125% input rate; OpenAI GPT-5.6+: 125% input rate; 0 on older OpenAI models, which have no write fee) |
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, BedrockPromptCachingConfig, LLMfy, llmfy_usage_tracker
+from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConversePromptCachingConfig, LLMfy, llmfy_usage_tracker
 
-config = BedrockConfig(prompt_caching=BedrockPromptCachingConfig(enabled=True))
-llm = BedrockModel(model="anthropic.claude-sonnet-4-6", config=config)
+config = BedrockConverseConfig(prompt_caching=BedrockConversePromptCachingConfig(enabled=True))
+llm = BedrockConverseModel(model="anthropic.claude-sonnet-4-6", config=config)
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 
 with llmfy_usage_tracker() as usage:

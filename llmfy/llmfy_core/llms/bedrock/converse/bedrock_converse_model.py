@@ -9,8 +9,8 @@ from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
-from llmfy.llmfy_core.llms.bedrock.bedrock_config import (
-    BedrockConfig,
+from llmfy.llmfy_core.llms.bedrock.converse.bedrock_converse_config import (
+    BedrockConverseConfig,
 )
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -18,17 +18,17 @@ from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.service_provider import ServiceProvider
 
 
-class BedrockModel(BaseAIModel):
+class BedrockConverseModel(BaseAIModel):
     """
-    BedrockModel class.
+    BedrockConverseModel class.
 
     Example:
     ```python
     # Configuration
-    config = BedrockConfig(
+    config = BedrockConverseConfig(
             temperature=0.7
     )
-    llm = BedrockModel(model="amazon.nova-pro-v1:0", config=config)
+    llm = BedrockConverseModel(model="amazon.nova-pro-v1:0", config=config)
     ...
     ```
     """
@@ -36,17 +36,17 @@ class BedrockModel(BaseAIModel):
     def __init__(
         self,
         model: str,
-        config: BedrockConfig | None = None,
+        config: BedrockConverseConfig | None = None,
         aws_access_key_id: str | None = None,
         aws_secret_access_key: str | None = None,
         aws_bedrock_region: str | None = None,
     ):
         """
-        BedrockModel
+        BedrockConverseModel
 
         Args:
             model (str): Model ID
-            config (BedrockConfig, optional): Configuration. Defaults to BedrockConfig().
+            config (BedrockConverseConfig, optional): Configuration. Defaults to BedrockConverseConfig().
             aws_access_key_id (str, optional): AWS access key ID. Defaults to the
                 `AWS_ACCESS_KEY_ID` environment variable if not provided.
             aws_secret_access_key (str, optional): AWS secret access key. Defaults to
@@ -54,7 +54,7 @@ class BedrockModel(BaseAIModel):
             aws_bedrock_region (str, optional): AWS Bedrock region. Defaults to the
                 `AWS_BEDROCK_REGION` environment variable if not provided.
         """
-        config = config if config is not None else BedrockConfig()
+        config = config if config is not None else BedrockConverseConfig()
         if boto3 is None:
             raise LLMfyException(
                 'boto3 package is not installed. Install it using `pip install "llmfy[boto3]"`'
@@ -79,7 +79,7 @@ class BedrockModel(BaseAIModel):
                 "Please provide `AWS_BEDROCK_REGION` on your environment or pass `aws_bedrock_region`!"
             )
 
-        self.backend = ModelBackend.BEDROCK
+        self.backend = ModelBackend.BEDROCK_CONVERSE
         self.provider = ServiceProvider.BEDROCK
         self.model_name = model
         self.config = config
@@ -99,9 +99,11 @@ class BedrockModel(BaseAIModel):
         )
 
         from llmfy.exception.exception_handler import handle_bedrock_error
-        from llmfy.llmfy_core.llms.bedrock.bedrock_usage import track_bedrock_usage
+        from llmfy.llmfy_core.llms.bedrock.converse.bedrock_converse_usage import (
+            track_bedrock_converse_usage,
+        )
 
-        @track_bedrock_usage
+        @track_bedrock_converse_usage
         def _call_bedrock_impl(params: dict[str, Any]):
             try:
                 response = self.client.converse(**params)
@@ -120,11 +122,11 @@ class BedrockModel(BaseAIModel):
         )
 
         from llmfy.exception.exception_handler import handle_bedrock_error
-        from llmfy.llmfy_core.llms.bedrock.bedrock_usage import (
-            track_bedrock_stream_usage,
+        from llmfy.llmfy_core.llms.bedrock.converse.bedrock_converse_usage import (
+            track_bedrock_converse_stream_usage,
         )
 
-        @track_bedrock_stream_usage
+        @track_bedrock_converse_stream_usage
         def _call_stream_bedrock_impl(params: dict[str, Any]):
             try:
                 return self.client.converse_stream(**params)

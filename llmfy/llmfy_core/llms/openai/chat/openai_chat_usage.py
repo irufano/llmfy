@@ -2,6 +2,7 @@ import functools
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
+from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
@@ -36,7 +37,7 @@ def track_openai_usage(func):
         ]  # args is tuple[OpenAIChatModel, params] and params contain `model`
         if response.usage:
             usage_tracker.update(
-                backend=ModelBackend.OPENAI,
+                backend=ModelBackend.OPENAI_CHAT,
                 type=ServiceType.LLM,
                 model=model,
                 usage=response.usage,
@@ -81,7 +82,7 @@ def track_openai_stream_usage(func):
 
         if stream_usage:
             usage_tracker.update(
-                backend=ModelBackend.OPENAI,
+                backend=ModelBackend.OPENAI_CHAT,
                 type=ServiceType.LLM,
                 model=model,
                 usage=stream_usage,
@@ -106,7 +107,7 @@ def track_openai_embedding_usage(func):
             "total_tokens": response.usage.total_tokens or 0,
         }
         usage_tracker.update(
-            backend=ModelBackend.OPENAI,
+            provider=ServiceProvider.OPENAI,
             type=ServiceType.EMBEDDING,
             model=model,
             usage=usage,

@@ -228,8 +228,8 @@ class LLMfyUsage:
             + "\n".join(
                 f"{i + 1}. {detail['model']} "
                 f"\n\tprovider: {detail['provider']} "
-                f"\n\tbackend: {detail.get('backend')} "
-                f"\n\ttype: {detail['type']} "
+                + (f"\n\tbackend: {detail.get('backend')} " if detail.get('backend') else "")
+                + f"\n\ttype: {detail['type']} "
                 f"\n\tinput_tokens: {detail['input_tokens']} "
                 f"\n\toutput_tokens: {detail['output_tokens']} "
                 f"\n\ttotal_tokens: {detail['total_tokens']} "
@@ -438,28 +438,36 @@ class LLMfyUsage:
 
     def update(
         self,
-        backend: ModelBackend,
         type: ServiceType,
         model: str,
         usage: dict[str, int],
+        backend: ModelBackend | None = None,
+        provider: ServiceProvider | None = None,
     ) -> None:
         """
         Update usage statistics and calculate price.
 
         Args:
-            backend (ModelBackend): Model backend (implementation path)
+            type (ServiceType): LLM or EMBEDDING.
             model (str): Model name
             usage (Dict[str, int]): Dictionary containing token counts
+            backend (ModelBackend, optional): Model backend (implementation path).
+                Required for `ServiceType.LLM` — distinguishes API variants of the
+                same vendor (e.g. OpenAI Chat Completions vs Responses) that need
+                different parsing/pricing logic.
+            provider (ServiceProvider, optional): Vendor-level identity. Required
+                for `ServiceType.EMBEDDING` — embedding models have no API-variant
+                split, so dispatch only needs to know the vendor.
         """
         match type:
             case ServiceType.LLM:
                 match backend:
-                    case ModelBackend.OPENAI:
-                        self.__openai_update(model=model, usage=usage)
+                    case ModelBackend.OPENAI_CHAT:
+                        self.__openai_chat_update(model=model, usage=usage)
                     case ModelBackend.OPENAI_RESPONSES:
                         self.__openai_responses_update(model=model, usage=usage)
-                    case ModelBackend.BEDROCK:
-                        self.__bedrock_update(model=model, usage=usage)
+                    case ModelBackend.BEDROCK_CONVERSE:
+                        self.__bedrock_converse_update(model=model, usage=usage)
                     case ModelBackend.GOOGLE:
                         self.__googleai_update(model=model, usage=usage)
                     case ModelBackend.ANTHROPIC_MESSAGES:
@@ -467,19 +475,19 @@ class LLMfyUsage:
                     case _:
                         pass
             case ServiceType.EMBEDDING:
-                match backend:
-                    case ModelBackend.OPENAI:
+                match provider:
+                    case ServiceProvider.OPENAI:
                         self.__openai_embedding_update(model=model, usage=usage)
-                    case ModelBackend.BEDROCK:
+                    case ServiceProvider.BEDROCK:
                         self.__bedrock_embedding_update(model=model, usage=usage)
-                    case ModelBackend.GOOGLE:
+                    case ServiceProvider.GOOGLE:
                         self.__googleai_embedding_update(model=model, usage=usage)
                     case _:
                         pass
             case _:
                 pass
 
-    def __openai_update(
+    def __openai_chat_update(
         self,
         model: str,
         usage: dict[str, int],
@@ -565,7 +573,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.OPENAI,
+                "backend": ModelBackend.OPENAI_CHAT,
                 "provider": ServiceProvider.OPENAI,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
@@ -725,7 +733,6 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.OPENAI,
                 "provider": ServiceProvider.OPENAI,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
@@ -739,7 +746,7 @@ class LLMfyUsage:
         )
         pass
 
-    def __bedrock_update(self, model: str, usage: dict[str, int]) -> None:
+    def __bedrock_converse_update(self, model: str, usage: dict[str, int]) -> None:
         """
         Update usage statistics and calculate price.
 
@@ -818,7 +825,7 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.BEDROCK,
+                "backend": ModelBackend.BEDROCK_CONVERSE,
                 "provider": ServiceProvider.BEDROCK,
                 "type": ServiceType.LLM,
                 "input_tokens": input_tokens,
@@ -967,7 +974,6 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.BEDROCK,
                 "provider": ServiceProvider.BEDROCK,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,
@@ -1160,7 +1166,6 @@ class LLMfyUsage:
         self.details.append(
             {
                 "model": model,
-                "backend": ModelBackend.GOOGLE,
                 "provider": ServiceProvider.GOOGLE,
                 "type": ServiceType.EMBEDDING,
                 "input_tokens": input_tokens,

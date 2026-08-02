@@ -7,7 +7,7 @@ class AnthropicMessagesThinkingConfig(BaseModel):
     """Grouped thinking settings for AnthropicMessagesModel.
 
     This is a direct port of the native Anthropic `thinking` block — unlike
-    BedrockThinkingConfig there is no `reasoning_effort` field, since that is
+    BedrockConverseThinkingConfig there is no `reasoning_effort` field, since that is
     a Bedrock/Amazon-Nova-only mechanism with no equivalent on the native
     Anthropic Messages API.
 
@@ -63,7 +63,7 @@ class AnthropicMessagesPromptCachingConfig(BaseModel):
     ~200% (1h TTL) of input price. `ModelPricing` has a single `cache_write`
     field with no TTL distinction — set it explicitly per model if the 1h
     write premium needs to be modeled precisely (same simplification already
-    made by BedrockPromptCachingConfig).
+    made by BedrockConversePromptCachingConfig).
 
     Minimum cacheable prefix is model-dependent (as low as 1024 tokens on
     current models, up to 4096 on some older/smaller models) — shorter

@@ -8,8 +8,8 @@ from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.role import Role
 
 
-class BedrockFormatter(ModelFormatter):
-    """BedrockFormatter.
+class BedrockConverseFormatter(ModelFormatter):
+    """BedrockConverseFormatter.
 
     Args:
         id (str): _description_

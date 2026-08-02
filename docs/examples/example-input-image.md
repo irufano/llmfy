@@ -11,8 +11,8 @@ from llmfy import (
     ContentType,
     Message,
     Role,
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     OpenAIChatConfig,
     OpenAIChatModel,
     llmfy_usage_tracker,
@@ -24,8 +24,8 @@ load_dotenv()
 
 def image_bedrock_example():
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
+    config = BedrockConverseConfig(temperature=0.7)
+    llm = BedrockConverseModel(
         model="amazon.nova-pro-v1:0",
         config=config,
     )

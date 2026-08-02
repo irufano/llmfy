@@ -69,11 +69,11 @@ Answer any user questions based on the data:
 Answer only relevant questions, otherwise say I don't know.
 """
 
-from llmfy import LLMfy, BedrockModel, BedrockConfig
+from llmfy import LLMfy, BedrockConverseModel, BedrockConverseConfig
 
-llm = BedrockModel(
+llm = BedrockConverseModel(
     model="amazon.nova-lite-v1:0",
-    config=BedrockConfig(temperature=0.7),
+    config=BedrockConverseConfig(temperature=0.7),
 )
 
 # Add input_variables matching the placeholder names

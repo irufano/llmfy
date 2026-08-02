@@ -4,8 +4,8 @@
 from dotenv import load_dotenv
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     LLMfy,
     Message,
     Role,
@@ -18,9 +18,9 @@ load_dotenv()
 
 
 def tool_calling_example():
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+        config=BedrockConverseConfig(temperature=0.7),
     )
 
     # llm = OpenAIChatModel(
@@ -63,9 +63,9 @@ def tool_calling_example():
 
 
 def tool_calling_with_invoke_example():
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+        config=BedrockConverseConfig(temperature=0.7),
     )
 
     # config = OpenAIChatConfig(temperature=0.7)

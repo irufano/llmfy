@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from llmfy import (
     # AnthropicMessagesConfig,
     # AnthropicMessagesModel,
-    # BedrockConfig,
-    # BedrockModel,
+    # BedrockConverseConfig,
+    # BedrockConverseModel,
     # OpenAIChatConfig,
     # OpenAIChatModel,
     # OpenAIResponsesConfig,
@@ -38,8 +38,8 @@ def retrieval_example():
     #     config=config,
     # )
 
-    # config = BedrockConfig(temperature=0.7)
-    # llm = BedrockModel(
+    # config = BedrockConverseConfig(temperature=0.7)
+    # llm = BedrockConverseModel(
     #     model="amazon.nova-lite-v1:0",
     #     config=config,
     # )
@@ -99,8 +99,8 @@ def retrieval_invoke_example():
     #     config=config,
     # )
 
-    # config = BedrockConfig(temperature=0.7)
-    # llm = BedrockModel(
+    # config = BedrockConverseConfig(temperature=0.7)
+    # llm = BedrockConverseModel(
     #     model="amazon.nova-lite-v1:0",
     #     config=config,
     # )

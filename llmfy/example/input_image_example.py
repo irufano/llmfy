@@ -3,8 +3,8 @@ import base64
 from dotenv import load_dotenv
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     Content,
     ContentType,
     GoogleAIConfig,
@@ -23,8 +23,8 @@ load_dotenv()
 
 def image_bedrock_example():
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
+    config = BedrockConverseConfig(temperature=0.7)
+    llm = BedrockConverseModel(
         model="amazon.nova-pro-v1:0",
         config=config,
     )

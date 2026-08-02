@@ -113,7 +113,7 @@ class AnthropicMessagesModel(BaseAIModel):
         self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None
     ) -> dict[str, Any]:
         # System is hoisted out of `messages`, same extraction pattern as
-        # BedrockModel — the formatter still emits a {"role": "system", ...}
+        # BedrockConverseModel — the formatter still emits a {"role": "system", ...}
         # entry; we strip it here and pass it as the top-level `system` param.
         _system = next(
             (msg["content"] for msg in messages if msg["role"] == "system"), None

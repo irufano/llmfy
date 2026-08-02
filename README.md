@@ -79,7 +79,7 @@ To use `OpenAIChatModel` (Chat Completions) or `OpenAIResponsesModel` (Responses
 - `OPENAI_API_KEY`
 
 ### AWS Bedrock models
-To use `BedrockModel`, requires install `"llmfy[boto3]"` and add below config to your env (or pass `aws_access_key_id=`, `aws_secret_access_key=`, `aws_bedrock_region=` to `BedrockModel` instead):
+To use `BedrockConverseModel`, requires install `"llmfy[boto3]"` and add below config to your env (or pass `aws_access_key_id=`, `aws_secret_access_key=`, `aws_bedrock_region=` to `BedrockConverseModel` instead):
 - `AWS_ACCESS_KEY_ID` 
 - `AWS_SECRET_ACCESS_KEY` 
 - `AWS_BEDROCK_REGION`

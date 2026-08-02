@@ -7,7 +7,7 @@ LLMfy supports four LLM providers. The table below summarises their capabilities
 | Anthropic (Messages API) | `AnthropicMessagesModel` | `llmfy[anthropic]` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | OpenAI (Chat Completions) | `OpenAIChatModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ✅ | ❌ |
 | OpenAI (Responses API) | `OpenAIResponsesModel` | `llmfy[openai]` | ✅ | ✅ | ✅ | ❌ | ❌ |
-| AWS Bedrock | `BedrockModel` | `llmfy[boto3]` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| AWS Bedrock | `BedrockConverseModel` | `llmfy[boto3]` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Google AI | `GoogleAIModel` | `llmfy[google-genai]` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 !!! note "Two OpenAI backends, one vendor"
@@ -17,7 +17,7 @@ LLMfy supports four LLM providers. The table below summarises their capabilities
 
 ## Anthropic (Messages API)
 
-`AnthropicMessagesModel` talks directly to Anthropic's native [Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages) (`api.anthropic.com`) via the official `anthropic` Python SDK — distinct from using Claude models through AWS Bedrock's Converse API (see [AWS Bedrock](#aws-bedrock) below, which is a separate backend/provider pairing: `ModelBackend.ANTHROPIC_MESSAGES` vs `ModelBackend.BEDROCK`).
+`AnthropicMessagesModel` talks directly to Anthropic's native [Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages) (`api.anthropic.com`) via the official `anthropic` Python SDK — distinct from using Claude models through AWS Bedrock's Converse API (see [AWS Bedrock](#aws-bedrock) below, which is a separate backend/provider pairing: `ModelBackend.ANTHROPIC_MESSAGES` vs `ModelBackend.BEDROCK_CONVERSE`).
 
 !!! warning "Video input not supported"
     `ContentType.VIDEO` raises `LLMfyException` on `AnthropicMessagesModel` — the native Messages API has no video input support. Text, image, and document (PDF) input are implemented.
@@ -234,21 +234,21 @@ Common model IDs: `gpt-4o`, `gpt-4o-mini`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_BEDROCK_REGION`
 
-Alternatively, pass `aws_access_key_id`, `aws_secret_access_key`, and `aws_bedrock_region` directly to `BedrockModel` — they take precedence over the environment variables.
+Alternatively, pass `aws_access_key_id`, `aws_secret_access_key`, and `aws_bedrock_region` directly to `BedrockConverseModel` — they take precedence over the environment variables.
 
 ### Configuration
 
 ```python
-from llmfy import BedrockConfig, BedrockThinkingConfig
+from llmfy import BedrockConverseConfig, BedrockConverseThinkingConfig
 
-config = BedrockConfig(
+config = BedrockConverseConfig(
     temperature=0.7,      # Sampling temperature
     max_tokens=None,      # Max output tokens
     top_p=1.0,            # Nucleus sampling probability
     top_k=None,           # Top-k sampling
     stopSequences=None,   # List of stop sequences
     # Thinking (Claude and Nova 2 Lite models) — grouped in one settings object
-    thinking=BedrockThinkingConfig(
+    thinking=BedrockConverseThinkingConfig(
         enabled=False,          # Set True to enable thinking
         budget_tokens=None,     # Claude extended thinking: token budget (min 1024)
         type=None,              # 'enabled' | 'adaptive' — Claude mode selector
@@ -263,10 +263,10 @@ See [Thinking Config](thinking-config.md) for per-model details and constraints.
 ### Usage
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, LLMfy
+from llmfy import BedrockConverseModel, BedrockConverseConfig, LLMfy
 
-config = BedrockConfig(temperature=0.7)
-llm = BedrockModel(model="amazon.nova-lite-v1:0", config=config)
+config = BedrockConverseConfig(temperature=0.7)
+llm = BedrockConverseModel(model="amazon.nova-lite-v1:0", config=config)
 
 agent = LLMfy(llm, system_message="You are a helpful assistant.")
 ```
@@ -274,7 +274,7 @@ agent = LLMfy(llm, system_message="You are a helpful assistant.")
 You can also pass the credentials directly instead of using environment variables:
 
 ```python
-llm = BedrockModel(
+llm = BedrockConverseModel(
     model="amazon.nova-lite-v1:0",
     config=config,
     aws_access_key_id="...",

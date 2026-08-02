@@ -13,8 +13,8 @@ from dotenv import load_dotenv
 from sqlalchemy.engine import URL
 
 from llmfy import (
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     GenerationResponse,
     LLMfy,
     Message,
@@ -92,14 +92,14 @@ def build_agent(use_redis: bool = True):
     def get_current_time(location: str) -> str:
         return f"The time in {location} is 09:00 AM"
 
-    model = BedrockModel(
+    model = BedrockConverseModel(
         # model="amazon.nova-pro-v1:0",
         # model="amazon.nova-pro-v1:0",
         # model="us.anthropic.claude-3-5-haiku-20241022-v1:0",
         # model="anthropic.claude-3-haiku-20240307-v1:0",
         # model="us.meta.llama3-3-70b-instruct-v1:0",
         model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+        config=BedrockConverseConfig(temperature=0.7),
     )
 
     # model = OpenAIChatModel(model="gpt-4o-mini", config=OpenAIChatConfig())

@@ -17,7 +17,7 @@ class AnthropicMessagesFormatter(ModelFormatter):
     `messages` array (system is a separate request parameter) and no
     per-message `name` field (unlike Bedrock/OpenAI). This formatter still
     emits a `{"role": "system", ...}` entry for SYSTEM-role messages — exactly
-    like BedrockFormatter does — because `AnthropicMessagesModel.generate()` /
+    like BedrockConverseFormatter does — because `AnthropicMessagesModel.generate()` /
     `generate_stream()` strip it out of `messages` and pass it as the
     top-level `system` param before calling the SDK.
     """
@@ -212,7 +212,7 @@ class AnthropicMessagesFormatter(ModelFormatter):
         support it either.
 
         Batches multiple tool results from the same assistant turn into a
-        single Message (role=TOOL), identically to BedrockFormatter.
+        single Message (role=TOOL), identically to BedrockConverseFormatter.
         """
         tool_result = {
             "type": "tool_result",

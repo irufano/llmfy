@@ -4,8 +4,8 @@ from llmfy import (
     GenerationResponse,
     # AnthropicMessagesConfig,
     # AnthropicMessagesModel,
-    # BedrockConfig,
-    # BedrockModel,
+    # BedrockConverseConfig,
+    # BedrockConverseModel,
     GoogleAIConfig,
     GoogleAIModel,
     LLMfy,
@@ -32,9 +32,9 @@ def stream_example():
     # model="us.anthropic.claude-3-5-haiku-20241022-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    # llm = BedrockModel(
+    # llm = BedrockConverseModel(
     #     model="amazon.nova-lite-v1:0",
-    #     config=BedrockConfig(temperature=0.7),
+    #     config=BedrockConverseConfig(temperature=0.7),
     # )
 
     # llm = AnthropicMessagesModel(
@@ -107,9 +107,9 @@ def stream_invoke_example():
     # model="us.anthropic.claude-3-5-haiku-20241022-v1:0",
     # model="amazon.nova-lite-v1:0",
 
-    # llm = BedrockModel(
+    # llm = BedrockConverseModel(
     #     model="amazon.nova-lite-v1:0",
-    #     config=BedrockConfig(temperature=0.7),
+    #     config=BedrockConverseConfig(temperature=0.7),
     # )
 
     # llm = AnthropicMessagesModel(

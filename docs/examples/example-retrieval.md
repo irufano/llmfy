@@ -10,8 +10,8 @@ from llmfy import (
     LLMfy,
     Message,
     Role,
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     # OpenAIChatConfig,
     # OpenAIChatModel,
 )
@@ -27,8 +27,8 @@ def retrieval_chat_example():
 	"""
 
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
+    config = BedrockConverseConfig(temperature=0.7)
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
         config=config,
     )
@@ -67,8 +67,8 @@ def retrieval_invoke_example():
 	"""
 
     # Configuration
-    config = BedrockConfig(temperature=0.7)
-    llm = BedrockModel(
+    config = BedrockConverseConfig(temperature=0.7)
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
         config=config,
     )

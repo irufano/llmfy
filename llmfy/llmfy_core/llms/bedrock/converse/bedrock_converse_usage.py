@@ -2,12 +2,13 @@ import functools
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
+from llmfy.llmfy_core.service_provider import ServiceProvider
 from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
 
-def track_bedrock_usage(func):
-    """Decorator to wrap `__call_bedrock` calls on `BedrockModel`.
+def track_bedrock_converse_usage(func):
+    """Decorator to wrap `__call_bedrock` calls on `BedrockConverseModel`.
 
     Extracts the `usage` dict from the Converse API response and forwards it
     to the usage tracker. The dict contains:
@@ -29,10 +30,10 @@ def track_bedrock_usage(func):
             return response
         model = args[0][
             "modelId"
-        ]  # args is tuple[BedrockModel, params] and params contain `modelId`
+        ]  # args is tuple[BedrockConverseModel, params] and params contain `modelId`
         if response["usage"]:
             usage_tracker.update(
-                backend=ModelBackend.BEDROCK,
+                backend=ModelBackend.BEDROCK_CONVERSE,
                 type=ServiceType.LLM,
                 model=model,
                 usage=response["usage"],
@@ -42,8 +43,8 @@ def track_bedrock_usage(func):
     return wrapper
 
 
-def track_bedrock_stream_usage(func):
-    """Decorator to wrap `__call_stream_bedrock` calls on `BedrockModel`.
+def track_bedrock_converse_stream_usage(func):
+    """Decorator to wrap `__call_stream_bedrock` calls on `BedrockConverseModel`.
 
     Tees the event stream to extract the `metadata.usage` dict without
     consuming it. The usage dict contains the same fields as the non-stream
@@ -77,7 +78,7 @@ def track_bedrock_stream_usage(func):
 
         if stream_usage:
             usage_tracker.update(
-                backend=ModelBackend.BEDROCK,
+                backend=ModelBackend.BEDROCK_CONVERSE,
                 type=ServiceType.LLM,
                 model=model,
                 usage=stream_usage,
@@ -103,7 +104,7 @@ def track_bedrock_embedding_usage(func):
         input_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
         usage = {"x-amzn-bedrock-input-token-count": input_tokens}
         usage_tracker.update(
-            backend=ModelBackend.BEDROCK,
+            provider=ServiceProvider.BEDROCK,
             type=ServiceType.EMBEDDING,
             model=model,
             usage=usage,

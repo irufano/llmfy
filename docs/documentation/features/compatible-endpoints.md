@@ -13,7 +13,7 @@ self.client = openai.OpenAI(api_key=api_key, base_url=base_url, default_headers=
 Because of that, **any provider exposing an API compatible with the Anthropic Messages API, OpenAI Chat Completions API, or OpenAI Responses API spec** can be used through llmfy — not just Anthropic/OpenAI themselves — with no code changes to the library.
 
 !!! note "Not every provider class supports this"
-    `BedrockModel` and `GoogleAIModel` are **not** part of this mechanism — they authenticate via AWS SigV4 / Google's own SDK conventions, which have no simple bearer-token `base_url` override.
+    `BedrockConverseModel` and `GoogleAIModel` are **not** part of this mechanism — they authenticate via AWS SigV4 / Google's own SDK conventions, which have no simple bearer-token `base_url` override.
 
 ---
 

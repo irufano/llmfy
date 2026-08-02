@@ -8,8 +8,8 @@ from llmfy import (
     LLMfy,
     Message,
     Role,
-    BedrockConfig,
-    BedrockModel,
+    BedrockConverseConfig,
+    BedrockConverseModel,
     OpenAIChatConfig,
     OpenAIChatModel,
     llmfy_usage_tracker,
@@ -24,9 +24,9 @@ def usage_example():
 	"""
 
     # Configuration
-    llm = BedrockModel(
+    llm = BedrockConverseModel(
         model="amazon.nova-lite-v1:0",
-        config=BedrockConfig(temperature=0.7),
+        config=BedrockConverseConfig(temperature=0.7),
     )
 
     llm2 = OpenAIChatModel(

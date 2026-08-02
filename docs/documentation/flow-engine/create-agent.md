@@ -11,7 +11,7 @@ The most common FlowEngine pattern is an **agent loop**: the LLM runs, optionall
 
 ```python linenums="1"
 from llmfy import (
-    LLMfy, BedrockModel, BedrockConfig,
+    LLMfy, BedrockConverseModel, BedrockConverseConfig,
     Message, Tool, ToolRegistry, tools_node,
     FlowEngine, START, END,
 )
@@ -42,7 +42,7 @@ import asyncio
 from llmfy.llmfy_core.messages.role import Role
 
 # 1. Model & LLM
-model = BedrockModel(model="amazon.nova-lite-v1:0", config=BedrockConfig(temperature=0.7))
+model = BedrockConverseModel(model="amazon.nova-lite-v1:0", config=BedrockConverseConfig(temperature=0.7))
 llm = LLMfy(model, system_message="You are a helpful assistant.")
 
 # 2. Tools

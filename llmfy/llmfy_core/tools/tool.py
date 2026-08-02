@@ -5,7 +5,9 @@ from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_formatter import (
     AnthropicMessagesFormatter,
 )
-from llmfy.llmfy_core.llms.bedrock.bedrock_formatter import BedrockFormatter
+from llmfy.llmfy_core.llms.bedrock.converse.bedrock_converse_formatter import (
+    BedrockConverseFormatter,
+)
 from llmfy.llmfy_core.llms.google.googleai_formatter import GoogleAIFormatter
 from llmfy.llmfy_core.llms.model_formatter import ModelFormatter
 from llmfy.llmfy_core.llms.openai.chat.openai_chat_formatter import OpenAIChatFormatter
@@ -24,9 +26,9 @@ class Tool:
 
     # Register formatter
     _formatters: dict[ModelBackend, ModelFormatter] = {
-        ModelBackend.OPENAI: OpenAIChatFormatter(),
+        ModelBackend.OPENAI_CHAT: OpenAIChatFormatter(),
         ModelBackend.OPENAI_RESPONSES: OpenAIResponsesFormatter(),
-        ModelBackend.BEDROCK: BedrockFormatter(),
+        ModelBackend.BEDROCK_CONVERSE: BedrockConverseFormatter(),
         ModelBackend.GOOGLE: GoogleAIFormatter(),
         ModelBackend.ANTHROPIC_MESSAGES: AnthropicMessagesFormatter(),
     }

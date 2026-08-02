@@ -29,4 +29,4 @@ response = agent.invoke("Hello")
 print(f"\n>> {response.result.content}\n")
 ```
 
-`LLMfy` is provider-agnostic — swap `OpenAIChatModel`/`OpenAIChatConfig` for [`AnthropicMessagesModel`](providers.md#anthropic-messages-api), `BedrockModel`, `OpenAIResponsesModel`, or `GoogleAIModel` (and their matching config classes) without changing anything else. See [Framework](framework.md) and [Providers](providers.md) for a deeper walkthrough.
+`LLMfy` is provider-agnostic — swap `OpenAIChatModel`/`OpenAIChatConfig` for [`AnthropicMessagesModel`](providers.md#anthropic-messages-api), `BedrockConverseModel`, `OpenAIResponsesModel`, or `GoogleAIModel` (and their matching config classes) without changing anything else. See [Framework](framework.md) and [Providers](providers.md) for a deeper walkthrough.

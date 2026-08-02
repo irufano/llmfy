@@ -5,8 +5,8 @@ LLMfy provides a grouped `thinking` settings object across all three providers t
 | Provider | Config class | Toggle | Effort control | Budget control |
 |----------|-------------|--------|---------------|----------------|
 | **Anthropic** (Messages API) | `AnthropicMessagesThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
-| **AWS Bedrock** (Claude) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
-| **AWS Bedrock** (Nova 2) | `BedrockThinkingConfig` | `thinking.enabled=True` | `thinking.reasoning_effort` | — |
+| **AWS Bedrock** (Claude) | `BedrockConverseThinkingConfig` | `thinking.enabled=True` | `thinking.effort` (adaptive) | `thinking.budget_tokens` (extended) |
+| **AWS Bedrock** (Nova 2) | `BedrockConverseThinkingConfig` | `thinking.enabled=True` | `thinking.reasoning_effort` | — |
 | **OpenAI** (Chat Completions) | `OpenAIChatThinkingConfig` | `thinking.enabled=True` | `thinking.effort` | — |
 | **OpenAI** (Responses API) | `OpenAIResponsesReasoningConfig` | `reasoning.enabled=True` | `reasoning.effort` | — |
 | **Google AI** | `GoogleAIThinkingConfig` | `thinking.enabled=True` | `thinking.level` | `thinking.budget_tokens` |
@@ -101,7 +101,7 @@ print(response.result.content)
 
 ## AWS Bedrock
 
-Bedrock supports three distinct thinking modes depending on the model family, all configured through `BedrockThinkingConfig`.
+Bedrock supports three distinct thinking modes depending on the model family, all configured through `BedrockConverseThinkingConfig`.
 
 ### Mode 1 — Claude Extended Thinking
 
@@ -119,9 +119,9 @@ For Claude 3.7 and Claude 4 series (pre-4.6). Uses a fixed token budget.
 | Claude Opus 4.5 | `anthropic.claude-opus-4-5-20251101-v1:0` |
 
 !!! warning "Constraints"
-    `temperature`, `top_p`, and `top_k` must be set to `None` on `BedrockConfig` when extended thinking is enabled. The API returns an error if they are present.
+    `temperature`, `top_p`, and `top_k` must be set to `None` on `BedrockConverseConfig` when extended thinking is enabled. The API returns an error if they are present.
 
-**`BedrockThinkingConfig` fields used**
+**`BedrockConverseThinkingConfig` fields used**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -129,10 +129,10 @@ For Claude 3.7 and Claude 4 series (pre-4.6). Uses a fixed token budget.
 | `budget_tokens` | `int \| None` | Max thinking tokens. Min `1024`. |
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, BedrockThinkingConfig, LLMfy
+from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConverseThinkingConfig, LLMfy
 
-config = BedrockConfig(
-    thinking=BedrockThinkingConfig(
+config = BedrockConverseConfig(
+    thinking=BedrockConverseThinkingConfig(
         enabled=True,
         budget_tokens=4000,
     ),
@@ -140,7 +140,7 @@ config = BedrockConfig(
     top_p=None,        # must be unset
 )
 
-llm = BedrockModel(
+llm = BedrockConverseModel(
     model="anthropic.claude-3-7-sonnet-20250219-v1:0",
     config=config,
 )
@@ -169,7 +169,7 @@ For Claude 4.6 and newer. The model dynamically decides when and how much to thi
 !!! note
     Fable 5, Mythos 5, and Opus 4.7 **only** accept `thinking.type='adaptive'`. Sending `thinking.type='enabled'` returns a `400` error.
 
-**`BedrockThinkingConfig` fields used**
+**`BedrockConverseThinkingConfig` fields used**
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
@@ -178,17 +178,17 @@ For Claude 4.6 and newer. The model dynamically decides when and how much to thi
 | `effort` | `str \| None` | `'low'`, `'medium'`, `'high'`, `'max'` | Controls thinking depth. `'max'` is Opus 4.6 only. |
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, BedrockThinkingConfig, LLMfy
+from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConverseThinkingConfig, LLMfy
 
-config = BedrockConfig(
-    thinking=BedrockThinkingConfig(
+config = BedrockConverseConfig(
+    thinking=BedrockConverseThinkingConfig(
         enabled=True,
         type="adaptive",
         effort="high",
     ),
 )
 
-llm = BedrockModel(
+llm = BedrockConverseModel(
     model="anthropic.claude-sonnet-4-6",
     config=config,
 )
@@ -211,9 +211,9 @@ For Amazon Nova 2 Lite. Uses a named effort level via the `reasoningConfig` API 
 | Amazon Nova 2 Lite | `us.amazon.nova-2-lite-v1:0` |
 
 !!! warning "Constraints"
-    When `thinking.reasoning_effort='high'`, `temperature`, `top_p`, and `max_tokens` on `BedrockConfig` must be set to `None`.
+    When `thinking.reasoning_effort='high'`, `temperature`, `top_p`, and `max_tokens` on `BedrockConverseConfig` must be set to `None`.
 
-**`BedrockThinkingConfig` fields used**
+**`BedrockConverseThinkingConfig` fields used**
 
 | Field | Type | Values | Description |
 |-------|------|--------|-------------|
@@ -221,16 +221,16 @@ For Amazon Nova 2 Lite. Uses a named effort level via the `reasoningConfig` API 
 | `reasoning_effort` | `str \| None` | `'low'`, `'medium'`, `'high'` | Controls reasoning depth. |
 
 ```python linenums="1"
-from llmfy import BedrockModel, BedrockConfig, BedrockThinkingConfig, LLMfy
+from llmfy import BedrockConverseModel, BedrockConverseConfig, BedrockConverseThinkingConfig, LLMfy
 
-config = BedrockConfig(
-    thinking=BedrockThinkingConfig(
+config = BedrockConverseConfig(
+    thinking=BedrockConverseThinkingConfig(
         enabled=True,
         reasoning_effort="medium",
     ),
 )
 
-llm = BedrockModel(
+llm = BedrockConverseModel(
     model="us.amazon.nova-2-lite-v1:0",
     config=config,
 )
@@ -243,8 +243,8 @@ print(response.result.content)
 For `high` effort, unset inference params:
 
 ```python linenums="1"
-config = BedrockConfig(
-    thinking=BedrockThinkingConfig(
+config = BedrockConverseConfig(
+    thinking=BedrockConverseThinkingConfig(
         enabled=True,
         reasoning_effort="high",
     ),
