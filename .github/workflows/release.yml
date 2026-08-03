@@ -150,7 +150,7 @@ jobs:
             CHANGELOG="${CHANGELOG}$(echo "$body" | sed 's/^/    /')"$'\n'
           fi
           CHANGELOG="${CHANGELOG}"$'\n'
-        done < <(git log ${RANGE} --no-merges --pretty=format:"%H")
+        done < <(git log ${RANGE} --no-merges --pretty=tformat:"%H")
 
         if [ -z "$CHANGELOG" ]; then
           CHANGELOG="- Initial release"

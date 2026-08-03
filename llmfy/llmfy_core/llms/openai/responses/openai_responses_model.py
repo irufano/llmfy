@@ -191,6 +191,7 @@ class OpenAIResponsesModel(BaseAIModel):
             response = self.__call_openai_responses(params)
 
             content = None
+            thinking = None
             tool_calls = None
 
             for item in response.output:
@@ -211,6 +212,11 @@ class OpenAIResponsesModel(BaseAIModel):
                         for c in item.content
                         if getattr(c, "type", None) == "output_text"
                     )
+                elif item.type == "reasoning" and item.summary:
+                    # Populated only when `reasoning.summary` is requested in
+                    # the config — the full chain-of-thought itself is never
+                    # returned, only this model-generated summary.
+                    thinking = "".join(s.text for s in item.summary)
 
             # A turn that requests tool calls takes priority — mirrors OpenAIChatModel's
             # Chat Completions behavior of not surfacing partial text alongside tool_calls.
@@ -219,6 +225,7 @@ class OpenAIResponsesModel(BaseAIModel):
 
             return AIResponse(
                 content=content,
+                thinking=thinking,
                 tool_calls=tool_calls,
             )
 
@@ -274,6 +281,10 @@ class OpenAIResponsesModel(BaseAIModel):
                 elif event_type == "response.output_text.delta":
                     if event.delta:
                         yield AIResponse(content=event.delta)
+
+                elif event_type == "response.reasoning_summary_text.delta":
+                    if event.delta:
+                        yield AIResponse(thinking=event.delta)
 
                 elif event_type == "response.function_call_arguments.done":
                     pending = pending_tool_calls.pop(event.item_id, None)

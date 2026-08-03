@@ -289,6 +289,7 @@ class BedrockConverseModel(BaseAIModel):
             stop_reason = response["stopReason"]
             tool_calls = None
             content = None
+            thinking = None
 
             if stop_reason == "tool_use":
                 tool_requests = response["output"]["message"]["content"]
@@ -308,10 +309,19 @@ class BedrockConverseModel(BaseAIModel):
                         )
                 tool_calls = tool_callings
             else:
-                content = output_message["content"][0]["text"]
+                # NOT output_message["content"][0]["text"] — when thinking is
+                # enabled, the reasoningContent block comes first in the array,
+                # so blindly indexing [0] grabs the reasoning block (no "text"
+                # key) instead of the actual answer.
+                for block in output_message["content"]:
+                    if "reasoningContent" in block:
+                        thinking = block["reasoningContent"]["reasoningText"]["text"]
+                    elif "text" in block:
+                        content = block["text"]
 
             return AIResponse(
                 content=content,
+                thinking=thinking,
                 tool_calls=tool_calls,
             )
         except Exception as e:
@@ -462,6 +472,7 @@ class BedrockConverseModel(BaseAIModel):
                 tooluse_id = None
                 for chunk in stream:
                     text = None
+                    thinking = None
 
                     if "messageStart" in chunk:
                         # print(f"\nRole: {chunk['messageStart']['role']}")
@@ -480,6 +491,13 @@ class BedrockConverseModel(BaseAIModel):
                         # print(f"\nDELTA: {delta}")
                         if "text" in delta:
                             text = delta["text"]
+
+                        if "reasoningContent" in delta:
+                            # {"text": "..."} while the reasoning is being
+                            # generated, then a final {"signature": "..."}
+                            # delta with no text — ignore the latter.
+                            if "text" in delta["reasoningContent"]:
+                                thinking = delta["reasoningContent"]["text"]
 
                         if "toolUse" in delta:
                             if "input" not in tool_use:
@@ -531,6 +549,7 @@ class BedrockConverseModel(BaseAIModel):
 
                     yield AIResponse(
                         content=text,
+                        thinking=thinking,
                         tool_calls=tool_calls if tool_calls else None,
                     )
 

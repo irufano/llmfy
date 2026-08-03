@@ -356,18 +356,24 @@ class LLMfy:
             for chunk in stream:
                 if isinstance(chunk, AIResponse):
                     content = ""
+                    thinking = ""
                     tool_calls = []
                     # Yield each chunk
                     if chunk.content:
                         content = chunk.content
                         full_content += content
 
+                    if chunk.thinking:
+                        thinking = chunk.thinking
+
                     if chunk.tool_calls:
                         tool_calls = chunk.tool_calls
 
-                    # update content and toolcalls only
+                    # update content, thinking and toolcalls only
                     yield GenerationResponse(
-                        result=AIResponse(content=content, tool_calls=tool_calls),
+                        result=AIResponse(
+                            content=content, thinking=thinking, tool_calls=tool_calls
+                        ),
                         messages=[],
                     )
 
@@ -628,18 +634,24 @@ class LLMfy:
             for chunk in stream:
                 if isinstance(chunk, AIResponse):
                     content = ""
+                    thinking = ""
                     tool_calls = []
                     # Yield each chunk
                     if chunk.content:
                         content = chunk.content
                         full_content += content
 
+                    if chunk.thinking:
+                        thinking = chunk.thinking
+
                     if chunk.tool_calls:
                         tool_calls = chunk.tool_calls
 
-                    # update content and toolcalls only
+                    # update content, thinking and toolcalls only
                     yield GenerationResponse(
-                        result=AIResponse(content=content, tool_calls=tool_calls),
+                        result=AIResponse(
+                            content=content, thinking=thinking, tool_calls=tool_calls
+                        ),
                         messages=[],
                     )
 

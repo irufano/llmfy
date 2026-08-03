@@ -208,6 +208,7 @@ class GoogleAIGenerateModel(BaseAIModel):
             request_call_id = str(uuid.uuid4())
             tool_calls = None
             content = None
+            thinking = None
 
             if response.candidates:
                 candidate = response.candidates[0]
@@ -230,10 +231,20 @@ class GoogleAIGenerateModel(BaseAIModel):
                             if fc is not None
                         ]
                     else:
+                        # response.text already excludes thought=True parts
                         content = response.text
+
+                    thinking_parts = [
+                        p.text
+                        for p in candidate.content.parts
+                        if getattr(p, "thought", False) and p.text
+                    ]
+                    if thinking_parts:
+                        thinking = "".join(thinking_parts)
 
             return AIResponse(
                 content=content,
+                thinking=thinking,
                 tool_calls=tool_calls,
             )
 
@@ -286,6 +297,7 @@ class GoogleAIGenerateModel(BaseAIModel):
 
             for chunk in stream:
                 content = None
+                thinking = None
                 tool_calls = None
 
                 if chunk.candidates:
@@ -293,7 +305,10 @@ class GoogleAIGenerateModel(BaseAIModel):
                         if candidate.content and candidate.content.parts:
                             for part in candidate.content.parts:
                                 if part.text is not None:
-                                    content = part.text
+                                    if getattr(part, "thought", False):
+                                        thinking = part.text
+                                    else:
+                                        content = part.text
 
                                 if part.function_call is not None:
                                     fc = part.function_call
@@ -310,6 +325,7 @@ class GoogleAIGenerateModel(BaseAIModel):
 
                 yield AIResponse(
                     content=content,
+                    thinking=thinking,
                     tool_calls=tool_calls if tool_calls else None,
                 )
 

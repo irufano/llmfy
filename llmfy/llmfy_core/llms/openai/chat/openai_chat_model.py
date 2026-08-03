@@ -138,14 +138,16 @@ class OpenAIChatModel(BaseAIModel):
             params = {
                 "model": self.model_name,
                 "messages": messages,
-                "max_tokens": self.config.max_tokens,
                 "frequency_penalty": self.config.frequency_penalty,
                 "presence_penalty": self.config.presence_penalty,
                 "stream": False,
                 **kwargs,
             }
             # Omitted entirely (not sent as null) when None — some models
-            # reject these params outright rather than accepting a default.
+            # reject these params outright rather than accepting a default
+            # (e.g. o4-mini 400s on an explicit `max_tokens: null`).
+            if self.config.max_tokens is not None:
+                params["max_tokens"] = self.config.max_tokens
             if self.config.temperature is not None:
                 params["temperature"] = self.config.temperature
             if self.config.top_p is not None:
@@ -179,8 +181,20 @@ class OpenAIChatModel(BaseAIModel):
             else:
                 content = message.content
 
+            # Neither field is part of OpenAI's own Chat Completions schema
+            # (OpenAI never returns reasoning text on this API, only a
+            # `reasoning_tokens` count) — but OpenAI-compatible endpoints that
+            # do return it use different non-standard field names: `reasoning`
+            # (Ollama) vs `reasoning_content` (DeepSeek and others). The SDK's
+            # message model allows extra fields, so this is a no-op (stays
+            # None) against real OpenAI.
+            thinking = getattr(message, "reasoning", None) or getattr(
+                message, "reasoning_content", None
+            )
+
             return AIResponse(
                 content=content,
+                thinking=thinking,
                 tool_calls=tool_calls,
             )
 
@@ -220,9 +234,10 @@ class OpenAIChatModel(BaseAIModel):
             params = {
                 "model": self.model_name,
                 "messages": messages,
-                "max_tokens": self.config.max_tokens,
                 **kwargs,
             }
+            if self.config.max_tokens is not None:
+                params["max_tokens"] = self.config.max_tokens
             if self.config.temperature is not None:
                 params["temperature"] = self.config.temperature
 
@@ -251,11 +266,21 @@ class OpenAIChatModel(BaseAIModel):
 
                 if chunk.choices:
                     content = None
+                    thinking = None
 
                     delta = chunk.choices[0].delta
 
                     if delta.content is not None:
                         content = delta.content
+
+                    # See the matching comment in generate() — no-op against
+                    # real OpenAI, picks up reasoning deltas on compatible
+                    # endpoints that emit them (Ollama, DeepSeek, etc.).
+                    reasoning_delta = getattr(delta, "reasoning", None) or getattr(
+                        delta, "reasoning_content", None
+                    )
+                    if reasoning_delta is not None:
+                        thinking = reasoning_delta
 
                     if delta.tool_calls is not None:
                         tool_calls = []
@@ -313,6 +338,7 @@ class OpenAIChatModel(BaseAIModel):
 
                     yield AIResponse(
                         content=content,
+                        thinking=thinking,
                         tool_calls=tool_calls if tool_calls else None,
                     )
 

@@ -277,6 +277,9 @@ Reasoning is enabled on o-series models via `OpenAIChatThinkingConfig`. These mo
 | `enabled` | `bool` | — | Set to `True` to enable. |
 | `effort` | `str \| None` | `'low'`, `'medium'`, `'high'` | Defaults to `'medium'` when not set. |
 
+!!! warning "Constraints"
+    o-series models only accept the default `temperature`/`top_p` (`1`) — a `400 unsupported_value` otherwise. Set both to `None` on `OpenAIChatConfig` to omit them from the request entirely.
+
 ```python linenums="1"
 from llmfy import OpenAIChatModel, OpenAIChatConfig, OpenAIChatThinkingConfig, LLMfy
 
@@ -285,6 +288,8 @@ config = OpenAIChatConfig(
         enabled=True,
         effort="high",
     ),
+    temperature=None,  # must be unset — o-series only accepts the default (1)
+    top_p=None,        # must be unset — same reason
 )
 
 llm = OpenAIChatModel(model="o4-mini", config=config)
@@ -310,6 +315,9 @@ Unlike `OpenAIChatThinkingConfig`, this adds a `summary` field: the Responses AP
 | `effort` | `str \| None` | `'none'`, `'minimal'`, `'low'`, `'medium'`, `'high'`, `'xhigh'`, `'max'` | Defaults to `'medium'` when not set. Not every value is supported by every model. |
 | `summary` | `str \| None` | `'auto'`, `'concise'`, `'detailed'` | Requests a summary of the model's reasoning. Left unset (`None`) omits the field entirely. |
 
+!!! warning "Constraints"
+    `gpt-5.6-terra` (and other GPT-5.x routing models) reject `temperature`/`top_p` outright (`400 unsupported_parameter`) rather than accepting a default. Set both to `None` on `OpenAIResponsesConfig` to omit them from the request entirely.
+
 ```python linenums="1"
 from llmfy import OpenAIResponsesModel, OpenAIResponsesConfig, OpenAIResponsesReasoningConfig, LLMfy
 
@@ -319,6 +327,8 @@ config = OpenAIResponsesConfig(
         effort="high",
         summary="concise",
     ),
+    temperature=None,  # must be unset — gpt-5.6-terra rejects it outright
+    top_p=None,        # must be unset — same reason
 )
 
 llm = OpenAIResponsesModel(model="gpt-5.6-terra", config=config)

@@ -54,10 +54,12 @@ nav:
       - LLM & Generation:
           - Retrieval: examples/example-retrieval.md
           - Tool Calling: examples/example-tool-calling.md
+          - Thinking / Reasoning: examples/example-thinking.md
           - Streaming: examples/example-stream.md
           - Usage Tracking: examples/example-usage-tracker.md
       - Compatible Endpoints:
           - AWS Bedrock Mantle: examples/example-bedrock-mantle.md
+          - Ollama (local): examples/example-ollama.md
       - Prompt Caching:
           - AWS Bedrock: examples/example-prompt-caching-bedrock.md
           - OpenAI: examples/example-prompt-caching-openai.md

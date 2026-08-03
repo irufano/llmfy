@@ -219,7 +219,12 @@ class AnthropicMessagesModel(BaseAIModel):
                 )
                 content = text_block.text if text_block else None
 
-            return AIResponse(content=content, tool_calls=tool_calls)
+            thinking_block = next(
+                (b for b in response.content if b.type == "thinking"), None
+            )
+            thinking = thinking_block.thinking if thinking_block else None
+
+            return AIResponse(content=content, thinking=thinking, tool_calls=tool_calls)
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
@@ -253,6 +258,7 @@ class AnthropicMessagesModel(BaseAIModel):
 
             for event in stream:
                 text_out = None
+                thinking_out = None
                 new_tool_call = None
 
                 if event.type == "message_start":
@@ -269,9 +275,10 @@ class AnthropicMessagesModel(BaseAIModel):
                         }
                     elif cb.type == "text":
                         blocks[event.index] = {"type": "text", "text": ""}
+                    elif cb.type == "thinking":
+                        blocks[event.index] = {"type": "thinking", "thinking": ""}
                     else:
-                        # "thinking" or other future block types — not
-                        # surfaced in v1
+                        # other future block types — not surfaced in v1
                         blocks[event.index] = {"type": cb.type}
 
                 elif event.type == "content_block_delta":
@@ -281,9 +288,11 @@ class AnthropicMessagesModel(BaseAIModel):
                     if event.delta.type == "text_delta":
                         block["text"] += event.delta.text
                         text_out = event.delta.text
+                    elif event.delta.type == "thinking_delta":
+                        block["thinking"] += event.delta.thinking
+                        thinking_out = event.delta.thinking
                     elif event.delta.type == "input_json_delta":
                         block["input_json"] += event.delta.partial_json
-                    # "thinking_delta" ignored in v1
 
                 elif event.type == "content_block_stop":
                     block = blocks.get(event.index)
@@ -300,9 +309,14 @@ class AnthropicMessagesModel(BaseAIModel):
                             arguments=arguments,
                         )
 
-                if text_out is not None or new_tool_call is not None:
+                if (
+                    text_out is not None
+                    or thinking_out is not None
+                    or new_tool_call is not None
+                ):
                     yield AIResponse(
                         content=text_out,
+                        thinking=thinking_out,
                         tool_calls=[new_tool_call] if new_tool_call else None,
                     )
 
