@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.google.generate.googleai_generate_config import (
     GoogleAIGenerateConfig,
 )
@@ -195,6 +195,32 @@ class GoogleAIGenerateModel(BaseAIModel):
 
         return _call_stream_googleai_impl(params)
 
+    def __call_stream_googleai_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_stream_googleai`, used by
+        # `agenerate_stream`. Same `.aio` async surface as `__call_googleai_async`.
+        import httpx
+        from google.genai import errors
+
+        from llmfy.exception.exception_handler import handle_google_error
+        from llmfy.llmfy_core.llms.google.generate.googleai_generate_usage import (
+            track_googleai_stream_usage_async,
+        )
+
+        @track_googleai_stream_usage_async
+        async def _call_stream_googleai_impl_async(params: dict[str, Any]):
+            try:
+                stream = await self.client.aio.models.generate_content_stream(
+                    model=params["model"],
+                    contents=params["contents"],
+                    config=params["config"],
+                )
+                async for chunk in stream:
+                    yield chunk
+            except (errors.APIError, httpx.TimeoutException) as e:
+                raise handle_google_error(e) from e
+
+        return _call_stream_googleai_impl_async(params)
+
     def __build_generate_params(
         self,
         messages: list[dict[str, Any]],
@@ -307,17 +333,48 @@ class GoogleAIGenerateModel(BaseAIModel):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
 
-    def agenerate_stream(
-        self,
-        messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]] | None = None,
-        **kwargs,
-    ) -> AsyncGenerator[AIResponse, Any]:
-        """Async version of `generate_stream`. No native async streaming path
-        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
-        `generate_stream()`, still non-blocking to the event loop per chunk.
+    def __process_stream_chunk(self, chunk, request_call_id: str) -> AIResponse:
+        """Process one generate_content_stream chunk. Google delivers complete
+        function_call objects in a single chunk (no incremental argument
+        accumulation needed, unlike OpenAI), so unlike the other backends'
+        per-chunk helpers, no mutable accumulator needs to be threaded
+        between calls — `request_call_id` is fixed for the whole stream.
+        Shared by the sync (`generate_stream`) and async (`agenerate_stream`)
+        streaming loops, which differ only in their iteration protocol
+        (`for` vs `async for`).
         """
-        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
+        content = None
+        thinking = None
+        tool_calls = None
+
+        if chunk.candidates:
+            for candidate in chunk.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if part.text is not None:
+                            if getattr(part, "thought", False):
+                                thinking = part.text
+                            else:
+                                content = part.text
+
+                        if part.function_call is not None:
+                            fc = part.function_call
+                            fc_id = fc.id if fc.id else str(uuid.uuid4())
+                            # Google delivers complete function calls in one chunk
+                            tool_calls = [
+                                ToolCall(
+                                    request_call_id=request_call_id,
+                                    tool_call_id=fc_id,
+                                    name=fc.name or "",
+                                    arguments=dict(fc.args) if fc.args else {},
+                                )
+                            ]
+
+        return AIResponse(
+            content=content,
+            thinking=thinking,
+            tool_calls=tool_calls if tool_calls else None,
+        )
 
     def generate_stream(
         self,
@@ -340,60 +397,34 @@ class GoogleAIGenerateModel(BaseAIModel):
             Generator[AIResponse]: Yields AIResponse chunks.
         """
         try:
-            system_instruction = next(
-                (
-                    msg["parts"][0]["text"]
-                    for msg in messages
-                    if msg.get("role") == "system"
-                ),
-                None,
-            )
-            contents = [msg for msg in messages if msg.get("role") != "system"]
-
-            params = {
-                "model": self.model_name,
-                "contents": contents,
-                "config": self.__build_config(
-                    tools=tools, system_instruction=system_instruction
-                ),
-            }
-
+            params = self.__build_generate_params(messages, tools)
             stream = self.__call_stream_googleai(params)
             request_call_id = str(uuid.uuid4())
 
             for chunk in stream:
-                content = None
-                thinking = None
-                tool_calls = None
+                yield self.__process_stream_chunk(chunk, request_call_id)
 
-                if chunk.candidates:
-                    for candidate in chunk.candidates:
-                        if candidate.content and candidate.content.parts:
-                            for part in candidate.content.parts:
-                                if part.text is not None:
-                                    if getattr(part, "thought", False):
-                                        thinking = part.text
-                                    else:
-                                        content = part.text
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
 
-                                if part.function_call is not None:
-                                    fc = part.function_call
-                                    fc_id = fc.id if fc.id else str(uuid.uuid4())
-                                    # Google delivers complete function calls in one chunk
-                                    tool_calls = [
-                                        ToolCall(
-                                            request_call_id=request_call_id,
-                                            tool_call_id=fc_id,
-                                            name=fc.name or "",
-                                            arguments=dict(fc.args) if fc.args else {},
-                                        )
-                                    ]
+    async def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream` — uses the `google-genai` SDK's
+        async surface (`client.aio.models.generate_content_stream`) natively,
+        no thread offload. See `generate_stream` for behavior/args."""
+        try:
+            params = self.__build_generate_params(messages, tools)
+            stream = self.__call_stream_googleai_async(params)
+            request_call_id = str(uuid.uuid4())
 
-                yield AIResponse(
-                    content=content,
-                    thinking=thinking,
-                    tool_calls=tool_calls if tool_calls else None,
-                )
+            async for chunk in stream:
+                yield self.__process_stream_chunk(chunk, request_call_id)
 
         except Exception as e:
             if isinstance(e, LLMfyException):

@@ -110,3 +110,47 @@ def track_anthropic_messages_stream_usage(func):
         return stream_origin
 
     return wrapper
+
+
+def track_anthropic_messages_stream_usage_async(func):
+    """Async-generator counterpart of `track_anthropic_messages_stream_usage`.
+
+    No `tee` needed: merges the same `message_start`/`message_delta` fields
+    incrementally in a single pass while forwarding each event immediately,
+    then reports once the stream is fully forwarded — equivalent to the sync
+    version's "walk the entire copy" behavior (still needed here since
+    output_tokens only becomes authoritative near the end of the stream),
+    just without needing a duplicate copy of it.
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        model = args[0]["model"]
+        merged_usage: dict[str, int] = {}
+
+        async for event in func(*args, **kwargs):
+            event_type = getattr(event, "type", None)
+            if event_type == "message_start":
+                start_usage = event.message.usage
+                merged_usage["input_tokens"] = getattr(start_usage, "input_tokens", 0) or 0
+                merged_usage["cache_creation_input_tokens"] = (
+                    getattr(start_usage, "cache_creation_input_tokens", 0) or 0
+                )
+                merged_usage["cache_read_input_tokens"] = (
+                    getattr(start_usage, "cache_read_input_tokens", 0) or 0
+                )
+            elif event_type == "message_delta":
+                delta_usage = event.usage
+                merged_usage["output_tokens"] = getattr(delta_usage, "output_tokens", 0) or 0
+            yield event
+
+        if usage_tracker is not None and merged_usage:
+            usage_tracker.update(
+                backend=ModelBackend.ANTHROPIC_MESSAGES,
+                type=ServiceType.LLM,
+                model=model,
+                usage=merged_usage,
+            )
+
+    return wrapper

@@ -88,3 +88,30 @@ def track_openai_responses_stream_usage(func):
             yield event
 
     return wrapper
+
+
+def track_openai_responses_stream_usage_async(func):
+    """Async-generator counterpart of `track_openai_responses_stream_usage`,
+    used by `agenerate_stream`. Same single-pass shape as the sync version
+    (this one never needed `tee` either — `func` already yields the stream's
+    events directly), just declared with `async def`/`async for`.
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        model = args[0]["model"]
+
+        async for event in func(*args, **kwargs):
+            if usage_tracker is not None and getattr(event, "type", None) == "response.completed":
+                usage = getattr(event.response, "usage", None)
+                if usage:
+                    usage_tracker.update(
+                        backend=ModelBackend.OPENAI_RESPONSES,
+                        type=ServiceType.LLM,
+                        model=model,
+                        usage=usage,
+                    )
+            yield event
+
+    return wrapper

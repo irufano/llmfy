@@ -9,7 +9,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.openai.chat.openai_chat_config import OpenAIChatConfig
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -145,6 +145,33 @@ class OpenAIChatModel(BaseAIModel):
 
         return __call_stream_openai_impl(params)
 
+    def __call_stream_openai_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_stream_openai`, used by
+        # `agenerate_stream`. Unlike Bedrock's aioboto3 client, OpenAI's
+        # AsyncStream has no connection-closing-on-context-exit constraint —
+        # it's written as an async generator anyway (rather than "await once,
+        # return the stream object") purely so usage-tracking can forward
+        # chunks in a single pass instead of needing an async `tee`.
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
+        from llmfy.llmfy_core.llms.openai.chat.openai_chat_usage import (
+            track_openai_stream_usage_async,
+        )
+
+        @track_openai_stream_usage_async
+        async def _call_stream_openai_impl_async(params: dict[str, Any]):
+            try:
+                params["stream"] = True
+                params["stream_options"] = {"include_usage": True}
+                stream = await self.async_client.chat.completions.create(**params)
+                async for chunk in stream:
+                    yield chunk
+            except openai.APIError as e:
+                raise handle_openai_error(e) from e
+
+        return _call_stream_openai_impl_async(params)
+
     def __build_params(
         self,
         messages: list[dict[str, Any]],
@@ -262,17 +289,127 @@ class OpenAIChatModel(BaseAIModel):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
 
-    def agenerate_stream(
+    def __build_stream_params(
         self,
         messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]] | None = None,
+        tools: list[dict[str, Any]] | None,
         **kwargs,
-    ) -> AsyncGenerator[AIResponse, Any]:
-        """Async version of `generate_stream`. No native async streaming path
-        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
-        `generate_stream()`, still non-blocking to the event loop per chunk.
+    ) -> dict[str, Any]:
+        # Deliberately NOT the same shape as __build_params (generate's) —
+        # frequency_penalty/presence_penalty/top_p/explicit stream=False are
+        # not sent here; pre-existing divergence, preserved as-is rather than
+        # unified, since changing request params is outside this task's scope.
+        params: dict[str, Any] = {
+            "model": self.model_name,
+            "messages": messages,
+            **kwargs,
+        }
+        if self.config.max_tokens is not None:
+            params["max_tokens"] = self.config.max_tokens
+        if self.config.temperature is not None:
+            params["temperature"] = self.config.temperature
+
+        if self.config.thinking.enabled:
+            params["reasoning_effort"] = self.config.thinking.effort or "medium"
+
+        if tools:
+            params["tools"] = [
+                {"type": "function", "function": tool} for tool in tools
+            ]
+            params["tool_choice"] = "auto"
+
+        return params
+
+    def __process_stream_chunk(
+        self, chunk, tool_calls_accumulator: dict[str, Any]
+    ) -> AIResponse | None:
+        """Process one Chat Completions stream chunk.
+
+        Mutates `tool_calls_accumulator` in place (keyed by tool_call_id) and
+        returns `None` for chunks with no `choices` (e.g. the trailing
+        usage-only chunk from `stream_options={"include_usage": True}`) —
+        shared by the sync (`generate_stream`) and async (`agenerate_stream`)
+        streaming loops, which differ only in their iteration protocol
+        (`for` vs `async for`).
         """
-        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
+        if not chunk.choices:
+            return None
+
+        content = None
+        thinking = None
+        tool_calls = None
+
+        delta = chunk.choices[0].delta
+
+        if delta.content is not None:
+            content = delta.content
+
+        # See the matching comment in generate() — no-op against real
+        # OpenAI, picks up reasoning deltas on compatible endpoints that
+        # emit them (Ollama, DeepSeek, etc.).
+        reasoning_delta = getattr(delta, "reasoning", None) or getattr(
+            delta, "reasoning_content", None
+        )
+        if reasoning_delta is not None:
+            thinking = reasoning_delta
+
+        if delta.tool_calls is not None:
+            tool_calls = []
+            for tool_call in delta.tool_calls:
+                tool_call_id = tool_call.id  # Exists only in the first chunk
+
+                if tool_call_id:  # First chunk of a new tool call
+                    tool_calls_accumulator[tool_call_id] = {
+                        "request_call_id": chunk.id,
+                        "tool_call_id": tool_call_id,
+                        "name": tool_call.function.name,
+                        "arguments": "",
+                    }
+
+                # Find the active tool call in the accumulator
+                active_tool_call = next(
+                    iter(tool_calls_accumulator.values()), None
+                )
+                if active_tool_call:
+                    # Accumulate arguments across multiple chunks
+                    active_tool_call["arguments"] += (
+                        tool_call.function.arguments or ""
+                    )
+
+                    # Try to parse accumulated JSON when complete
+                    try:
+                        parsed_arguments = json.loads(
+                            active_tool_call["arguments"]
+                        )
+
+                        # Construct the ToolCall object
+                        tool_calls.append(
+                            ToolCall(
+                                request_call_id=active_tool_call[
+                                    "request_call_id"
+                                ],
+                                tool_call_id=active_tool_call[
+                                    "tool_call_id"
+                                ],
+                                name=active_tool_call["name"],
+                                arguments=parsed_arguments,
+                            )
+                        )
+
+                        # Remove the tool call once fully processed
+                        del tool_calls_accumulator[
+                            active_tool_call["tool_call_id"]
+                        ]
+
+                    except json.JSONDecodeError:
+                        # JSON is incomplete, continue accumulating
+                        pass
+
+        return AIResponse(
+            content=content,
+            thinking=thinking,
+            tool_calls=tool_calls if tool_calls else None,
+        )
 
     def generate_stream(
         self,
@@ -302,116 +439,38 @@ class OpenAIChatModel(BaseAIModel):
                 Any: _description_
         """
         try:
-            params = {
-                "model": self.model_name,
-                "messages": messages,
-                **kwargs,
-            }
-            if self.config.max_tokens is not None:
-                params["max_tokens"] = self.config.max_tokens
-            if self.config.temperature is not None:
-                params["temperature"] = self.config.temperature
-
-            if self.config.thinking.enabled:
-                params["reasoning_effort"] = self.config.thinking.effort or "medium"
-
-            if tools:
-                params["tools"] = [
-                    {"type": "function", "function": tool} for tool in tools
-                ]
-                params["tool_choice"] = "auto"
-
+            params = self.__build_stream_params(messages, tools, **kwargs)
             stream = self.__call_stream_openai(params)
-
-            tool_calls_accumulator = {}
-            tool_calls = None
+            tool_calls_accumulator: dict[str, Any] = {}
 
             for chunk in stream:
-                if chunk.usage:
-                    # ChatCompletionChunk(id='chatcmpl-B5SIoSdLpEFk9gFH0Vl4B6hM6st8H', choices=[], created=1740640134, model='gpt-4o-mini-2024-07-18', object='chat.completion.chunk', service_tier='default', system_fingerprint='fp_06737a9306', usage=CompletionUsage(completion_tokens=11, prompt_tokens=56, total_tokens=67, completion_tokens_details=CompletionTokensDetails(accepted_prediction_tokens=0, audio_tokens=0, reasoning_tokens=0, rejected_prediction_tokens=0), prompt_tokens_details=PromptTokensDetails(audio_tokens=0, cached_tokens=0)))
-                    # usage = chunk.usage
-                    # print(f"completion_tokens = {usage.completion_tokens or ''}")
-                    # print(f"prompt_tokens = {usage.prompt_tokens or ''}")
-                    # print(f"total_tokens = {usage.total_tokens or ''}")
-                    pass
+                ai_response = self.__process_stream_chunk(chunk, tool_calls_accumulator)
+                if ai_response is not None:
+                    yield ai_response
 
-                if chunk.choices:
-                    content = None
-                    thinking = None
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
 
-                    delta = chunk.choices[0].delta
+    async def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream` — uses `openai.AsyncOpenAI`
+        natively (no thread offload). See `generate_stream` for behavior/args.
+        """
+        try:
+            params = self.__build_stream_params(messages, tools, **kwargs)
+            stream = self.__call_stream_openai_async(params)
+            tool_calls_accumulator: dict[str, Any] = {}
 
-                    if delta.content is not None:
-                        content = delta.content
-
-                    # See the matching comment in generate() — no-op against
-                    # real OpenAI, picks up reasoning deltas on compatible
-                    # endpoints that emit them (Ollama, DeepSeek, etc.).
-                    reasoning_delta = getattr(delta, "reasoning", None) or getattr(
-                        delta, "reasoning_content", None
-                    )
-                    if reasoning_delta is not None:
-                        thinking = reasoning_delta
-
-                    if delta.tool_calls is not None:
-                        tool_calls = []
-                        for tool_call in delta.tool_calls:
-                            tool_call_id = (
-                                tool_call.id
-                            )  # Exists only in the first chunk
-
-                            if tool_call_id:  # First chunk of a new tool call
-                                tool_calls_accumulator[tool_call_id] = {
-                                    "request_call_id": chunk.id,
-                                    "tool_call_id": tool_call_id,
-                                    "name": tool_call.function.name,
-                                    "arguments": "",
-                                }
-
-                            # Find the active tool call in the accumulator
-                            active_tool_call = next(
-                                iter(tool_calls_accumulator.values()), None
-                            )
-                            if active_tool_call:
-                                # Accumulate arguments across multiple chunks
-                                active_tool_call["arguments"] += (
-                                    tool_call.function.arguments or ""
-                                )
-
-                                # Try to parse accumulated JSON when complete
-                                try:
-                                    parsed_arguments = json.loads(
-                                        active_tool_call["arguments"]
-                                    )
-
-                                    # Construct the ToolCall object
-                                    tool_calls.append(
-                                        ToolCall(
-                                            request_call_id=active_tool_call[
-                                                "request_call_id"
-                                            ],
-                                            tool_call_id=active_tool_call[
-                                                "tool_call_id"
-                                            ],
-                                            name=active_tool_call["name"],
-                                            arguments=parsed_arguments,
-                                        )
-                                    )
-
-                                    # Remove the tool call once fully processed
-                                    del tool_calls_accumulator[
-                                        active_tool_call["tool_call_id"]
-                                    ]
-
-                                except json.JSONDecodeError:
-                                    # JSON is incomplete, continue accumulating
-                                    pass
-
-                    yield AIResponse(
-                        content=content,
-                        thinking=thinking,
-                        tool_calls=tool_calls if tool_calls else None,
-                    )
+            async for chunk in stream:
+                ai_response = self.__process_stream_chunk(chunk, tool_calls_accumulator)
+                if ai_response is not None:
+                    yield ai_response
 
         except Exception as e:
             if isinstance(e, LLMfyException):

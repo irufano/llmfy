@@ -106,6 +106,38 @@ def track_openai_stream_usage(func):
     return wrapper
 
 
+def track_openai_stream_usage_async(func):
+    """Async-generator counterpart of `track_openai_stream_usage`.
+
+    No `tee` needed here (unlike the sync version): `func` is an
+    async-generator function that yields chunks directly, so this forwards
+    each one in a single pass and reports usage the moment a chunk carrying
+    it is seen (the final chunk, when `stream_options={"include_usage": True}`).
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        model = args[0]["model"]  # args is tuple[params, ...] and params contain `model`
+        # Sync version stops at the first usage-bearing chunk found (`break`
+        # after tee-scanning) — this flag preserves "report at most once"
+        # here too, in case more than one chunk ever carries usage.
+        reported = False
+
+        async for chunk in func(*args, **kwargs):
+            if not reported and usage_tracker is not None and chunk.usage:
+                usage_tracker.update(
+                    backend=ModelBackend.OPENAI_CHAT,
+                    type=ServiceType.LLM,
+                    model=model,
+                    usage=chunk.usage,
+                )
+                reported = True
+            yield chunk
+
+    return wrapper
+
+
 def track_openai_embedding_usage(func):
     """Decorator to wrap `__call_openai_embedding` calls on `OpenAIEmbedding`."""
 

@@ -12,7 +12,7 @@ from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_config import (
     AnthropicMessagesConfig,
 )
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
@@ -133,6 +133,27 @@ class AnthropicMessagesModel(BaseAIModel):
                 raise handle_anthropic_error(e) from e
 
         return _call_stream_anthropic_impl(params)
+
+    def __call_stream_anthropic_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_stream_anthropic`, used by
+        # `agenerate_stream`.
+        from anthropic import APIError
+
+        from llmfy.exception.exception_handler import handle_anthropic_error
+        from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_usage import (
+            track_anthropic_messages_stream_usage_async,
+        )
+
+        @track_anthropic_messages_stream_usage_async
+        async def _call_stream_anthropic_impl_async(params: dict[str, Any]):
+            try:
+                stream = await self.async_client.messages.create(**params, stream=True)
+                async for event in stream:
+                    yield event
+            except APIError as e:
+                raise handle_anthropic_error(e) from e
+
+        return _call_stream_anthropic_impl_async(params)
 
     def __build_params(
         self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None
@@ -274,17 +295,84 @@ class AnthropicMessagesModel(BaseAIModel):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
 
-    def agenerate_stream(
+    def __process_stream_event(
         self,
-        messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]] | None = None,
-        **kwargs,
-    ) -> AsyncGenerator[AIResponse, Any]:
-        """Async version of `generate_stream`. No native async streaming path
-        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
-        `generate_stream()`, still non-blocking to the event loop per chunk.
+        event,
+        blocks: dict[int, dict[str, Any]],
+        message_id: str,
+    ) -> tuple[AIResponse | None, str]:
+        """Process one Messages-API stream event.
+
+        Mutates `blocks` in place (index-keyed — every content block carries
+        an explicit index, so multiple parallel tool_use blocks stream
+        correctly) and returns `(ai_response, message_id)` — the caller's
+        loop carries `message_id` into the next call since it's set once (on
+        `message_start`) and read later (on `content_block_stop`). Shared by
+        the sync (`generate_stream`) and async (`agenerate_stream`) streaming
+        loops, which differ only in their iteration protocol (`for` vs
+        `async for`).
         """
-        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
+        text_out = None
+        thinking_out = None
+        new_tool_call = None
+
+        if event.type == "message_start":
+            message_id = event.message.id
+
+        elif event.type == "content_block_start":
+            cb = event.content_block
+            if cb.type == "tool_use":
+                blocks[event.index] = {
+                    "type": "tool_use",
+                    "id": cb.id,
+                    "name": cb.name,
+                    "input_json": "",
+                }
+            elif cb.type == "text":
+                blocks[event.index] = {"type": "text", "text": ""}
+            elif cb.type == "thinking":
+                blocks[event.index] = {"type": "thinking", "thinking": ""}
+            else:
+                # other future block types — not surfaced in v1
+                blocks[event.index] = {"type": cb.type}
+
+        elif event.type == "content_block_delta":
+            block = blocks.get(event.index)
+            if block is None:
+                return None, message_id
+            if event.delta.type == "text_delta":
+                block["text"] += event.delta.text
+                text_out = event.delta.text
+            elif event.delta.type == "thinking_delta":
+                block["thinking"] += event.delta.thinking
+                thinking_out = event.delta.thinking
+            elif event.delta.type == "input_json_delta":
+                block["input_json"] += event.delta.partial_json
+
+        elif event.type == "content_block_stop":
+            block = blocks.get(event.index)
+            if block and block["type"] == "tool_use":
+                arguments = (
+                    json.loads(block["input_json"]) if block["input_json"] else {}
+                )
+                new_tool_call = ToolCall(
+                    request_call_id=message_id,
+                    tool_call_id=block["id"],
+                    name=block["name"],
+                    arguments=arguments,
+                )
+
+        if text_out is not None or thinking_out is not None or new_tool_call is not None:
+            return (
+                AIResponse(
+                    content=text_out,
+                    thinking=thinking_out,
+                    tool_calls=[new_tool_call] if new_tool_call else None,
+                ),
+                message_id,
+            )
+
+        return None, message_id
 
     def generate_stream(
         self,
@@ -306,75 +394,43 @@ class AnthropicMessagesModel(BaseAIModel):
             params = {**self.__build_params(messages, tools), **kwargs}
             stream = self.__call_stream_anthropic(params)
 
-            # Index-keyed accumulator (event.index) — every content block
-            # carries an explicit index, so multiple parallel tool_use
-            # blocks stream correctly (unlike a single-in-flight-call dict).
             blocks: dict[int, dict[str, Any]] = {}
             message_id = ""
 
             for event in stream:
-                text_out = None
-                thinking_out = None
-                new_tool_call = None
+                ai_response, message_id = self.__process_stream_event(
+                    event, blocks, message_id
+                )
+                if ai_response is not None:
+                    yield ai_response
 
-                if event.type == "message_start":
-                    message_id = event.message.id
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
 
-                elif event.type == "content_block_start":
-                    cb = event.content_block
-                    if cb.type == "tool_use":
-                        blocks[event.index] = {
-                            "type": "tool_use",
-                            "id": cb.id,
-                            "name": cb.name,
-                            "input_json": "",
-                        }
-                    elif cb.type == "text":
-                        blocks[event.index] = {"type": "text", "text": ""}
-                    elif cb.type == "thinking":
-                        blocks[event.index] = {"type": "thinking", "thinking": ""}
-                    else:
-                        # other future block types — not surfaced in v1
-                        blocks[event.index] = {"type": cb.type}
+    async def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream` — uses `anthropic.AsyncAnthropic`
+        natively (no thread offload). See `generate_stream` for behavior/args.
+        """
+        try:
+            params = {**self.__build_params(messages, tools), **kwargs}
+            stream = self.__call_stream_anthropic_async(params)
 
-                elif event.type == "content_block_delta":
-                    block = blocks.get(event.index)
-                    if block is None:
-                        continue
-                    if event.delta.type == "text_delta":
-                        block["text"] += event.delta.text
-                        text_out = event.delta.text
-                    elif event.delta.type == "thinking_delta":
-                        block["thinking"] += event.delta.thinking
-                        thinking_out = event.delta.thinking
-                    elif event.delta.type == "input_json_delta":
-                        block["input_json"] += event.delta.partial_json
+            blocks: dict[int, dict[str, Any]] = {}
+            message_id = ""
 
-                elif event.type == "content_block_stop":
-                    block = blocks.get(event.index)
-                    if block and block["type"] == "tool_use":
-                        arguments = (
-                            json.loads(block["input_json"])
-                            if block["input_json"]
-                            else {}
-                        )
-                        new_tool_call = ToolCall(
-                            request_call_id=message_id,
-                            tool_call_id=block["id"],
-                            name=block["name"],
-                            arguments=arguments,
-                        )
-
-                if (
-                    text_out is not None
-                    or thinking_out is not None
-                    or new_tool_call is not None
-                ):
-                    yield AIResponse(
-                        content=text_out,
-                        thinking=thinking_out,
-                        tool_calls=[new_tool_call] if new_tool_call else None,
-                    )
+            async for event in stream:
+                ai_response, message_id = self.__process_stream_event(
+                    event, blocks, message_id
+                )
+                if ai_response is not None:
+                    yield ai_response
 
         except Exception as e:
             if isinstance(e, LLMfyException):

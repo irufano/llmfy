@@ -9,7 +9,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
 from llmfy.llmfy_core.llms.openai.responses.openai_responses_config import (
     OpenAIResponsesConfig,
 )
@@ -143,6 +143,28 @@ class OpenAIResponsesModel(BaseAIModel):
             # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return __call_stream_openai_responses_impl(params)
+
+    def __call_stream_openai_responses_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_stream_openai_responses`, used by
+        # `agenerate_stream`.
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
+        from llmfy.llmfy_core.llms.openai.responses.openai_responses_usage import (
+            track_openai_responses_stream_usage_async,
+        )
+
+        @track_openai_responses_stream_usage_async
+        async def __call_stream_openai_responses_impl_async(params: dict[str, Any]):
+            try:
+                params["stream"] = True
+                stream = await self.async_client.responses.create(**params)
+                async for event in stream:
+                    yield event
+            except openai.APIError as e:
+                raise handle_openai_error(e) from e
+
+        return __call_stream_openai_responses_impl_async(params)
 
     def __to_responses_input(self, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Flattens `MessageTemp.get_messages()`'s output into the Responses API's
@@ -282,17 +304,68 @@ class OpenAIResponsesModel(BaseAIModel):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
 
-    def agenerate_stream(
+    def __process_stream_event(
         self,
-        messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]] | None = None,
-        **kwargs,
-    ) -> AsyncGenerator[AIResponse, Any]:
-        """Async version of `generate_stream`. No native async streaming path
-        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
-        `generate_stream()`, still non-blocking to the event loop per chunk.
+        event,
+        pending_tool_calls: dict[str, dict[str, Any]],
+        response_id: str | None,
+    ) -> tuple[AIResponse | None, str | None]:
+        """Process one Responses-API stream event.
+
+        Mutates `pending_tool_calls` in place and returns `(ai_response,
+        response_id)` — the caller's loop carries `response_id` into the
+        next call since it's set once (on `response.created`) and read later
+        (on `response.function_call_arguments.done`). Shared by the sync
+        (`generate_stream`) and async (`agenerate_stream`) streaming loops,
+        which differ only in their iteration protocol (`for` vs `async for`).
+        Most event types produce no `AIResponse` (returns `None` for those —
+        the caller only yields non-`None` results).
         """
-        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
+        event_type = getattr(event, "type", None)
+
+        if event_type == "response.created":
+            response_id = event.response.id
+
+        elif event_type == "response.output_item.added":
+            item = event.item
+            if getattr(item, "type", None) == "function_call":
+                pending_tool_calls[item.id] = {
+                    "call_id": item.call_id,
+                    "name": item.name,
+                }
+
+        elif event_type == "response.output_text.delta":
+            if event.delta:
+                return AIResponse(content=event.delta), response_id
+
+        elif event_type == "response.reasoning_summary_text.delta":
+            if event.delta:
+                return AIResponse(thinking=event.delta), response_id
+
+        elif event_type == "response.function_call_arguments.done":
+            pending = pending_tool_calls.pop(event.item_id, None)
+            if pending:
+                return (
+                    AIResponse(
+                        tool_calls=[
+                            ToolCall(
+                                request_call_id=response_id or "",
+                                tool_call_id=pending["call_id"],
+                                name=pending["name"],
+                                arguments=json.loads(event.arguments),
+                            )
+                        ]
+                    ),
+                    response_id,
+                )
+
+        elif event_type == "error":
+            raise LLMfyException(
+                getattr(event, "message", "OpenAI Responses stream error"),
+                raw_error=event,
+            )
+
+        return None, response_id
 
     def generate_stream(
         self,
@@ -315,7 +388,6 @@ class OpenAIResponsesModel(BaseAIModel):
         """
         try:
             params = self.__build_params(messages, tools, **kwargs)
-
             stream = self.__call_stream_openai_responses(params)
 
             response_id = None
@@ -325,46 +397,39 @@ class OpenAIResponsesModel(BaseAIModel):
             pending_tool_calls: dict[str, dict[str, Any]] = {}
 
             for event in stream:
-                event_type = getattr(event, "type", None)
+                ai_response, response_id = self.__process_stream_event(
+                    event, pending_tool_calls, response_id
+                )
+                if ai_response is not None:
+                    yield ai_response
 
-                if event_type == "response.created":
-                    response_id = event.response.id
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
 
-                elif event_type == "response.output_item.added":
-                    item = event.item
-                    if getattr(item, "type", None) == "function_call":
-                        pending_tool_calls[item.id] = {
-                            "call_id": item.call_id,
-                            "name": item.name,
-                        }
+    async def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream` — uses `openai.AsyncOpenAI`
+        natively (no thread offload). See `generate_stream` for behavior/args.
+        """
+        try:
+            params = self.__build_params(messages, tools, **kwargs)
+            stream = self.__call_stream_openai_responses_async(params)
 
-                elif event_type == "response.output_text.delta":
-                    if event.delta:
-                        yield AIResponse(content=event.delta)
+            response_id = None
+            pending_tool_calls: dict[str, dict[str, Any]] = {}
 
-                elif event_type == "response.reasoning_summary_text.delta":
-                    if event.delta:
-                        yield AIResponse(thinking=event.delta)
-
-                elif event_type == "response.function_call_arguments.done":
-                    pending = pending_tool_calls.pop(event.item_id, None)
-                    if pending:
-                        yield AIResponse(
-                            tool_calls=[
-                                ToolCall(
-                                    request_call_id=response_id or "",
-                                    tool_call_id=pending["call_id"],
-                                    name=pending["name"],
-                                    arguments=json.loads(event.arguments),
-                                )
-                            ]
-                        )
-
-                elif event_type == "error":
-                    raise LLMfyException(
-                        getattr(event, "message", "OpenAI Responses stream error"),
-                        raw_error=event,
-                    )
+            async for event in stream:
+                ai_response, response_id = self.__process_stream_event(
+                    event, pending_tool_calls, response_id
+                )
+                if ai_response is not None:
+                    yield ai_response
 
         except Exception as e:
             if isinstance(e, LLMfyException):

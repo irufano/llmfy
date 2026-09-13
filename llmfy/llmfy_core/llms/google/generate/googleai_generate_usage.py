@@ -125,6 +125,42 @@ def track_googleai_stream_usage(func):
     return wrapper
 
 
+def track_googleai_stream_usage_async(func):
+    """Async-generator counterpart of `track_googleai_stream_usage`.
+
+    No `tee` needed: `func` yields chunks directly, so this forwards each
+    one in a single pass and reports usage the moment a chunk carrying it is
+    seen (the final chunk, same condition as the sync version).
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        model = args[0]["model"]  # args is tuple[params, ...] and params contain `model`
+        # Sync version stops at the first usage-bearing chunk found (`break`
+        # after tee-scanning) — this flag preserves "report at most once"
+        # here too, in case more than one chunk ever carries usage_metadata.
+        reported = False
+
+        async for chunk in func(*args, **kwargs):
+            if (
+                not reported
+                and usage_tracker is not None
+                and chunk.usage_metadata
+                and chunk.usage_metadata.prompt_token_count
+            ):
+                usage_tracker.update(
+                    backend=ModelBackend.GOOGLE_GENERATE,
+                    type=ServiceType.LLM,
+                    model=model,
+                    usage=_extract_usage(chunk.usage_metadata),
+                )
+                reported = True
+            yield chunk
+
+    return wrapper
+
+
 def track_googleai_embedding_usage(func):
     """Decorator to wrap `__call_googleai_embedding` calls on `GoogleAIEmbedding`.
 

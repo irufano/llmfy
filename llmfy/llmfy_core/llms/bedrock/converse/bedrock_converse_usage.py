@@ -120,9 +120,13 @@ def track_bedrock_converse_stream_usage_async(func):
     async def wrapper(*args, **kwargs):
         usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
         model = args[0]["modelId"]  # args is tuple[params, ...] and params contain `modelId`
+        # Sync version stops at the first usage-bearing event found (`break`
+        # after tee-scanning) — this flag preserves "report at most once"
+        # here too, in case more than one event ever carries metadata.usage.
+        reported = False
 
         async for event in func(*args, **kwargs):
-            if usage_tracker is not None and "metadata" in event:
+            if not reported and usage_tracker is not None and "metadata" in event:
                 usage = event["metadata"].get("usage")
                 if usage:
                     usage_tracker.update(
@@ -131,6 +135,7 @@ def track_bedrock_converse_stream_usage_async(func):
                         model=model,
                         usage=usage,
                     )
+                    reported = True
             yield event
 
     return wrapper
