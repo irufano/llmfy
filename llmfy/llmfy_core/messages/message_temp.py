@@ -20,6 +20,19 @@ class MessageTemp:
 
     def __init__(self):
         self.messages: list[Message] = []
+        # Formatted-message cache: backend -> {Message.id -> formatted dict}.
+        #
+        # Safe to cache "format once, reuse forever" even though
+        # `format_tool_message` (Anthropic/Bedrock) can mutate an existing
+        # Message's `tool_results` in place when merging parallel tool
+        # results: that merge always targets the *current* assistant turn's
+        # `request_call_id`, which is a fresh uuid per turn (see
+        # `add_assistant_message`) and is never reused for a past message.
+        # So by the time a message is read here (i.e. `get_messages` is
+        # called), every message already in `self.messages` is settled and
+        # will never be mutated again — only genuinely new messages need
+        # formatting.
+        self._formatted_cache: dict[ModelBackend, dict[str, dict[str, Any]]] = {}
 
     @classmethod
     def _get_formatter(cls, backend: ModelBackend) -> ModelFormatter | None:
@@ -98,7 +111,22 @@ class MessageTemp:
         formatter = self._get_formatter(backend)
         if not formatter:
             raise LLMfyException(f"Unsupported model backend: {backend}")
-        return [formatter.format_message(msg) for msg in self.messages]
+
+        cache = self._formatted_cache.setdefault(backend, {})
+
+        # Drop entries for messages no longer in history (e.g. after `clear()`
+        # dropped everything but the system message) so the cache can't grow
+        # unbounded across many invoke()/chat() calls on the same instance.
+        current_ids = {msg.id for msg in self.messages}
+        for stale_id in cache.keys() - current_ids:
+            del cache[stale_id]
+
+        formatted = []
+        for msg in self.messages:
+            if msg.id not in cache:
+                cache[msg.id] = formatter.format_message(msg)
+            formatted.append(cache[msg.id])
+        return formatted
 
     def get_instance_messages(self) -> list[Message]:
         # return [msg for msg in self.messages if msg.role != Role.SYSTEM]
