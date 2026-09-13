@@ -1,4 +1,5 @@
 import functools
+import inspect
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -35,8 +36,24 @@ def _extract_usage(usage_metadata) -> dict:
     }
 
 
+def _report_googleai_usage(args, response) -> None:
+    usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+    if usage_tracker is None or not response.usage_metadata:
+        return
+    model = args[0]["model"]  # args is tuple[params] and params contain `model`
+    usage_tracker.update(
+        backend=ModelBackend.GOOGLE_GENERATE,
+        type=ServiceType.LLM,
+        model=model,
+        usage=_extract_usage(response.usage_metadata),
+    )
+
+
 def track_googleai_usage(func):
-    """Decorator to wrap `__call_googleai` calls on `GoogleAIGenerateModel`.
+    """Decorator to wrap `__call_googleai`/`__call_googleai_async` calls on
+    `GoogleAIGenerateModel`. Works on both a sync and an async `func`
+    (checked via `asyncio.iscoroutinefunction`) so the same decorator covers
+    `generate` and `agenerate`.
 
     Extracts usage_metadata from the GenerateContentResponse and forwards it
     to the usage tracker via _extract_usage(). When explicit prompt caching is
@@ -45,22 +62,20 @@ def track_googleai_usage(func):
 
     Reference: https://ai.google.dev/gemini-api/docs/caching
     """
+    if inspect.iscoroutinefunction(func):
+
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            response = await func(*args, **kwargs)
+            _report_googleai_usage(args, response)
+            return response
+
+        return async_wrapper
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
-        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
-        if usage_tracker is None:
-            return response
-        model = args[0]["model"]  # args is tuple[params] and params contain `model`
-        if response.usage_metadata:
-            usage = _extract_usage(response.usage_metadata)
-            usage_tracker.update(
-                backend=ModelBackend.GOOGLE_GENERATE,
-                type=ServiceType.LLM,
-                model=model,
-                usage=usage,
-            )
+        _report_googleai_usage(args, response)
         return response
 
     return wrapper

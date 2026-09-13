@@ -5,10 +5,11 @@ except ImportError:
 
 import json
 import os
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
 from llmfy.llmfy_core.llms.openai.chat.openai_chat_config import OpenAIChatConfig
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -69,6 +70,13 @@ class OpenAIChatModel(BaseAIModel):
         self.client = openai.OpenAI(
             api_key=api_key, base_url=base_url, default_headers=default_headers
         )
+        # Native async client for `agenerate` — same credentials/config, no
+        # separate setup needed. Cheap to construct (no connection opened
+        # until the first request), so built eagerly alongside `self.client`
+        # rather than lazily on first async use.
+        self.async_client = openai.AsyncOpenAI(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
         self.backend = ModelBackend.OPENAI_CHAT
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
@@ -94,6 +102,28 @@ class OpenAIChatModel(BaseAIModel):
 
         return _call_openai_impl(params)
 
+    def __call_openai_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_openai`, used by `agenerate`. Same
+        # `track_openai_usage` decorator — it dispatches on whether the
+        # wrapped function is a coroutine function.
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
+        from llmfy.llmfy_core.llms.openai.chat.openai_chat_usage import (
+            track_openai_usage,
+        )
+
+        @track_openai_usage
+        async def _call_openai_impl_async(params: dict[str, Any]):
+            try:
+                response = await self.async_client.chat.completions.create(**params)
+                return response
+            except openai.APIError as e:
+                raise handle_openai_error(e) from e
+            # Any non-openai.APIError exceptions will naturally propagate up the call stack.
+
+        return _call_openai_impl_async(params)
+
     def __call_stream_openai(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
         import openai
@@ -115,6 +145,76 @@ class OpenAIChatModel(BaseAIModel):
 
         return __call_stream_openai_impl(params)
 
+    def __build_params(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "model": self.model_name,
+            "messages": messages,
+            "frequency_penalty": self.config.frequency_penalty,
+            "presence_penalty": self.config.presence_penalty,
+            "stream": False,
+            **kwargs,
+        }
+        # Omitted entirely (not sent as null) when None — some models
+        # reject these params outright rather than accepting a default
+        # (e.g. o4-mini 400s on an explicit `max_tokens: null`).
+        if self.config.max_tokens is not None:
+            params["max_tokens"] = self.config.max_tokens
+        if self.config.temperature is not None:
+            params["temperature"] = self.config.temperature
+        if self.config.top_p is not None:
+            params["top_p"] = self.config.top_p
+
+        if self.config.thinking.enabled:
+            params["reasoning_effort"] = self.config.thinking.effort or "medium"
+
+        if tools:
+            params["tools"] = [
+                {"type": "function", "function": tool} for tool in tools
+            ]
+            params["tool_choice"] = "auto"
+
+        return params
+
+    def __parse_response(self, response) -> AIResponse:
+        message = response.choices[0].message
+        tool_calls = None
+        content = None
+
+        if hasattr(message, "tool_calls") and message.tool_calls:
+            tool_calls = [
+                ToolCall(
+                    request_call_id=response.id,
+                    tool_call_id=tool_call.id,
+                    name=tool_call.function.name,
+                    arguments=json.loads(tool_call.function.arguments),
+                )
+                for tool_call in message.tool_calls
+            ]
+        else:
+            content = message.content
+
+        # Neither field is part of OpenAI's own Chat Completions schema
+        # (OpenAI never returns reasoning text on this API, only a
+        # `reasoning_tokens` count) — but OpenAI-compatible endpoints that
+        # do return it use different non-standard field names: `reasoning`
+        # (Ollama) vs `reasoning_content` (DeepSeek and others). The SDK's
+        # message model allows extra fields, so this is a no-op (stays
+        # None) against real OpenAI.
+        thinking = getattr(message, "reasoning", None) or getattr(
+            message, "reasoning_content", None
+        )
+
+        return AIResponse(
+            content=content,
+            thinking=thinking,
+            tool_calls=tool_calls,
+        )
+
     def generate(
         self,
         messages: list[dict[str, Any]],
@@ -135,73 +235,44 @@ class OpenAIChatModel(BaseAIModel):
                 AIResponse: _description_
         """
         try:
-            params = {
-                "model": self.model_name,
-                "messages": messages,
-                "frequency_penalty": self.config.frequency_penalty,
-                "presence_penalty": self.config.presence_penalty,
-                "stream": False,
-                **kwargs,
-            }
-            # Omitted entirely (not sent as null) when None — some models
-            # reject these params outright rather than accepting a default
-            # (e.g. o4-mini 400s on an explicit `max_tokens: null`).
-            if self.config.max_tokens is not None:
-                params["max_tokens"] = self.config.max_tokens
-            if self.config.temperature is not None:
-                params["temperature"] = self.config.temperature
-            if self.config.top_p is not None:
-                params["top_p"] = self.config.top_p
-
-            if self.config.thinking.enabled:
-                params["reasoning_effort"] = self.config.thinking.effort or "medium"
-
-            if tools:
-                params["tools"] = [
-                    {"type": "function", "function": tool} for tool in tools
-                ]
-                params["tool_choice"] = "auto"
-
+            params = self.__build_params(messages, tools, **kwargs)
             response = self.__call_openai(params)
-
-            message = response.choices[0].message
-            tool_calls = None
-            content = None
-
-            if hasattr(message, "tool_calls") and message.tool_calls:
-                tool_calls = [
-                    ToolCall(
-                        request_call_id=response.id,
-                        tool_call_id=tool_call.id,
-                        name=tool_call.function.name,
-                        arguments=json.loads(tool_call.function.arguments),
-                    )
-                    for tool_call in message.tool_calls
-                ]
-            else:
-                content = message.content
-
-            # Neither field is part of OpenAI's own Chat Completions schema
-            # (OpenAI never returns reasoning text on this API, only a
-            # `reasoning_tokens` count) — but OpenAI-compatible endpoints that
-            # do return it use different non-standard field names: `reasoning`
-            # (Ollama) vs `reasoning_content` (DeepSeek and others). The SDK's
-            # message model allows extra fields, so this is a no-op (stays
-            # None) against real OpenAI.
-            thinking = getattr(message, "reasoning", None) or getattr(
-                message, "reasoning_content", None
-            )
-
-            return AIResponse(
-                content=content,
-                thinking=thinking,
-                tool_calls=tool_calls,
-            )
+            return self.__parse_response(response)
 
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
+
+    async def agenerate(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AIResponse:
+        """Async version of `generate` — uses `openai.AsyncOpenAI` natively
+        (no thread offload). See `generate` for behavior/args."""
+        try:
+            params = self.__build_params(messages, tools, **kwargs)
+            response = await self.__call_openai_async(params)
+            return self.__parse_response(response)
+
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream`. No native async streaming path
+        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
+        `generate_stream()`, still non-blocking to the event loop per chunk.
+        """
+        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
 
     def generate_stream(
         self,

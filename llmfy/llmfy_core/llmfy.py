@@ -1,14 +1,15 @@
 import re
 import uuid
-from collections.abc import Callable, Generator
+from collections.abc import AsyncGenerator, Callable, Generator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
 from llmfy.llmfy_core.messages.content import Content
 from llmfy.llmfy_core.messages.message import Message
 from llmfy.llmfy_core.messages.message_temp import MessageTemp
 from llmfy.llmfy_core.messages.role import Role
+from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.responses.ai_response import AIResponse
 from llmfy.llmfy_core.responses.generation_response import GenerationResponse
 from llmfy.llmfy_core.tools.tool import Tool
@@ -151,6 +152,87 @@ class LLMfy:
         except Exception as e:
             raise LLMfyException(f"Error formatting system message: {str(e)}") from e
 
+    def __prepare_invoke_history(self, contents: str | list[Content], **kwargs) -> None:
+        """Reset `messages_temp` and seed it with the system message (if any)
+        and the user's `contents`. Shared by `invoke`/`invoke_with_tools` and
+        their async (`ainvoke`/`ainvoke_with_tools`) counterparts."""
+        self.messages_temp.clear()
+
+        # Generate using user role only if invoke
+        messages = [Message(role=Role.USER, content=contents)]
+
+        if self.system_message:
+            # Validate system message
+            final_system_message = self.__validate_system_message(**kwargs)
+
+            # Add system message to history
+            self.messages_temp.add_system_message(
+                final_system_message if final_system_message else ""
+            )
+
+        # Add new messages to history
+        for message in messages:
+            # always ROLE == USER because invoke
+            if message.role == Role.USER:
+                self.messages_temp.add_user_message(
+                    message.id,
+                    message.content if message.content else "",
+                )
+
+    def __prepare_chat_history(self, messages: list[Message], **kwargs) -> None:
+        """Reset `messages_temp` and replay the given `messages` into it.
+        Shared by `chat`/`chat_with_tools` and their async (`achat`/
+        `achat_with_tools`) counterparts."""
+        self.messages_temp.clear()
+
+        if self.system_message:
+            # Validate system message
+            final_system_message = self.__validate_system_message(**kwargs)
+
+            # Add system message to history
+            self.messages_temp.add_system_message(
+                final_system_message if final_system_message else ""
+            )
+
+        # Add new messages to history
+        for message in messages:
+            if message.role == Role.USER:
+                self.messages_temp.add_user_message(
+                    message.id,
+                    message.content if message.content else "",
+                )
+            elif message.role == Role.ASSISTANT:
+                self.messages_temp.add_assistant_message(
+                    id=message.id,
+                    content=message.content,
+                    tool_calls=message.tool_calls,
+                )
+            elif message.role == Role.TOOL:
+                self.messages_temp.add_tool_message(
+                    id=message.id,
+                    request_call_id=message.request_call_id,
+                    tool_call_id=(
+                        message.tool_call_id if message.tool_call_id else ""
+                    ),
+                    name=message.name if message.name else "",
+                    result=message.tool_results[0] if message.tool_results else "",
+                    backend=self.model.backend,
+                )
+
+    def __run_tool_calls(self, tool_calls: list[ToolCall]) -> None:
+        """Execute each requested tool call and append its result to
+        `messages_temp`. Shared by the sync and async tool-calling loops."""
+        for tool_call in tool_calls:
+            result = self.__execute_tool(tool_call.name, tool_call.arguments)
+            self.messages_temp.add_tool_message(
+                id=str(uuid.uuid4()),
+                request_call_id=tool_call.request_call_id,
+                tool_call_id=tool_call.tool_call_id,
+                name=tool_call.name,
+                result=str(result),
+                backend=self.model.backend,
+            )
+
     def invoke(self, contents: str | list[Content], **kwargs) -> GenerationResponse:
         """
         Generate a response based on contents.
@@ -163,28 +245,7 @@ class LLMfy:
             GenerationResponse containing the generated response
         """
         try:
-            self.messages_temp.clear()
-
-            # Generate using user role only if invoke
-            messages = [Message(role=Role.USER, content=contents)]
-
-            if self.system_message:
-                # Validate system message
-                final_system_message = self.__validate_system_message(**kwargs)
-
-                # Add system message to history
-                self.messages_temp.add_system_message(
-                    final_system_message if final_system_message else ""
-                )
-
-            # Add new messages to history
-            for message in messages:
-                # always ROLE == USER because invoke
-                if message.role == Role.USER:
-                    self.messages_temp.add_user_message(
-                        message.id,
-                        message.content if message.content else "",
-                    )
+            self.__prepare_invoke_history(contents, **kwargs)
 
             response = self.model.generate(
                 self.messages_temp.get_messages(backend=self.model.backend),
@@ -222,28 +283,7 @@ class LLMfy:
             GenerationResponse containing the generated response
         """
         try:
-            self.messages_temp.clear()
-
-            # Generate using user role only if invoke
-            messages = [Message(role=Role.USER, content=contents)]
-
-            if self.system_message:
-                # Validate system message
-                final_system_message = self.__validate_system_message(**kwargs)
-
-                # Add system message to history
-                self.messages_temp.add_system_message(
-                    final_system_message if final_system_message else ""
-                )
-
-            # Add new messages to history
-            for message in messages:
-                # always ROLE == USER because invoke
-                if message.role == Role.USER:
-                    self.messages_temp.add_user_message(
-                        message.id,
-                        message.content if message.content else "",
-                    )
+            self.__prepare_invoke_history(contents, **kwargs)
 
             while True:
                 response = self.model.generate(
@@ -256,19 +296,7 @@ class LLMfy:
                         id=str(uuid.uuid4()),
                         tool_calls=response.tool_calls,
                     )
-
-                    for tool_call in response.tool_calls:
-                        result = self.__execute_tool(
-                            tool_call.name, tool_call.arguments
-                        )
-                        self.messages_temp.add_tool_message(
-                            id=str(uuid.uuid4()),
-                            request_call_id=tool_call.request_call_id,
-                            tool_call_id=tool_call.tool_call_id,
-                            name=tool_call.name,
-                            result=str(result),
-                            backend=self.model.backend,
-                        )
+                    self.__run_tool_calls(response.tool_calls)
                     continue
 
                 self.messages_temp.add_assistant_message(
@@ -405,41 +433,7 @@ class LLMfy:
             GenerationResponse containing the generated response
         """
         try:
-            self.messages_temp.clear()
-
-            if self.system_message:
-                # Validate system message
-                final_system_message = self.__validate_system_message(**kwargs)
-
-                # Add system message to history
-                self.messages_temp.add_system_message(
-                    final_system_message if final_system_message else ""
-                )
-
-            # Add new messages to history
-            for message in messages:
-                if message.role == Role.USER:
-                    self.messages_temp.add_user_message(
-                        message.id,
-                        message.content if message.content else "",
-                    )
-                elif message.role == Role.ASSISTANT:
-                    self.messages_temp.add_assistant_message(
-                        id=message.id,
-                        content=message.content,
-                        tool_calls=message.tool_calls,
-                    )
-                elif message.role == Role.TOOL:
-                    self.messages_temp.add_tool_message(
-                        id=message.id,
-                        request_call_id=message.request_call_id,
-                        tool_call_id=(
-                            message.tool_call_id if message.tool_call_id else ""
-                        ),
-                        name=message.name if message.name else "",
-                        result=message.tool_results[0] if message.tool_results else "",
-                        backend=self.model.backend,
-                    )
+            self.__prepare_chat_history(messages, **kwargs)
 
             response = self.model.generate(
                 self.messages_temp.get_messages(backend=self.model.backend),
@@ -473,41 +467,7 @@ class LLMfy:
             GenerationResponse containing the generated response
         """
         try:
-            self.messages_temp.clear()
-
-            if self.system_message:
-                # Validate system message
-                final_system_message = self.__validate_system_message(**kwargs)
-
-                # Add system message to history
-                self.messages_temp.add_system_message(
-                    final_system_message if final_system_message else ""
-                )
-
-            # Add new messages to history
-            for message in messages:
-                if message.role == Role.USER:
-                    self.messages_temp.add_user_message(
-                        message.id,
-                        message.content if message.content else "",
-                    )
-                elif message.role == Role.ASSISTANT:
-                    self.messages_temp.add_assistant_message(
-                        id=message.id,
-                        content=message.content,
-                        tool_calls=message.tool_calls,
-                    )
-                elif message.role == Role.TOOL:
-                    self.messages_temp.add_tool_message(
-                        id=message.id,
-                        request_call_id=message.request_call_id,
-                        tool_call_id=(
-                            message.tool_call_id if message.tool_call_id else ""
-                        ),
-                        name=message.name if message.name else "",
-                        result=message.tool_results[0] if message.tool_results else "",
-                        backend=self.model.backend,
-                    )
+            self.__prepare_chat_history(messages, **kwargs)
 
             while True:
                 response = self.model.generate(
@@ -520,19 +480,7 @@ class LLMfy:
                         id=str(uuid.uuid4()),
                         tool_calls=response.tool_calls,
                     )
-
-                    for tool_call in response.tool_calls:
-                        result = self.__execute_tool(
-                            tool_call.name, tool_call.arguments
-                        )
-                        self.messages_temp.add_tool_message(
-                            id=str(uuid.uuid4()),
-                            request_call_id=tool_call.request_call_id,
-                            tool_call_id=tool_call.tool_call_id,
-                            name=tool_call.name,
-                            result=str(result),
-                            backend=self.model.backend,
-                        )
+                    self.__run_tool_calls(response.tool_calls)
                     continue
 
                 self.messages_temp.add_assistant_message(
@@ -673,3 +621,178 @@ class LLMfy:
 
     def clear_messages_temp(self) -> None:
         self.messages_temp.clear()
+
+    # ------------------------------------------------------------------
+    # Async wrappers
+    #
+    # `ainvoke`/`ainvoke_with_tools`/`achat`/`achat_with_tools` call
+    # `self.model.agenerate(...)` — a real non-blocking await for backends
+    # whose SDK ships a native async client (OpenAI, Anthropic, Google AI as
+    # of this writing; see each model's `agenerate` override), falling back
+    # to a thread-offloaded `generate()` for backends that don't (Bedrock has
+    # no async boto3 without the extra `aioboto3` dependency — see
+    # `BaseAIModel.agenerate`). Either way there's no `asyncio.to_thread`
+    # thread-pool ceiling (default ~32 workers) capping how many of these can
+    # run concurrently — matters if you fan out to many LLMfy instances at
+    # once, e.g. `await asyncio.gather(llm_a.ainvoke(...), llm_b.ainvoke(...))`.
+    #
+    # `ainvoke_stream`/`achat_stream` are still thread-offloaded wrappers
+    # around the whole sync streaming method (`sync_gen_to_async` helper) —
+    # no backend has a native async *streaming* path yet, since that also
+    # needs the usage-tracking decorators to support async generators (their
+    # current "tee the stream" trick is sync-only), which is a separate,
+    # bigger change than plain `agenerate`.
+    #
+    # Not thread-safe across concurrent calls on the SAME LLMfy instance:
+    # each instance owns one mutable `messages_temp` history, so two
+    # concurrent calls on the same instance can race on it — same
+    # limitation the sync API already has if you drove it from multiple
+    # threads yourself. Fan out across separate LLMfy instances (typically
+    # one per provider/model), not concurrent calls on one instance.
+    # ------------------------------------------------------------------
+
+    async def ainvoke(self, contents: str | list[Content], **kwargs) -> GenerationResponse:
+        """Async version of `invoke`. See `invoke` for behavior/args."""
+        try:
+            self.__prepare_invoke_history(contents, **kwargs)
+
+            response = await self.model.agenerate(
+                self.messages_temp.get_messages(backend=self.model.backend),
+                tools=self.__get_tool_definitions(),
+            )
+
+            self.messages_temp.add_assistant_message(
+                id=str(uuid.uuid4()),
+                content=response.content,
+                tool_calls=response.tool_calls,
+            )
+
+            return GenerationResponse(
+                result=response,
+                messages=self.messages_temp.get_instance_messages(),
+            )
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    async def ainvoke_with_tools(
+        self, contents: str | list[Content], **kwargs
+    ) -> GenerationResponse:
+        """Async version of `invoke_with_tools`. See `invoke_with_tools` for behavior/args."""
+        try:
+            self.__prepare_invoke_history(contents, **kwargs)
+
+            while True:
+                response = await self.model.agenerate(
+                    self.messages_temp.get_messages(backend=self.model.backend),
+                    tools=self.__get_tool_definitions(),
+                )
+
+                if response.tool_calls:
+                    self.messages_temp.add_assistant_message(
+                        id=str(uuid.uuid4()),
+                        tool_calls=response.tool_calls,
+                    )
+                    # Tool functions themselves stay sync (arbitrary user code —
+                    # not every tool implementation is async-safe to await).
+                    self.__run_tool_calls(response.tool_calls)
+                    continue
+
+                self.messages_temp.add_assistant_message(
+                    id=str(uuid.uuid4()),
+                    content=response.content,
+                    tool_calls=response.tool_calls,
+                )
+
+                return GenerationResponse(
+                    result=response,
+                    messages=self.messages_temp.get_instance_messages(),
+                )
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    def ainvoke_stream(
+        self, contents: str | list[Content], **kwargs
+    ) -> AsyncGenerator[GenerationResponse, Any]:
+        """Async version of `invoke_stream`. See `invoke_stream` for behavior/args.
+
+        Example usage:
+        ```python
+        async for chunk in chat.ainvoke_stream("apa ibukota jakarta?"):
+            if chunk.result.content:
+                print(chunk.result.content, end="", flush=True)
+        ```
+        """
+        return sync_gen_to_async(self.invoke_stream(contents, **kwargs))
+
+    async def achat(self, messages: list[Message], **kwargs) -> GenerationResponse:
+        """Async version of `chat`. See `chat` for behavior/args."""
+        try:
+            self.__prepare_chat_history(messages, **kwargs)
+
+            response = await self.model.agenerate(
+                self.messages_temp.get_messages(backend=self.model.backend),
+                tools=self.__get_tool_definitions(),
+            )
+
+            self.messages_temp.add_assistant_message(
+                id=str(uuid.uuid4()),
+                content=response.content,
+                tool_calls=response.tool_calls,
+            )
+
+            return GenerationResponse(
+                result=response,
+                messages=self.messages_temp.get_instance_messages(),
+            )
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    async def achat_with_tools(
+        self, messages: list[Message], **kwargs
+    ) -> GenerationResponse:
+        """Async version of `chat_with_tools`. See `chat_with_tools` for behavior/args."""
+        try:
+            self.__prepare_chat_history(messages, **kwargs)
+
+            while True:
+                response = await self.model.agenerate(
+                    self.messages_temp.get_messages(backend=self.model.backend),
+                    tools=self.__get_tool_definitions(),
+                )
+
+                if response.tool_calls:
+                    self.messages_temp.add_assistant_message(
+                        id=str(uuid.uuid4()),
+                        tool_calls=response.tool_calls,
+                    )
+                    # Tool functions themselves stay sync (arbitrary user code —
+                    # not every tool implementation is async-safe to await).
+                    self.__run_tool_calls(response.tool_calls)
+                    continue
+
+                self.messages_temp.add_assistant_message(
+                    id=str(uuid.uuid4()),
+                    content=response.content,
+                    tool_calls=response.tool_calls,
+                )
+
+                return GenerationResponse(
+                    result=response,
+                    messages=self.messages_temp.get_instance_messages(),
+                )
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    def achat_stream(
+        self, messages: list[Message], **kwargs
+    ) -> AsyncGenerator[GenerationResponse, Any]:
+        """Async version of `chat_stream`. See `chat_stream` for behavior/args."""
+        return sync_gen_to_async(self.chat_stream(messages, **kwargs))

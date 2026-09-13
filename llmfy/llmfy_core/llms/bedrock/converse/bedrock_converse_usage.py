@@ -1,4 +1,5 @@
 import functools
+import inspect
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -7,8 +8,24 @@ from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
 
+def _report_bedrock_converse_usage(args, response) -> None:
+    usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+    if usage_tracker is None or not response["usage"]:
+        return
+    model = args[0]["modelId"]  # args is tuple[params, ...] and params contain `modelId`
+    usage_tracker.update(
+        backend=ModelBackend.BEDROCK_CONVERSE,
+        type=ServiceType.LLM,
+        model=model,
+        usage=response["usage"],
+    )
+
+
 def track_bedrock_converse_usage(func):
-    """Decorator to wrap `__call_bedrock` calls on `BedrockConverseModel`.
+    """Decorator to wrap `__call_bedrock`/`__call_bedrock_async` calls on
+    `BedrockConverseModel`. Works on both a sync and an async `func` (checked
+    via `asyncio.iscoroutinefunction`) so the same decorator covers
+    `generate` and `agenerate`.
 
     Extracts the `usage` dict from the Converse API response and forwards it
     to the usage tracker. The dict contains:
@@ -21,23 +38,20 @@ def track_bedrock_converse_usage(func):
 
     Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
     """
+    if inspect.iscoroutinefunction(func):
+
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            response = await func(*args, **kwargs)
+            _report_bedrock_converse_usage(args, response)
+            return response
+
+        return async_wrapper
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
-        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
-        if usage_tracker is None:
-            return response
-        model = args[0][
-            "modelId"
-        ]  # args is tuple[BedrockConverseModel, params] and params contain `modelId`
-        if response["usage"]:
-            usage_tracker.update(
-                backend=ModelBackend.BEDROCK_CONVERSE,
-                type=ServiceType.LLM,
-                model=model,
-                usage=response["usage"],
-            )
+        _report_bedrock_converse_usage(args, response)
         return response
 
     return wrapper
@@ -85,6 +99,39 @@ def track_bedrock_converse_stream_usage(func):
             )
 
         return response
+
+    return wrapper
+
+
+def track_bedrock_converse_stream_usage_async(func):
+    """Async-generator counterpart of `track_bedrock_converse_stream_usage`.
+
+    `itertools.tee` (used by the sync decorator to duplicate the stream
+    without consuming it) has no equivalent for async iterators in the
+    stdlib, and aioboto3's stream must be consumed while its underlying
+    client connection is still open — so `func` here is an async-generator
+    function that yields raw Converse-stream events directly (not a response
+    dict with a "stream" key, unlike the sync path), and this wraps it in a
+    single pass: forward each event immediately, and report usage the moment
+    the event carrying `metadata.usage` is seen.
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+        model = args[0]["modelId"]  # args is tuple[params, ...] and params contain `modelId`
+
+        async for event in func(*args, **kwargs):
+            if usage_tracker is not None and "metadata" in event:
+                usage = event["metadata"].get("usage")
+                if usage:
+                    usage_tracker.update(
+                        backend=ModelBackend.BEDROCK_CONVERSE,
+                        type=ServiceType.LLM,
+                        model=model,
+                        usage=usage,
+                    )
+            yield event
 
     return wrapper
 

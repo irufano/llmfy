@@ -5,13 +5,14 @@ except ImportError:
 
 import json
 import os
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
 from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_config import (
     AnthropicMessagesConfig,
 )
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
 from llmfy.llmfy_core.messages.tool_call import ToolCall
 from llmfy.llmfy_core.model_backend import ModelBackend
 from llmfy.llmfy_core.responses.ai_response import AIResponse
@@ -72,6 +73,12 @@ class AnthropicMessagesModel(BaseAIModel):
         self.client = anthropic.Anthropic(
             api_key=api_key, base_url=base_url, default_headers=default_headers
         )
+        # Native async client for `agenerate` — same credentials/config as
+        # `self.client`, built eagerly (cheap: no connection opened until the
+        # first request).
+        self.async_client = anthropic.AsyncAnthropic(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
 
     def __call_anthropic(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
@@ -90,6 +97,24 @@ class AnthropicMessagesModel(BaseAIModel):
                 raise handle_anthropic_error(e) from e
 
         return _call_anthropic_impl(params)
+
+    def __call_anthropic_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_anthropic`, used by `agenerate`.
+        from anthropic import APIError
+
+        from llmfy.exception.exception_handler import handle_anthropic_error
+        from llmfy.llmfy_core.llms.anthropic.messages.anthropic_messages_usage import (
+            track_anthropic_messages_usage,
+        )
+
+        @track_anthropic_messages_usage
+        async def _call_anthropic_impl_async(params: dict[str, Any]):
+            try:
+                return await self.async_client.messages.create(**params)
+            except APIError as e:
+                raise handle_anthropic_error(e) from e
+
+        return _call_anthropic_impl_async(params)
 
     def __call_stream_anthropic(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
@@ -179,6 +204,34 @@ class AnthropicMessagesModel(BaseAIModel):
 
         return params
 
+    def __parse_response(self, response) -> AIResponse:
+        tool_calls = None
+        content = None
+
+        if response.stop_reason == "tool_use":
+            tool_calls = [
+                ToolCall(
+                    request_call_id=response.id,
+                    tool_call_id=block.id,
+                    name=block.name,
+                    arguments=block.input,
+                )
+                for block in response.content
+                if block.type == "tool_use"
+            ]
+        else:
+            text_block = next(
+                (b for b in response.content if b.type == "text"), None
+            )
+            content = text_block.text if text_block else None
+
+        thinking_block = next(
+            (b for b in response.content if b.type == "thinking"), None
+        )
+        thinking = thinking_block.thinking if thinking_block else None
+
+        return AIResponse(content=content, thinking=thinking, tool_calls=tool_calls)
+
     def generate(
         self,
         messages: list[dict[str, Any]],
@@ -198,37 +251,40 @@ class AnthropicMessagesModel(BaseAIModel):
         try:
             params = {**self.__build_params(messages, tools), **kwargs}
             response = self.__call_anthropic(params)
-
-            tool_calls = None
-            content = None
-
-            if response.stop_reason == "tool_use":
-                tool_calls = [
-                    ToolCall(
-                        request_call_id=response.id,
-                        tool_call_id=block.id,
-                        name=block.name,
-                        arguments=block.input,
-                    )
-                    for block in response.content
-                    if block.type == "tool_use"
-                ]
-            else:
-                text_block = next(
-                    (b for b in response.content if b.type == "text"), None
-                )
-                content = text_block.text if text_block else None
-
-            thinking_block = next(
-                (b for b in response.content if b.type == "thinking"), None
-            )
-            thinking = thinking_block.thinking if thinking_block else None
-
-            return AIResponse(content=content, thinking=thinking, tool_calls=tool_calls)
+            return self.__parse_response(response)
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
+
+    async def agenerate(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AIResponse:
+        """Async version of `generate` — uses `anthropic.AsyncAnthropic`
+        natively (no thread offload). See `generate` for behavior/args."""
+        try:
+            params = {**self.__build_params(messages, tools), **kwargs}
+            response = await self.__call_anthropic_async(params)
+            return self.__parse_response(response)
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream`. No native async streaming path
+        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
+        `generate_stream()`, still non-blocking to the event loop per chunk.
+        """
+        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
 
     def generate_stream(
         self,

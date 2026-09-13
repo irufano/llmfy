@@ -1,4 +1,5 @@
 import functools
+import inspect
 import itertools
 
 from llmfy.llmfy_core.model_backend import ModelBackend
@@ -6,8 +7,24 @@ from llmfy.llmfy_core.service_type import ServiceType
 from llmfy.llmfy_core.usage.usage_tracker import LLMFY_USAGE_TRACKER_VAR
 
 
+def _report_anthropic_usage(args, response) -> None:
+    usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
+    if usage_tracker is None or not response.usage:
+        return
+    model = args[0]["model"]  # args is tuple[params]; params contain `model`
+    usage_tracker.update(
+        backend=ModelBackend.ANTHROPIC_MESSAGES,
+        type=ServiceType.LLM,
+        model=model,
+        usage=response.usage,
+    )
+
+
 def track_anthropic_messages_usage(func):
-    """Decorator to wrap `__call_anthropic` calls on `AnthropicMessagesModel`.
+    """Decorator to wrap `__call_anthropic`/`__call_anthropic_async` calls on
+    `AnthropicMessagesModel`. Works on both a sync and an async `func`
+    (checked via `asyncio.iscoroutinefunction`) so the same decorator covers
+    `generate` and `agenerate`.
 
     Extracts the `usage` object from the Messages API response and forwards
     it to the usage tracker. Fields (per Anthropic Messages API `Usage`):
@@ -18,21 +35,20 @@ def track_anthropic_messages_usage(func):
 
     Reference: https://platform.claude.com/docs/en/build-with-claude/prompt-caching
     """
+    if inspect.iscoroutinefunction(func):
+
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            response = await func(*args, **kwargs)
+            _report_anthropic_usage(args, response)
+            return response
+
+        return async_wrapper
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
-        usage_tracker = LLMFY_USAGE_TRACKER_VAR.get()
-        if usage_tracker is None:
-            return response
-        model = args[0]["model"]  # args is tuple[params]; params contain `model`
-        if response.usage:
-            usage_tracker.update(
-                backend=ModelBackend.ANTHROPIC_MESSAGES,
-                type=ServiceType.LLM,
-                model=model,
-                usage=response.usage,
-            )
+        _report_anthropic_usage(args, response)
         return response
 
     return wrapper

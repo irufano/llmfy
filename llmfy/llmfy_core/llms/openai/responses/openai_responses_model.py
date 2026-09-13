@@ -5,10 +5,11 @@ except ImportError:
 
 import json
 import os
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from llmfy.exception.llmfy_exception import LLMfyException
-from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel
+from llmfy.llmfy_core.llms.base_ai_model import BaseAIModel, sync_gen_to_async
 from llmfy.llmfy_core.llms.openai.responses.openai_responses_config import (
     OpenAIResponsesConfig,
 )
@@ -73,6 +74,11 @@ class OpenAIResponsesModel(BaseAIModel):
         self.client = openai.OpenAI(
             api_key=api_key, base_url=base_url, default_headers=default_headers
         )
+        # Native async client for `agenerate` — see the matching comment in
+        # `OpenAIChatModel.__init__`.
+        self.async_client = openai.AsyncOpenAI(
+            api_key=api_key, base_url=base_url, default_headers=default_headers
+        )
         self.backend = ModelBackend.OPENAI_RESPONSES
         self.provider = ServiceProvider.OPENAI
         self.model_name = model
@@ -97,6 +103,26 @@ class OpenAIResponsesModel(BaseAIModel):
             # Any non-openai.APIError exceptions will naturally propagate up the call stack.
 
         return _call_openai_responses_impl(params)
+
+    def __call_openai_responses_async(self, params: dict[str, Any]):
+        # Async counterpart of `__call_openai_responses`, used by `agenerate`.
+        import openai
+
+        from llmfy.exception.exception_handler import handle_openai_error
+        from llmfy.llmfy_core.llms.openai.responses.openai_responses_usage import (
+            track_openai_responses_usage,
+        )
+
+        @track_openai_responses_usage
+        async def _call_openai_responses_impl_async(params: dict[str, Any]):
+            try:
+                response = await self.async_client.responses.create(**params)
+                return response
+            except openai.APIError as e:
+                raise handle_openai_error(e) from e
+            # Any non-openai.APIError exceptions will naturally propagate up the call stack.
+
+        return _call_openai_responses_impl_async(params)
 
     def __call_stream_openai_responses(self, params: dict[str, Any]):
         # Import the decorator when the method is first defined/called
@@ -165,6 +191,46 @@ class OpenAIResponsesModel(BaseAIModel):
 
         return params
 
+    def __parse_response(self, response) -> AIResponse:
+        content = None
+        thinking = None
+        tool_calls = None
+
+        for item in response.output:
+            if item.type == "function_call":
+                if tool_calls is None:
+                    tool_calls = []
+                tool_calls.append(
+                    ToolCall(
+                        request_call_id=response.id,
+                        tool_call_id=item.call_id,
+                        name=item.name,
+                        arguments=json.loads(item.arguments),
+                    )
+                )
+            elif item.type == "message" and content is None:
+                content = "".join(
+                    c.text
+                    for c in item.content
+                    if getattr(c, "type", None) == "output_text"
+                )
+            elif item.type == "reasoning" and item.summary:
+                # Populated only when `reasoning.summary` is requested in
+                # the config — the full chain-of-thought itself is never
+                # returned, only this model-generated summary.
+                thinking = "".join(s.text for s in item.summary)
+
+        # A turn that requests tool calls takes priority — mirrors OpenAIChatModel's
+        # Chat Completions behavior of not surfacing partial text alongside tool_calls.
+        if tool_calls:
+            content = None
+
+        return AIResponse(
+            content=content,
+            thinking=thinking,
+            tool_calls=tool_calls,
+        )
+
     def generate(
         self,
         messages: list[dict[str, Any]],
@@ -189,50 +255,44 @@ class OpenAIResponsesModel(BaseAIModel):
             params["stream"] = False
 
             response = self.__call_openai_responses(params)
-
-            content = None
-            thinking = None
-            tool_calls = None
-
-            for item in response.output:
-                if item.type == "function_call":
-                    if tool_calls is None:
-                        tool_calls = []
-                    tool_calls.append(
-                        ToolCall(
-                            request_call_id=response.id,
-                            tool_call_id=item.call_id,
-                            name=item.name,
-                            arguments=json.loads(item.arguments),
-                        )
-                    )
-                elif item.type == "message" and content is None:
-                    content = "".join(
-                        c.text
-                        for c in item.content
-                        if getattr(c, "type", None) == "output_text"
-                    )
-                elif item.type == "reasoning" and item.summary:
-                    # Populated only when `reasoning.summary` is requested in
-                    # the config — the full chain-of-thought itself is never
-                    # returned, only this model-generated summary.
-                    thinking = "".join(s.text for s in item.summary)
-
-            # A turn that requests tool calls takes priority — mirrors OpenAIChatModel's
-            # Chat Completions behavior of not surfacing partial text alongside tool_calls.
-            if tool_calls:
-                content = None
-
-            return AIResponse(
-                content=content,
-                thinking=thinking,
-                tool_calls=tool_calls,
-            )
+            return self.__parse_response(response)
 
         except Exception as e:
             if isinstance(e, LLMfyException):
                 raise  # Already handled, re-raise as-is
             raise LLMfyException(str(e), raw_error=e) from e
+
+    async def agenerate(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AIResponse:
+        """Async version of `generate` — uses `openai.AsyncOpenAI` natively
+        (no thread offload). See `generate` for behavior/args."""
+        try:
+            params = self.__build_params(messages, tools, **kwargs)
+            params["stream"] = False
+
+            response = await self.__call_openai_responses_async(params)
+            return self.__parse_response(response)
+
+        except Exception as e:
+            if isinstance(e, LLMfyException):
+                raise  # Already handled, re-raise as-is
+            raise LLMfyException(str(e), raw_error=e) from e
+
+    def agenerate_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[AIResponse, Any]:
+        """Async version of `generate_stream`. No native async streaming path
+        yet (see `BaseAIModel.agenerate_stream`) — thread-offloads the sync
+        `generate_stream()`, still non-blocking to the event loop per chunk.
+        """
+        return sync_gen_to_async(self.generate_stream(messages, tools, **kwargs))
 
     def generate_stream(
         self,
