@@ -175,6 +175,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
                 )
 
             batch_embeddings = []
+            was_rate_limited = False
             for text in batch_texts:
                 # Retry logic for individual text
                 for attempt in range(max_retries):
@@ -185,6 +186,7 @@ class BedrockEmbedding(BaseEmbeddingModel):
                     except ClientError as e:
                         error_code = e.response["Error"]["Code"]
                         if error_code == "ThrottlingException":
+                            was_rate_limited = True
                             if attempt < max_retries - 1:
                                 wait_time = retry_delay * (
                                     2**attempt
@@ -205,8 +207,13 @@ class BedrockEmbedding(BaseEmbeddingModel):
 
             embeddings.extend(batch_embeddings)
 
-            # Small delay between batches to avoid rate limits
-            if i + batch_size < len(texts):
+            # Only pause before the next chunk if this one actually got
+            # rate-limited — a flat delay on every chunk regardless of need
+            # was pure wasted wall-clock time on the common (no-rate-limit)
+            # path. (Bedrock's embedding API has no native batch endpoint —
+            # see llmfy_core/embeddings/openai and .../google for the ones
+            # that do — so this chunk loop still calls encode() per text.)
+            if was_rate_limited and i + batch_size < len(texts):
                 time.sleep(0.1)
 
         return np.array(embeddings)

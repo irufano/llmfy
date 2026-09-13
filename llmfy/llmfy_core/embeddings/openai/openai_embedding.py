@@ -160,6 +160,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                 )
 
             batch_embeddings = None
+            was_rate_limited = False
             # Retry logic for the whole batch (one request covers all texts in it)
             for attempt in range(max_retries):
                 try:
@@ -183,6 +184,7 @@ class OpenAIEmbedding(BaseEmbeddingModel):
                         "rate_limit_exceeded" in error_message.lower()
                         or "rate limit" in error_message.lower()
                     ):
+                        was_rate_limited = True
                         if attempt < max_retries - 1:
                             wait_time = retry_delay * (2**attempt)  # Exponential backoff
                             logger.warning(
@@ -205,8 +207,12 @@ class OpenAIEmbedding(BaseEmbeddingModel):
 
             embeddings.extend(batch_embeddings)
 
-            # Small delay between batches to avoid rate limits
-            if i + batch_size < len(texts):
+            # Only pause before the next batch if this one actually got
+            # rate-limited — with native batching (see encode_batch docstring)
+            # a full run is typically a handful of requests, so a flat delay
+            # on every batch regardless of need was pure wasted wall-clock
+            # time on the common (no-rate-limit) path.
+            if was_rate_limited and i + batch_size < len(texts):
                 time.sleep(0.1)
 
         return np.array(embeddings)
