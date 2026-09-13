@@ -51,13 +51,15 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
         self.provider = ServiceProvider.GOOGLE
         self.model = model
 
-    def __call_googleai_embedding(self, model: str, text: str):
+    def __call_googleai_embedding(self, model: str, text: str | list[str]):
         from llmfy.llmfy_core.llms.google.generate.googleai_generate_usage import (
             track_googleai_embedding_usage,
         )
 
         @track_googleai_embedding_usage
-        def _call_googleai_embedding_impl(model: str, contents: str, client):
+        def _call_googleai_embedding_impl(
+            model: str, contents: str | list[str], client
+        ):
             return client.models.embed_content(
                 model=model,
                 contents=contents,
@@ -106,7 +108,7 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
     def encode_batch(
         self,
         texts: list[str] | str,
-        batch_size: int = 10,
+        batch_size: int = 100,
         max_retries: int = 3,
         retry_delay: float = 1.0,
         show_progress_bar: bool = False,
@@ -114,10 +116,16 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
         """
         Encode texts into embedding with batch process.
 
+        Each chunk of `batch_size` texts is sent as a single `embed_content`
+        call (Google GenAI's `contents` accepts a list of strings natively),
+        instead of one HTTP request per text. `batch_size` is now safe to
+        raise; 100 is a conservative default that keeps payloads reasonable
+        while cutting request count ~100x compared to one-request-per-text.
+
         Args:
             texts (List[str] | str): Text(s) to embed
-            batch_size (int, optional): Number of texts per batch. Defaults to 10.
-            max_retries (int, optional): Maximum retry attempts. Defaults to 3.
+            batch_size (int, optional): Number of texts per request. Defaults to 100.
+            max_retries (int, optional): Maximum retry attempts per batch. Defaults to 3.
             retry_delay (float, optional): Delay between retries in seconds. Defaults to 1.0.
             show_progress_bar (bool, optional): Whether to show progress. Defaults to False.
 
@@ -148,32 +156,49 @@ class GoogleAIEmbedding(BaseEmbeddingModel):
                     f"Processing batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size}"
                 )
 
-            batch_embeddings = []
-            for text in batch_texts:
-                for attempt in range(max_retries):
-                    try:
-                        embedding = self.encode(text)
-                        batch_embeddings.append(embedding)
-                        break
-                    except errors.APIError as e:
-                        if e.code == 429:
-                            if attempt < max_retries - 1:
-                                wait_time = retry_delay * (2**attempt)  # Exponential backoff
-                                logger.warning(
-                                    f"Rate limited, waiting {wait_time}s before retry..."
-                                )
-                                time.sleep(wait_time)
-                                continue
-                            logger.error(f"Rate limit error after {max_retries} attempts: {e}")
-                            raise
-                        logger.error(f"Error processing text: {e}")
-                        raise
-                    except Exception as e:
-                        logger.error(f"Unexpected error: {e}")
+            batch_embeddings = None
+            # Retry logic for the whole batch (one request covers all texts in it)
+            for attempt in range(max_retries):
+                try:
+                    response = self.__call_googleai_embedding(
+                        model=self.model, text=batch_texts
+                    )
+
+                    if not response.embeddings or len(response.embeddings) != len(
+                        batch_texts
+                    ):
+                        raise ValueError(
+                            f"Expected {len(batch_texts)} embeddings, "
+                            f"got {len(response.embeddings) if response.embeddings else 0}"
+                        )
+
+                    # embed_content preserves input order for a list of contents.
+                    batch_embeddings = [
+                        emb.values or [] for emb in response.embeddings
+                    ]
+                    break
+                except errors.APIError as e:
+                    if e.code == 429:
                         if attempt < max_retries - 1:
-                            time.sleep(retry_delay)
+                            wait_time = retry_delay * (2**attempt)  # Exponential backoff
+                            logger.warning(
+                                f"Rate limited, waiting {wait_time}s before retry..."
+                            )
+                            time.sleep(wait_time)
                             continue
+                        logger.error(f"Rate limit error after {max_retries} attempts: {e}")
                         raise
+                    logger.error(f"Error processing batch: {e}")
+                    raise
+                except Exception as e:
+                    logger.error(f"Unexpected error: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        continue
+                    raise
+
+            if batch_embeddings is None:
+                raise ValueError("Failed to obtain embeddings for batch")
 
             embeddings.extend(batch_embeddings)
 
