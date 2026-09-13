@@ -168,22 +168,30 @@ Commit subjects follow [Conventional Commits](https://www.conventionalcommits.or
 - Keep the summary in the imperative mood (e.g. "add", not "added"/"adds").
 - The release workflow copies each commit's subject and body verbatim into the GitHub release changelog, so write both to be read standalone (see `.github/workflows/release.yml`).
 
+### Version bump rules (automatic tagging)
+
+Every push to `main` is scanned by `.github/workflows/auto-tag.yml`, which tags a new release automatically — no manual `git tag` needed. The bump is decided per commit subject, in this precedence order (highest across all new commits wins):
+
+| Commit subject | Bump |
+|---|---|
+| `[breaking-changes] <type>: ...` **or** `<type>!: ...` / `<type>(scope)!: ...` | **MAJOR** |
+| `feat: ...` (no breaking marker) | **MINOR** |
+| `fix: ...` (no breaking marker) | **PATCH** |
+| `refactor:`, `chore:`, `ci:`, `docs:`, `test:` alone | no release (bundled into the next qualifying commit) |
+
+A breaking marker always forces MAJOR regardless of type — use it deliberately when a `feat` or `fix` must ship as a major version, e.g. `[breaking-changes] feat: ...` or `feat!: ...`, both equivalent.
+
 ### Build package
 ```sh
 uv build
 ```
 
-### Trigger build and deploy to PyPI
-```sh
-# TAG_NAME must start with "v" (e.g., v1.0.0)
-git tag -a [TAG_NAME] -m "[TAG_MESSAGE]"
+### Manual / backfill release
 
-# push tag to remote
-git push origin [TAG_NAME]
-```
+Tagging is automatic (see above). To manually cut or re-run a release, use the `workflow_dispatch` trigger on `release.yml` (GitHub Actions UI → "Release & Publish" → "Run workflow", tag input `vX.Y.Z`) instead of pushing a tag by hand.
 
 ### After deploy on local 
-After the CI moves the tag, your local tag still points to the old commit. To sync:
+After CI creates or moves the tag, your local tag ref may be stale. To sync:
 
 ```sh
 git fetch --tags --force

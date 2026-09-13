@@ -265,11 +265,29 @@ UV_PUBLISH_TOKEN=your_token uv publish
 
 ## GitHub Workflow
 
-All release automation is consolidated in a single workflow: `.github/workflows/release.yml`.
+Release automation is split across two workflows: `.github/workflows/auto-tag.yml` decides *whether and what* to tag from commit history, and `.github/workflows/release.yml` does everything downstream of a tag (badges, PyPI publish, GitHub release).
+
+### Auto Tag (`auto-tag.yml`)
+
+- **Trigger**: Push to `main`
+- **Permission**: `contents: write` (to push the tag it computes)
+
+On every push to `main`, it walks commit subjects since the last tag (`git log <lastTag>..HEAD --no-merges --pretty=%s`) and computes the highest-severity bump among them:
+
+| Commit subject | Bump |
+|---|---|
+| `[breaking-changes] <type>: ...` **or** `<type>!: ...` / `<type>(scope)!: ...` | MAJOR |
+| `feat: ...` (no breaking marker) | MINOR |
+| `fix: ...` (no breaking marker) | PATCH |
+| `refactor:`, `chore:`, `ci:`, `docs:`, `test:` alone | no release |
+
+If nothing since the last tag qualifies (e.g. only `chore`/`docs`/`ci` commits, or none at all), the workflow exits without creating a tag — those commits simply ship with whatever the next `feat`/`fix`/breaking commit releases. Otherwise it creates and pushes an annotated `vX.Y.Z` tag, which triggers `release.yml`.
+
+This also means `release.yml`'s own `chore: update version badges to vX` commit (pushed straight to `main`) safely re-triggers `auto-tag.yml` without looping: that commit alone never qualifies for a bump, so the second run is a no-op.
 
 ### Release & Publish (`release.yml`)
 
-- **Trigger**: Push tag matching `v*` or manual dispatch
+- **Trigger**: Push tag matching `v*` (normally pushed by `auto-tag.yml`) or manual dispatch (for a manual/backfill release)
 - **Secret**: `PYPI_API_TOKEN`
 
 The workflow runs three jobs **in sequence** to ensure version badges are updated before publishing:
@@ -287,13 +305,9 @@ This ensures:
 
 ### Release Process
 
-The version is **automatically derived from git tags** using `hatch-vcs`. No need to manually edit any version field.
+The version is **automatically derived from git tags** using `hatch-vcs`. No need to manually edit any version field, and no need to manually create a tag either — `auto-tag.yml` does that from commit history (see above) whenever a qualifying commit lands on `main`.
 
-```bash
-# 1. Create and push tag
-git tag v0.4.22
-git push origin v0.4.22
-```
+For a manual or backfill release, trigger `release.yml` directly via `workflow_dispatch` (GitHub Actions UI → "Release & Publish" → "Run workflow") instead of pushing a tag by hand.
 
 ### Version Badges
 
@@ -372,12 +386,8 @@ print(__version__)  # e.g., "0.4.21"
 
 ### Release Flow
 
-```bash
-# 1. Create a version tag
-git tag v0.4.22
-
-# 2. Push the tag (triggers release.yml workflow)
-git push origin v0.4.22
-```
+1. Push a `feat:`/`fix:`/breaking-marked commit to `main` (directly or via a squash-merged PR).
+2. `auto-tag.yml` computes the next `vX.Y.Z` from commit subjects since the last tag and pushes it.
+3. The tag push triggers `release.yml` (badges → PyPI publish → GitHub release).
 
 The tag `v` prefix is automatically stripped, so the package is published to PyPI as the bare version number (e.g., `v0.4.22` → `0.4.22`).

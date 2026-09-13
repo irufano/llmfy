@@ -1,0 +1,86 @@
+name: Auto Tag
+
+# Computes the next semantic version from commit subjects since the last tag
+# and pushes it, which in turn triggers release.yml (badges, PyPI, GitHub
+# release). See README.md "Commit message format" for the bump rules.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: auto-tag-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  auto-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -z "$LATEST_TAG" ]; then
+            RANGE="HEAD"
+            BASE_VERSION="0.0.0"
+          else
+            RANGE="${LATEST_TAG}..HEAD"
+            BASE_VERSION="${LATEST_TAG#v}"
+          fi
+
+          SUBJECTS=$(git log $RANGE --no-merges --pretty=%s)
+          if [ -z "$SUBJECTS" ]; then
+            echo "No new commits since ${LATEST_TAG:-<root>}; skipping."
+            exit 0
+          fi
+
+          # Bump precedence, per commit subject (highest wins across all new commits):
+          #   0=none 1=patch(fix) 2=minor(feat) 3=major(breaking)
+          # Breaking marker is either the repo's "[breaking-changes]" subject
+          # prefix, or the standard Conventional Commits "type!:" suffix
+          # (e.g. "feat!:", "fix!:") -- both force MAJOR regardless of type.
+          RANK=0
+          while IFS= read -r subject; do
+            [ -z "$subject" ] && continue
+            if [[ "$subject" == \[breaking-changes\]* ]] || [[ "$subject" =~ ^[a-zA-Z]+(\(.+\))?!: ]]; then
+              r=3
+            elif [[ "$subject" =~ ^feat(\(.+\))?: ]]; then
+              r=2
+            elif [[ "$subject" =~ ^fix(\(.+\))?: ]]; then
+              r=1
+            else
+              r=0
+            fi
+            [ "$r" -gt "$RANK" ] && RANK=$r
+          done <<< "$SUBJECTS"
+
+          if [ "$RANK" -eq 0 ]; then
+            echo "No feat/fix/breaking-changes commits since ${LATEST_TAG:-<root>}; skipping release."
+            exit 0
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+          case "$RANK" in
+            3) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            2) MINOR=$((MINOR+1)); PATCH=0 ;;
+            1) PATCH=$((PATCH+1)) ;;
+          esac
+          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+
+          if git rev-parse -q --verify "refs/tags/${NEW_TAG}" >/dev/null; then
+            echo "::error::Tag ${NEW_TAG} already exists — aborting to avoid overwriting it."
+            exit 1
+          fi
+
+          echo "Bumping ${LATEST_TAG:-<root>} -> ${NEW_TAG} (rank=${RANK})"
+          git tag -a "${NEW_TAG}" -m "Release ${NEW_TAG}"
+          git push origin "${NEW_TAG}"
