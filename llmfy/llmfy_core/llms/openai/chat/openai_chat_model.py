@@ -321,16 +321,16 @@ class OpenAIChatModel(BaseAIModel):
         return params
 
     def __process_stream_chunk(
-        self, chunk, tool_calls_accumulator: dict[str, Any]
+        self, chunk, tool_calls_accumulator: dict[int, Any]
     ) -> AIResponse | None:
         """Process one Chat Completions stream chunk.
 
-        Mutates `tool_calls_accumulator` in place (keyed by tool_call_id) and
-        returns `None` for chunks with no `choices` (e.g. the trailing
-        usage-only chunk from `stream_options={"include_usage": True}`) —
-        shared by the sync (`generate_stream`) and async (`agenerate_stream`)
-        streaming loops, which differ only in their iteration protocol
-        (`for` vs `async for`).
+        Mutates `tool_calls_accumulator` in place (keyed by `tool_call.index`
+        — see the comment below for why) and returns `None` for chunks with
+        no `choices` (e.g. the trailing usage-only chunk from
+        `stream_options={"include_usage": True}`) — shared by the sync
+        (`generate_stream`) and async (`agenerate_stream`) streaming loops,
+        which differ only in their iteration protocol (`for` vs `async for`).
         """
         if not chunk.choices:
             return None
@@ -356,54 +356,51 @@ class OpenAIChatModel(BaseAIModel):
         if delta.tool_calls is not None:
             tool_calls = []
             for tool_call in delta.tool_calls:
-                tool_call_id = tool_call.id  # Exists only in the first chunk
+                # `index` is the position of this tool call among the
+                # response's tool calls (0, 1, 2, ...) and is present on
+                # EVERY chunk belonging to it — unlike `id`/`function.name`,
+                # which only appear on that tool call's first chunk.
+                # Correlating by `index` (rather than "whichever entry
+                # happens to be first in the accumulator dict") is what
+                # makes this correct when the model streams more than one
+                # tool call in parallel: with 2+ tool calls in flight,
+                # `next(iter(accumulator.values()))` would always grab the
+                # first one, appending every tool call's argument deltas
+                # onto it regardless of which one they actually belong to.
+                index = tool_call.index
 
-                if tool_call_id:  # First chunk of a new tool call
-                    tool_calls_accumulator[tool_call_id] = {
+                if index not in tool_calls_accumulator:  # First chunk of this tool call
+                    tool_calls_accumulator[index] = {
                         "request_call_id": chunk.id,
-                        "tool_call_id": tool_call_id,
+                        "tool_call_id": tool_call.id,
                         "name": tool_call.function.name,
                         "arguments": "",
                     }
 
-                # Find the active tool call in the accumulator
-                active_tool_call = next(
-                    iter(tool_calls_accumulator.values()), None
-                )
-                if active_tool_call:
-                    # Accumulate arguments across multiple chunks
-                    active_tool_call["arguments"] += (
-                        tool_call.function.arguments or ""
+                active_tool_call = tool_calls_accumulator[index]
+                # Accumulate arguments across multiple chunks
+                active_tool_call["arguments"] += tool_call.function.arguments or ""
+
+                # Try to parse accumulated JSON when complete
+                try:
+                    parsed_arguments = json.loads(active_tool_call["arguments"])
+
+                    # Construct the ToolCall object
+                    tool_calls.append(
+                        ToolCall(
+                            request_call_id=active_tool_call["request_call_id"],
+                            tool_call_id=active_tool_call["tool_call_id"],
+                            name=active_tool_call["name"],
+                            arguments=parsed_arguments,
+                        )
                     )
 
-                    # Try to parse accumulated JSON when complete
-                    try:
-                        parsed_arguments = json.loads(
-                            active_tool_call["arguments"]
-                        )
+                    # Remove the tool call once fully processed
+                    del tool_calls_accumulator[index]
 
-                        # Construct the ToolCall object
-                        tool_calls.append(
-                            ToolCall(
-                                request_call_id=active_tool_call[
-                                    "request_call_id"
-                                ],
-                                tool_call_id=active_tool_call[
-                                    "tool_call_id"
-                                ],
-                                name=active_tool_call["name"],
-                                arguments=parsed_arguments,
-                            )
-                        )
-
-                        # Remove the tool call once fully processed
-                        del tool_calls_accumulator[
-                            active_tool_call["tool_call_id"]
-                        ]
-
-                    except json.JSONDecodeError:
-                        # JSON is incomplete, continue accumulating
-                        pass
+                except json.JSONDecodeError:
+                    # JSON is incomplete, continue accumulating
+                    pass
 
         return AIResponse(
             content=content,
@@ -441,7 +438,7 @@ class OpenAIChatModel(BaseAIModel):
         try:
             params = self.__build_stream_params(messages, tools, **kwargs)
             stream = self.__call_stream_openai(params)
-            tool_calls_accumulator: dict[str, Any] = {}
+            tool_calls_accumulator: dict[int, Any] = {}
 
             for chunk in stream:
                 ai_response = self.__process_stream_chunk(chunk, tool_calls_accumulator)
@@ -465,7 +462,7 @@ class OpenAIChatModel(BaseAIModel):
         try:
             params = self.__build_stream_params(messages, tools, **kwargs)
             stream = self.__call_stream_openai_async(params)
-            tool_calls_accumulator: dict[str, Any] = {}
+            tool_calls_accumulator: dict[int, Any] = {}
 
             async for chunk in stream:
                 ai_response = self.__process_stream_chunk(chunk, tool_calls_accumulator)
