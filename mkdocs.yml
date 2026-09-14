@@ -37,7 +37,6 @@ nav:
       - Embeddings:
           - Embeddings: documentation/features/embedding.md
           - Chunking: documentation/features/chunk-text.md
-          - Vector Store: documentation/vector-store/faiss-vector-store.md
       - Usage Tracking: documentation/features/usage.md
       - Exception Handling: documentation/exception/exception-handler.md
   - Flow Engine:
@@ -65,10 +64,9 @@ nav:
           - Document: examples/example-input-document.md
           - Image: examples/example-input-image.md
           - Video: examples/example-input-video.md
-      - Embeddings & Vector Store:
+      - Embeddings:
           - Embedding: examples/example-embedding.md
           - Chunking: examples/example-chunking.md
-          - FAISS Vector Store: examples/example-faiss-vectore-store.md
       - Flow Engine:
           - Basic Agent: examples/example-flowengine-agent-basic.md
   - API Reference:
@@ -141,10 +139,6 @@ nav:
               - Node Stream: reference/flow_engine.stream.node_stream_response.md
               - Tool Node Stream: reference/flow_engine.stream.tool_node_stream_response.md
           - Visualizer: reference/flow_engine.visualizer.visualizer.md
-      - vector_store:
-          - Document: reference/vector_store.document.md
-          - FAISS Index: reference/vector_store.faiss_index.faiss_index.md
-          - FAISS Vector Store: reference/vector_store.faiss_index.faiss_vector_store.md
 
 theme:
   name: material

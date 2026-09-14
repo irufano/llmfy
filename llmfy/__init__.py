@@ -75,9 +75,6 @@ from .llmfy_core.embeddings.google.googleai_embedding import GoogleAIEmbedding
 from .llmfy_core.embeddings.openai.openai_embedding import OpenAIEmbedding
 from .llmfy_utils.chunk import chunk_markdown_by_header, chunk_text
 from .llmfy_utils.text_preprocessing import clean_text_for_embedding
-from .vector_store.document import Document
-from .vector_store.faiss_index.faiss_index import FAISSIndex
-from .vector_store.faiss_index.faiss_vector_store import FAISSVectorStore
 
 __all__ = [
     "LLMfy",
@@ -111,9 +108,6 @@ __all__ = [
     "llmfy_usage_tracker",
     "Content",
     "ContentType",
-    "Document",
-    "FAISSIndex",
-    "FAISSVectorStore",
     "BaseEmbeddingModel",
     "BedrockEmbedding",
     "GoogleAIEmbedding",

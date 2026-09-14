@@ -22,8 +22,7 @@
 | [openai](https://pypi.org/project/openai)                        | 🔸 Optional        | Use OpenAI models                                       | `pip install "llmfy[openai]"`           |
 | [boto3](https://pypi.org/project/boto3/)                         | 🔸 Optional        | Use AWS Bedrock models                                  | `pip install "llmfy[boto3]"`            |
 | [google-genai](https://pypi.org/project/google-genai/)           | 🔸 Optional        | Use Google AI (Gemini) models                           | `pip install "llmfy[google-genai]"`     |
-| [numpy](https://pypi.org/project/numpy/)                         | 🔸 Optional        | Use Embedding, `FAISSVectorStore`                       | `pip install "llmfy[numpy]"`            |
-| [faiss-cpu](https://pypi.org/project/faiss-cpu/)                 | 🔸 Optional        | Use `FAISSVectorStore`                                  | `pip install "llmfy[faiss-cpu]"`        |
+| [numpy](https://pypi.org/project/numpy/)                         | 🔸 Optional        | Use Embedding                                            | `pip install "llmfy[numpy]"`            |
 | [typing_extensions](https://pypi.org/project/typing-extensions/) | 🔸 Optional        | Use state in `FlowEngine`                               | `pip install "llmfy[typing_extensions]"` |
 | [redis](https://pypi.org/project/redis/)                         | 🔸 Optional        | Use `RedisCheckpointer`                                 | `pip install "llmfy[redis]"`            |
 | [SQLAlchemy](https://pypi.org/project/SQLAlchemy/)               | 🔸 Optional        | Use `SQLCheckpointer` (supports sync and async drivers) | `pip install "llmfy[SQLAlchemy]"`       |

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock, Google AI, Anthropic), workflow orchestration via FlowEngine, vector storage with FAISS, and utility functions for text processing.
+LLMfy is a Python framework for developing applications with large language models (LLMs). It provides abstractions for multiple LLM providers (OpenAI, AWS Bedrock, Google AI, Anthropic), workflow orchestration via FlowEngine, and utility functions for text processing.
 
 - **Python**: >= 3.11
 - **Package Manager**: [UV](https://docs.astral.sh/uv/)
@@ -53,7 +53,6 @@ llmfy/
 │   │   ├── checkpointer/       # State persistence (InMemory, Redis, SQL)
 │   │   ├── helper/             # Helper utilities
 │   │   └── visualizer/         # Workflow visualization
-│   ├── vector_store/           # Vector store (FAISS)
 │   └── llmfy_utils/            # Utilities (chunking, logging, text processing)
 └── site/                       # Generated documentation (not committed)
 ```
@@ -136,7 +135,6 @@ Install with `pip install llmfy[extra_name]` or `pip install llmfy[all]`.
 | `google-genai`     | google-genai       | Google AI (Gemini) client    |
 | `anthropic`        | anthropic          | Anthropic Claude API client (native Messages API) |
 | `numpy`            | numpy              | Numerical computing          |
-| `faiss-cpu`        | faiss-cpu          | FAISS vector similarity      |
 | `typing_extensions`| typing_extensions  | Backported typing features   |
 | `redis`            | redis              | Redis checkpointer support   |
 | `SQLAlchemy`       | SQLAlchemy         | SQL checkpointer support     |
