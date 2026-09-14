@@ -36,8 +36,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/irufano/llmfy"
-Repository = "https://github.com/irufano/llmfy"
+Homepage = "https://github.com/llmfy-labs/llmfy-python"
+Repository = "https://github.com/llmfy-labs/llmfy-python"
+Issues = "https://github.com/llmfy-labs/llmfy-python/issues"
 
 [project.optional-dependencies]
 openai = ["openai"]

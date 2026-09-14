@@ -2,7 +2,7 @@
 
 <div align="center">
 
-  <a href="https://img.shields.io/github/actions/workflow/status/irufano/llmfy/release.yml">![llmfy](https://img.shields.io/github/actions/workflow/status/irufano/llmfy/release.yml?style=for-the-badge&logo=pypi&logoColor=blue&label=publish
+  <a href="https://img.shields.io/github/actions/workflow/status/llmfy-labs/llmfy-python/release.yml">![llmfy](https://img.shields.io/github/actions/workflow/status/llmfy-labs/llmfy-python/release.yml?style=for-the-badge&logo=pypi&logoColor=blue&label=publish
   )</a>
   <a href="https://pypi.org/project/llmfy/0.10.0">![llmfy](https://img.shields.io/badge/llmfy-v0.10.0-31CA9C.svg?style=for-the-badge&logo=pypi&logoColor=yellow)</a>
   <a href="https://pypi.org/project/llmfy/">![llmfy](https://img.shields.io/pypi/v/llmfy?style=for-the-badge&label=latest&labelColor=691DC6&color=B77309)</a>
@@ -46,28 +46,28 @@ pip install llmfy
 #### From a specific branch
 ```sh
 # main
-uv add git+https://github.com/irufano/llmfy.git@main
+uv add git+https://github.com/llmfy-labs/llmfy-python.git@main
 # or
-pip install git+https://github.com/irufano/llmfy.git@main
+pip install git+https://github.com/llmfy-labs/llmfy-python.git@main
 
 # dev
-uv add git+https://github.com/irufano/llmfy.git@dev
+uv add git+https://github.com/llmfy-labs/llmfy-python.git@dev
 # or
-pip install git+https://github.com/irufano/llmfy.git@dev
+pip install git+https://github.com/llmfy-labs/llmfy-python.git@dev
 ```
 
 #### From a tag
 ```sh
 # example tag version 0.4.3
-uv add git+https://github.com/irufano/llmfy.git@v0.4.3
+uv add git+https://github.com/llmfy-labs/llmfy-python.git@v0.4.3
 # or
-pip install git+https://github.com/irufano/llmfy.git@v0.4.3
+pip install git+https://github.com/llmfy-labs/llmfy-python.git@v0.4.3
 ```
 
 #### Github in requirements.txt
 
 ```txt
-git+https://github.com/irufano/llmfy.git@dev
+git+https://github.com/llmfy-labs/llmfy-python.git@dev
 ```
 
 ## How to use

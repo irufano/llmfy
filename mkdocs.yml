@@ -220,6 +220,6 @@ extra:
 extra_css:
   - stylesheets/extra.css
 
-repo_url: https://github.com/irufano/llmfy
+repo_url: https://github.com/llmfy-labs/llmfy-python
 
 copyright: LLMfy | framework for building and integrating LLM-powered applications.
