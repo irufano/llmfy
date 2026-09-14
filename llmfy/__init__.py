@@ -36,13 +36,6 @@ from .flow_engine import (
     tools_stream_node,
     trim_messages,
 )
-from .guardrails import (
-    PIIDetection,
-    PIIDetectionResult,
-    PIIGuard,
-    PIIStrategy,
-    PIIType,
-)
 from .llmfy_core import (
     AIResponse,
     AnthropicMessagesConfig,
@@ -125,11 +118,6 @@ __all__ = [
     "BedrockEmbedding",
     "GoogleAIEmbedding",
     "OpenAIEmbedding",
-    "PIIGuard",
-    "PIIDetection",
-    "PIIDetectionResult",
-    "PIIStrategy",
-    "PIIType",
     "chunk_text",
     "clean_text_for_embedding",
     "chunk_markdown_by_header",

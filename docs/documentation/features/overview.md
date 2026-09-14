@@ -1,6 +1,6 @@
 # Overview
 
-LLMfy provides a unified interface for building LLM-powered applications across multiple providers — [Anthropic](providers.md#anthropic-messages-api), [OpenAI](providers.md#openai-chat-completions) (Chat Completions and Responses API), [AWS Bedrock](providers.md#aws-bedrock), and [Google AI](providers.md#google-ai) — plus a workflow orchestration engine, vector store, and guardrails.
+LLMfy provides a unified interface for building LLM-powered applications across multiple providers — [Anthropic](providers.md#anthropic-messages-api), [OpenAI](providers.md#openai-chat-completions) (Chat Completions and Responses API), [AWS Bedrock](providers.md#aws-bedrock), and [Google AI](providers.md#google-ai) — plus a workflow orchestration engine and vector store.
 
 This guide covers the core building blocks:
 

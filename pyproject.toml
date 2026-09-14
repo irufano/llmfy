@@ -51,7 +51,6 @@ faiss-cpu = ["faiss-cpu"]
 typing_extensions = ["typing_extensions"]
 redis = ["redis"]
 SQLAlchemy = ["SQLAlchemy"]
-spacy = ["spacy>=3.8.14"]
 all = [
     "openai",
     "boto3",
@@ -63,7 +62,6 @@ all = [
     "typing_extensions",
     "redis",
     "SQLAlchemy",
-    "spacy",
 ]
 
 [dependency-groups]
@@ -80,8 +78,6 @@ dev = [
     "SQLAlchemy>=2.0.44",
     "typing_extensions>=4.15.0",
     "PyMySQL>=1.1.2",
-    "spacy>=3.8.0",
-    "xx-ent-pii-sm",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -113,9 +109,6 @@ include = [
     "pyproject.toml",
 ]
 exclude = ["llmfy/test/"]
-
-[tool.uv.sources]
-xx-ent-pii-sm = { url = "https://github.com/irufano/spacy_ner_pii/releases/download/v0.1.0/xx_ent_pii_sm-0.1.0-py3-none-any.whl" }
 
 [tool.ruff]
 target-version = "py311"

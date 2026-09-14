@@ -28,7 +28,6 @@ Key features:
   - Usage tracking with per-request token counts and cost estimates
   - Flow Engine for building stateful multi-step AI agents
   - Embeddings and FAISS vector store for retrieval-augmented generation
-  - PII detection and masking as a guardrail
 
 Providers supported:
   AWS Bedrock  — Claude 3.x / 4.x / 4.5 / 4.6 / 4.8 / Fable 5, Amazon Nova, Llama, DeepSeek

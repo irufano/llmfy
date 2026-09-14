@@ -47,9 +47,6 @@ nav:
       - Create Agent: documentation/flow-engine/create-agent.md
       - Streaming: documentation/flow-engine/streaming.md
       - Checkpointer: documentation/flow-engine/checkpointer.md
-  - Guardrails:
-      - Overview: documentation/guardrails/overview.md
-      - PII Guard: documentation/guardrails/pii-guard.md
   - Examples:
       - LLM & Generation:
           - Retrieval: examples/example-retrieval.md
@@ -74,8 +71,6 @@ nav:
           - FAISS Vector Store: examples/example-faiss-vectore-store.md
       - Flow Engine:
           - Basic Agent: examples/example-flowengine-agent-basic.md
-      - Guardrails:
-          - PII Guard: examples/example-pii.md
   - API Reference:
       - llmfy_core:
           - LLMfy: reference/llmfy_core.llmfy.md
@@ -150,11 +145,6 @@ nav:
           - Document: reference/vector_store.document.md
           - FAISS Index: reference/vector_store.faiss_index.faiss_index.md
           - FAISS Vector Store: reference/vector_store.faiss_index.faiss_vector_store.md
-      - guardrails:
-          - PII Guard: reference/guardrails.pii.pii_guard.md
-          - PII Type: reference/guardrails.pii.pii_type.md
-          - PII Strategy: reference/guardrails.pii.pii_strategy.md
-          - PII Result: reference/guardrails.pii.pii_result.md
 
 theme:
   name: material

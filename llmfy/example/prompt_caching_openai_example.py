@@ -30,7 +30,6 @@ Key features:
   - Usage tracking with per-request token counts and cost estimates
   - Flow Engine for building stateful multi-step AI agents
   - Embeddings and FAISS vector store for retrieval-augmented generation
-  - PII detection and masking as a guardrail
 
 Providers supported:
   OpenAI   — GPT-4o, GPT-4.1, GPT-5, o-series reasoning models

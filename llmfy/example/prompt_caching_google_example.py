@@ -35,7 +35,6 @@ Key features:
   - Usage tracking with per-request token counts and cost estimates
   - Flow Engine for building stateful multi-step AI agents
   - Embeddings and FAISS vector store for retrieval-augmented generation
-  - PII detection and masking as a guardrail
 
 Providers supported:
   Google AI — Gemini 2.5 and 3.x families
