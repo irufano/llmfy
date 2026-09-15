@@ -136,4 +136,4 @@ if __name__ == "__main__":
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message format, the automatic version-bump/release process, and local package/docs development commands.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message format, the automatic version-bump/release process, local package/docs development commands, and the required testing policy for every change.

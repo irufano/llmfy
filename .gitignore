@@ -59,3 +59,9 @@ uv.lock
 
 # Auto-generated version file
 llmfy/_version.py
+
+# Test coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/

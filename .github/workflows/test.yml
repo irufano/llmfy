@@ -1,0 +1,95 @@
+name: Test
+
+# Runs the checks documented in CONTRIBUTING.md's "Testing policy" section on
+# every PR and every push to main, so they're enforced automatically instead
+# of relying on a contributor (human or AI agent) to have run them locally.
+#
+# `llmfy/flow_engine/` has no tests yet (see CONTRIBUTING.md) — nothing
+# special needed here, it's just not covered until that lands.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint
+        run: uvx ruff check --statistics .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Matches the "Programming Language :: Python :: 3.11" / "3.12"
+        # classifiers in pyproject.toml.
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies (dev + test groups)
+        run: uv sync --group dev --group test --python ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uv run --python ${{ matrix.python-version }} pytest -v
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    # Non-blocking by design (see CONTRIBUTING.md's "Investigating and
+    # fixing a `pip-audit` finding"): a transitive vulnerability in
+    # dev/docs/test tooling can appear at any time, unrelated to the PR
+    # being checked, and shouldn't block an unrelated merge. `test`/`lint`
+    # above stay blocking. Because this job is non-blocking, GitHub does NOT
+    # send a failure notification for it and the workflow's overall status
+    # stays green — the "Audit dependencies" step below writes its result to
+    # the job summary so a finding is visible on the run's summary page
+    # without digging into logs, instead of relying on someone noticing the
+    # small warning icon next to this job in the checks list.
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Audit dependencies
+        shell: bash
+        run: |
+          echo "### Dependency audit (pip-audit)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run pip-audit 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          exit_code="${PIPESTATUS[0]}"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if [ "$exit_code" -ne 0 ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "See CONTRIBUTING.md's \"Investigating and fixing a \`pip-audit\` finding\" for how to trace and fix these." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$exit_code"

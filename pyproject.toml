@@ -86,6 +86,17 @@ docs = [
     "mkdocs-material[imaging]",
     "watchdog>=6.0.0",
 ]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "pytest-cov>=5.0.0",
+    "pip-audit>=2.7.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.hatch.version]
 source = "vcs"
